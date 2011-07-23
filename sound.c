@@ -11,8 +11,6 @@ short snd_vol = 50;
 
 int snddisabled = 1;
 
-int rrrr;
-
 struct {
     snd_t *s;
     Mix_Chunk *c;
