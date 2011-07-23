@@ -7,8 +7,6 @@ short mus_vol = 50;
 
 Mix_Music * muslo;
 
-int hhhhh;
-
 char music_random = ON;
 int music_time = 3;
 int music_fade = 5;
