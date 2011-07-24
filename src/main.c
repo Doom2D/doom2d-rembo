@@ -25,7 +25,7 @@
 ///#include <process.h>
 #include <stdarg.h>
 ///#include <conio.h>
-#include <time.h>
+//#include <time.h>
 ///#include <dos.h>
 #include <stdlib.h>
 #include <malloc.h>
