@@ -97,7 +97,7 @@ static cfg_t cfg[]={
 };
 
 
-char cfg_file[128]="DEFAULT.CFG";
+char cfg_file[128]="default.cfg";
 
 static char buf[256];
 
