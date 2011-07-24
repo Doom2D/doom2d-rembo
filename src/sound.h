@@ -36,7 +36,7 @@ typedef struct{
                  lstart,	// начало повтора в байтах от начала данных
                  llen;		// длина повтора в байтах
 }snd_t;
-#pragma pack(1)
+#pragma pack()
 
 void S_init(void);
 
