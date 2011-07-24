@@ -176,7 +176,7 @@ void F_initwads(void) {
   int i,j,k,p;
   FILE *h;
   char s[4];
-  long n,o;
+  int n,o;
   wad_t w;
 
   logo("F_initwads: подключение WAD-файлов\n");
