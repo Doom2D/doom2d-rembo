@@ -19,7 +19,7 @@
    write to the Free Software Foundation, Inc.,
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
-
+/*
 #include "glob.h"
 #include <stdlib.h>
 #include <string.h>
@@ -104,3 +104,4 @@ int ANM_play(void) {
   if(anm->t==AB_END) return 0;
   return 1;
 }
+*/
