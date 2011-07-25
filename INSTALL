@@ -44,10 +44,8 @@ To proceed installation:
       script to copy doom2d music and wad's to
       /usr/share/doom2d-rembo directory.
 
-   4. Finally, to run Doom2D:Rembo `cd' to the
-      directory you copied binary, music and wad's
-      and type
+   4. Finally, to run Doom2D:Rembo and type
 
-      ./doom2d
+      /usr/local/bin/doom2d
 
       and enjoy game.
