@@ -1,0 +1,53 @@
+Basic Installation
+==================
+
+Currently to install Doom2D:Rembo from sources you need to have:
+
+   1. libSDL headers (SDL.h and SDL_mixer.h) at /usr/include/SDL
+
+      In Debian GNU/Linux you can install them with this command:
+
+      apt-get install libsdl1.2-dev libsdl-mixer1.2-dev
+
+   2. CMake to configure
+
+   3. GCC and make to build
+
+   4. libSDL.so and libSDL_mixer.so at /usr/lib to run
+
+To proceed installation:
+
+   1. `cd' to the directory containing the package's source code
+      e.g. `cd doom2d-rembo/src' and type
+
+      mkdir build
+      cd build
+      cmake ..
+
+      to configure installation with Cmake automatically
+
+   2. If CMake configured project successfully type
+
+      make
+
+      to compile project and then
+
+      make install
+
+      to install under /usr/local/bin
+
+   3. When compilation finished successfully simply run 
+
+      cd ..
+      ./copy.sh
+
+      script to copy doom2d music and wad's to
+      /usr/share/doom2d-rembo directory.
+
+   4. Finally, to run Doom2D:Rembo `cd' to the
+      directory you copied binary, music and wad's
+      and type
+
+      ./doom2d
+
+      and enjoy game.
