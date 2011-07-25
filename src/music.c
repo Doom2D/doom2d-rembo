@@ -175,22 +175,31 @@ void trans_ascii_str (char *dest, char *src)
 void F_loadmus(char n[8]) {
     if (musdisabled) return;
     char f[50];
+    char name[50];
 #ifndef WIN32
-    strcpy(f,"music/");
+    strcpy(f, "/usr/share/doom2d-rembo/music/");
 #else
-    strcpy(f,"music\\");
+    strcpy(f, "music\\");
 #endif
-    strncpy(&f[6], n, 8);
-    f[6+8]='\0';
-    muslo = Mix_LoadMUS(f);
-    if (muslo == NULL) {
-        char name[50];
+    int l = strlen(f);
+    strncpy(&f[l], n, 8);
+    f[l+8]='\0';
+    trans_ascii_str(name, f);
+    muslo = Mix_LoadMUS(name);
+    if (muslo == NULL)
+    {
+#ifndef WIN32
+        strcpy(f, "music/");
+        int l = strlen(f);
+        strncpy(&f[l], n, 8);
+        f[l+8]='\0';
         trans_ascii_str(name, f);
         muslo = Mix_LoadMUS(name);
-        if (!muslo) logo("Music not found '%s'\n", name);
+#endif
     }
-}
+    if (!muslo) logo("Music not found '%s'\n", name);
 
+}
 
 void F_freemus(void) {
     if (musdisabled) return;
