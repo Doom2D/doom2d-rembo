@@ -112,7 +112,16 @@ int main(int argc, char *argv[]) {
   pl2.id=-2;
   myrandomize();
   F_startup();
-  F_addwad("doom2d.wad");
+  char *pw;
+#ifndef WIN32 
+  pw = "/usr/share/doom2d-rembo/doom2d.wad";
+#else
+  pw = "doom2d.wad";
+#endif
+  if (fexists(pw))
+    F_addwad(pw);
+  else
+    F_addwad("doom2d.wad");
   CFG_args(argc, argv);
   CFG_load();
   F_initwads();

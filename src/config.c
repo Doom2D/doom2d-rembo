@@ -184,8 +184,23 @@ void CFG_load(void) {
   char s[128];
   char *p1,*p2;
 
-  logo("CFG_load: загрузка конфигурации из %s\n",cfg_file);
-  if((h=fopen(cfg_file,"rb"))==NULL) {
+  char pc[50];
+  char *e = getenv("HOME");
+  strncpy(pc, e, 30);
+  strcpy(&pc[strlen(pc)], "/default.cfg");
+  if (!fexists(pc)) {
+      strcpy(pc, "default.cfg");
+      if (!fexists(pc)) {
+          strcpy(pc, "/usr/share/doom2d-rembo/default.cfg");
+          if (!fexists(pc)) {
+              logo("default.cfg not found\n");
+              return;
+          }
+      }
+  }
+
+  logo("CFG_load: загрузка конфигурации из %s\n",pc);
+  if((h=fopen(pc,"rb"))==NULL) {
     perror("Cannot open file");return;
   }
   while(!feof(h)) {
