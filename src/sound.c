@@ -74,8 +74,10 @@ void S_init(void)
 void S_done(void)
 {
     free_chunks();
-    Mix_CloseAudio();
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    if (SDL_WasInit(SDL_INIT_AUDIO)) {
+        Mix_CloseAudio();
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    }
 }
 
 Mix_Chunk * get_chunk(snd_t *s, int r, int v)

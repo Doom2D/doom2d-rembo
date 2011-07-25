@@ -64,9 +64,11 @@ void S_initmusic(void)
 
 void S_donemusic(void)
 {
-    F_freemus();
-    Mix_CloseAudio();
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    if (SDL_WasInit(SDL_INIT_AUDIO)) {
+        F_freemus();
+        Mix_CloseAudio();
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    }
 }
 
 void S_startmusic(int time)
