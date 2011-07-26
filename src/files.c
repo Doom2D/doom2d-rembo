@@ -39,6 +39,7 @@
 #include "files.h"
 #include "map.h"
 
+#include <sys/stat.h>
 
 char *S_getinfo(void);
 
@@ -93,15 +94,34 @@ void F_startup(void) {
   memset(wads,0,sizeof(wads));
 }
 
+char *getsavfpname(int n, int ro)
+{
+  static char fn[]="savgame0.dat";
+  fn[7]=n+'0';
+#ifndef WIN32
+  static char p[100];
+  char *e = getenv("HOME");
+  strncpy(p,e,60);
+  strcat(p,"/.doom2d-rembo");
+  if (!ro) mkdir(p, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  strcat(p,"/");
+  strcat(p,fn);
+#else
+  strcpy(p,fn);
+#endif
+  return p;
+}
+
 void F_getsavnames(void) {
 
   int i; FILE *h;
-  static char n[]="SAVGAME0.DAT";
   short ver;
+  char *p;
 
   for(i=0;i<7;++i) {
-    n[7]=i+'0';memset(savname[i],0,24);savok[i]=0;
-    if((h=fopen(n,"rb"))==NULL) continue; //if((h=open(n,O_RDONLY|O_BINARY))==-1) continue;
+    p = getsavfpname(i,1);
+    memset(savname[i],0,24);savok[i]=0;
+    if((h=fopen(p,"rb"))==NULL) continue; //if((h=open(n,O_RDONLY|O_BINARY))==-1) continue;
     myfread(savname[i],1,24,h);ver=-1;myfread(&ver,1,2,h);
     fclose(h);savname[i][23]=0;savok[i]=(ver==3)?1:0;//savok[i]=(ver==2)?1:0;
   }
@@ -110,10 +130,9 @@ void F_getsavnames(void) {
 void F_savegame(int n,char *s) {
 
   FILE* h;
-  static char fn[]="SAVGAME0.DAT";
-
-  fn[7]=n+'0';
-  if((h=fopen(fn,"wb"))==NULL) return;
+  char *p;
+  p=getsavfpname(n,0);
+  if((h=fopen(p,"wb"))==NULL) return;
   myfwrite(s,1,24,h);myfwrite("\3\0",1,2,h);//myfwrite("\2\0",1,2,h);
   G_savegame(h);
   W_savegame(h);
@@ -126,16 +145,15 @@ void F_savegame(int n,char *s) {
   SW_savegame(h);
   WP_savegame(h);
   fclose(h);
-
 }
 
 void F_loadgame(int n) {
   FILE* h;
-  static char fn[]="SAVGAME0.DAT";
   short ver;
-
-  fn[7]=n+'0';
-  if((h=fopen(fn,"rb"))==NULL) return;//if((h=open(fn,O_BINARY|O_RDONLY))==-1) return;
+  char *p;
+  p=getsavfpname(n,1);
+  
+  if((h=fopen(p,"rb"))==NULL) return;//if((h=open(fn,O_BINARY|O_RDONLY))==-1) return;
   fseek(h,24,SEEK_SET);myfread(&ver,1,2,h);if(ver!=3) return;//if(ver!=2) return;
   G_loadgame(h);
   W_loadgame(h);
