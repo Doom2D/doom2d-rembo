@@ -99,7 +99,7 @@ else
   echo " Russian video game company \"Prikol Software\"" >> $DEST_DIR/DEBIAN/control
   echo " in early 1996 being inspired by original DOOM game by id Software." >> $DEST_DIR/DEBIAN/control
   echo "Done"
-  ARCHIVE_NAME=$PACKAGE_NAME"-"$VERSION"_"$ARCH.deb
+  ARCHIVE_NAME=$PACKAGE_NAME"_"$VERSION"_"$ARCH.deb
   fakeroot dpkg-deb --build $DEST_DIR $ARCHIVE_NAME
   echo $ARCHIVE_NAME" was created succesfully at "$SOURCE_DIR"/src/build/"
 fi
