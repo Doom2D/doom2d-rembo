@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+#  Copyright (C) Andriy Shinkarchuck <adriano32.gnu@gmail.com> 2011
+#
+#  This file is part of the Doom2D:Rembo project.
+#
+#  Doom2D:Rembo is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License version 2 as
+#  published by the Free Software Foundation.
+#
+#  Doom2D:Rembo is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, see <http://www.gnu.org/licenses/> or
+#  write to the Free Software Foundation, Inc.,
+#  51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+#
+set -e
+echo "Usage: doom2d_tarball_maker <TARBALL_NAME>"
+echo "Example: doom2d_tarball_maker doom2d-1.35.1-src" 
+WORK_DIR=`pwd`
+if [ $# -ne 1 ]; then
+  echo "Usage: doom2d_tarball_maker <TARBALL_NAME>"
+  echo "Example: doom2d_tarball_maker doom2d-1.35.1-src" 
+  exit 1
+else
+  TARBALL_NAME=$1
+  mkdir $WORK_DIR/tmp
+  cd $WORK_DIR/tmp
+  if [ -x `which hg` ]; then
+    hg clone https://code.google.com/p/doom2d-rembo/ doom2d-rembo
+  fi
+  if [ "$(ls -A $WORK_DIR/tmp/doom2d-rembo/)" ]; then
+    if [ -d $WORK_DIR/tmp/doom2d-rembo/src ]; then
+      if [ -d $WORK_DIR/tmp/doom2d-rembo/music ]; then
+        rm -fR $WORK_DIR/tmp/doom2d-rembo/.hg
+        cd $WORK_DIR/tmp
+        tar cf - doom2d-rembo/ | gzip -f9 > $TARBALL_NAME.tar.gz
+      else
+        echo "Error: Your source tree in "$WORK_DIR" is damaged. Check it for consistency"
+        exit 1
+      fi
+    else
+      echo "Error: Your source tree in "$WORK_DIR" is damaged. Check it for consistency"
+      exit 1
+    fi
+  else
+    echo "Error: Your source tree in "$WORK_DIR" is empty. Check it for consistency"
+    exit 1
+  fi
+  cd $WORK_DIR
+  cp $WORK_DIR/tmp/$TARBALL_NAME.tar.gz $WORK_DIR
+  rm -fR $WORK_DIR/tmp
+  echo $TARBALL_NAME".tar.gz created succesfully in "$WORK_DIR". Temporary files were removed"
+fi

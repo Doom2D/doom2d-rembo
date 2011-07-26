@@ -1,0 +1,105 @@
+#!/bin/bash
+#
+#  Copyright (C) Andriy Shinkarchuck <adriano32.gnu@gmail.com> 2011
+#
+#  This file is part of the Doom2D:Rembo project.
+#
+#  Doom2D:Rembo is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License version 2 as
+#  published by the Free Software Foundation.
+#
+#  Doom2D:Rembo is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, see <http://www.gnu.org/licenses/> or
+#  write to the Free Software Foundation, Inc.,
+#  51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+#
+set -e
+echo "Usage: doom2d_deb_maker <SOURCE_DIR> <DEST_DIR> <PACKAGE_NAME> <VERSION> <ARCH>"
+echo "<SOURCE_DIR> and <DEST_DIR> should be absolute pathes"
+WORK_DIR=`pwd`
+if [ $# -ne 5 ]; then
+  echo "Error: Not enough actual parametres.";
+  echo "Usage: doom2d_deb_maker <SOURCE_DIR> <DEST_DIR> <PACKAGE_NAME> <VERSION> <ARCH>"
+  exit 1
+else
+  SOURCE_DIR=$1
+  DEST_DIR=$2
+  PACKAGE_NAME=$3
+  VERSION=$4
+  ARCH=$5
+  if [ -d $DEST_DIR ]; then
+    echo $DEST_DIR" is already created. mkdir skipping"
+  else
+    mkdir $DEST_DIR
+    chmod -fR 755 $DEST_DIR
+    echo "mkdir "$DEST_DIR" success"
+  fi
+  if [ "$(ls -A $DEST_DIR)" ]; then
+    echo "Error: "$DEST_DIR" is not empty. Please, check it content and delete if it is unnecesary before starting"
+    exit 1
+  fi
+  if [ -d $SOURCE_DIR ]; then
+    if [ -d $SOURCE_DIR/src ]; then
+      if [ -d $SOURCE_DIR/music ]; then
+        if [ -d $SOURCE_DIR/src/build ]; then
+          rm -rf $SOURCE_DIR/src/build
+          echo "Cleaning "$SOURCE_DIR"/src/build after previous build"
+        fi
+        cd $SOURCE_DIR/src
+        mkdir $SOURCE_DIR/src/build
+        cd $SOURCE_DIR/src/build
+        echo "Compilation of "$PACKAGE_NAME" started"
+        cmake ..
+        make
+        echo "Compilation of "$PACKAGE_NAME" finished succesfully"
+      else
+        echo "Error: Your source tree in "$SOURCE_DIR" is damaged. Check your sources tarball consistency"
+        exit 1
+      fi
+    else
+      echo "Error: Your source tree in "$SOURCE_DIR" is damaged. Check your sources tarball consistency"
+      exit 1
+    fi
+  else
+    echo "Error: "$SOURCE_DIR" not found. Please, check parametres"
+    exit 1
+  fi
+  echo "mkdir debian package folder structure in "$DEST_DIR
+  mkdir $DEST_DIR/DEBIAN
+  mkdir $DEST_DIR/usr
+  mkdir $DEST_DIR/usr/bin
+  mkdir $DEST_DIR/usr/share
+  mkdir $DEST_DIR/usr/share/doom2d-rembo
+  chmod -fR 755 $DEST_DIR/
+  echo "Done"
+  echo "Copying binary and data files"
+  cp -fR $SOURCE_DIR/music $DEST_DIR/usr/share/doom2d-rembo/
+  cp -f $SOURCE_DIR/src/*.wad $DEST_DIR/usr/share/doom2d-rembo/
+  cp -f $SOURCE_DIR/src/*.cfg $DEST_DIR/usr/share/doom2d-rembo/
+  cp -f $SOURCE_DIR/src/build/doom2d $DEST_DIR/usr/bin
+  echo "Done"
+  touch $DEST_DIR/DEBIAN/control
+  echo "control file generating"
+  echo "Package: "$PACKAGE_NAME >> $DEST_DIR/DEBIAN/control
+  echo "Version: "$VERSION >> $DEST_DIR/DEBIAN/control
+  echo "Architecture: "$ARCH >> $DEST_DIR/DEBIAN/control
+  echo "Maintainer: Rembo <arembo@gmail.com>" >> $DEST_DIR/DEBIAN/control
+  echo "Installed-Size: "`du -ks $DEST_DIR/usr/ | grep -o \[0-9\]*` >> $DEST_DIR/DEBIAN/control
+  echo "Depends: libc6 (>= 2.3), libsdl-mixer1.2 (>= 1.2.6), libsdl1.2debian (>= 1.2.10-1)" >> $DEST_DIR/DEBIAN/control
+  echo "Section: games" >> $DEST_DIR/DEBIAN/control
+  echo "Priority: optional" >> $DEST_DIR/DEBIAN/control
+  echo "Homepage: http://code.google.com/p/doom2d-rembo/" >> $DEST_DIR/DEBIAN/control
+  echo "Description: Doom2D:Rembo is a Linux port of Doom2D game," >> $DEST_DIR/DEBIAN/control
+  echo " free DOS two-dimensional arcade created by" >> $DEST_DIR/DEBIAN/control
+  echo " Russian video game company \"Prikol Software\"" >> $DEST_DIR/DEBIAN/control
+  echo " in early 1996 being inspired by original DOOM game by id Software." >> $DEST_DIR/DEBIAN/control
+  echo "Done"
+  ARCHIVE_NAME=$PACKAGE_NAME"-"$VERSION"_"$ARCH.deb
+  fakeroot dpkg-deb --build $DEST_DIR $ARCHIVE_NAME
+  echo $ARCHIVE_NAME" was created succesfully at "$SOURCE_DIR"/src/build/"
+fi
