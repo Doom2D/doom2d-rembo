@@ -169,7 +169,7 @@ Command line parametres:
 
    -warp <numerical value>
 
-      Specify start card number.
+      Specify start map number.
 
    -vga
 
@@ -177,11 +177,11 @@ Command line parametres:
       pl2_* options with this option.   
       Screenshots will be saved to $HOME/.doom2d-rembo directory.
 
-   -sndvol <numerical value>
+   -sndvol <0-128>
 
       Specify sounds volume level from 0 to 128.
 
-   -musvol <numerical value>
+   -musvol <0-128>
 
       Specify music volume level from 0 to 128.
 
