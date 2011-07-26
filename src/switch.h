@@ -1,7 +1,6 @@
 /*
    Copyright (C) Prikol Software 1996-1997
    Copyright (C) Aleksey Volynskov 1996-1997
-   Copyright (C) <ARembo@gmail.com> 2011
 
    This file is part of the Doom2D:Rembo project.
 
