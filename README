@@ -1,17 +1,29 @@
 About
 =====
 
-Doom2D:Rembo is a Linux port of Doom2D game, free DOS two-dimensional arcade created by Russian video game company "Prikol Software" in early 1996 being inspired by original DOOM game by id Software.
+Doom2D:Rembo is a Linux port of Doom2D game,
+free DOS two-dimensional arcade created by Russian game company "Prikol Software"
+in early 1996 being inspired by original DOOM game by id Software.
 
 Authors
 =======
 
-Original Doom2D authors were Aleksey Volynskov, Vladimir Kalinin and Eugeniy Kovtunov. They called themselves as Prikol Software company. 
-Aleksey Volynskov worked under game engine, Vladimir Kalinin created unique sounds. Eugeniy Kovtunov helped them both with graphics. Most of game levels were designed by Vladimir Kalinin, other ones is Aleksey Volynskov's.
+Original Doom2D authors were Aleksey Volynskov, Vladimir Kalinin and Eugeniy Kovtunov.
+They called themselves as Prikol Software company.
+Aleksey Volynskov worked under game engine.
+Vladimir Kalinin created unique sounds.
+Eugeniy Kovtunov helped them both with graphics.
+Most of game levels were designed by Vladimir Kalinin, other ones is Aleksey Volynskov's.
 
-Over some time boys dropped Doom2D developing. Soon Aleksey Volynskov opened source code and shared it at Gaijin Entertainment site, some remakes were designed and gathered at Doom2D forum.
+Over some time boys dropped Doom2D developing.
+Soon Aleksey Volynskov opened source code and
+shared it at Gaijin Entertainment site.
+Some remakes were designed and gathered at Doom2D forum.
 
-In summer 2011 <ARembo@gmail.com> decided to port Doom2D to Linux and started work under Doom2D:Rembo project at code.google.com. Andriy Shinkarchuck <adriano32.gnu@gmail.com> helped him with documentation and some other things.
+In summer 2011 <ARembo@gmail.com> decided to port Doom2D to Linux and
+started work under Doom2D:Rembo project at code.google.com.
+Andriy Shinkarchuck <adriano32.gnu@gmail.com> helped him with documentation and
+some other things.
 
 Installation
 ============
@@ -21,12 +33,16 @@ For installation instructions see INSTALL file in source tree.
 Game modes
 ==========
 
-In Doom2D:Rembo like in original Doom2D you can select to start "One player" or "Two player" new game. When "Two player" selected, you can select "Cooperative" (play like a team) or "Deathmatch" (against each other) game.
+In Doom2D:Rembo like in original Doom2D you can select
+to start "One player" or "Two player" new game.
+When "Two player" selected, you can select "Cooperative" (play like a team) or
+"Deathmatch" (against each other) game.
 
 Configuration
 =============
 
-Doom2D:Rembo like original Doom2D can be configured both with config file and command line parametres.
+Doom2D:Rembo like original Doom2D can be configured both with config file and
+command line parametres.
 
 For default config file see /usr/share/doom2d-rembo/default.cfg.
 
@@ -36,7 +52,8 @@ Config options:
 
    screenshot=[on|off]
 
-      Allow to make screenshots by pressing F1 key. You should not use F1 for pl1_* and pl2_* options with this option.
+      Allow to make screenshots by pressing F1 key. You should not use F1 for pl1_* and
+      pl2_* options with this option.
       Screenshots will be saved to $HOME/.doom2d-rembo directory.
 
    sound_volume=<0-128>
@@ -53,11 +70,11 @@ Config options:
 
    sky=[on|off]
 
-      Disable background rendering.
+      Enable background rendering.
 
    gamma=<0-4>
 
-      Specify brightness.
+      Specify brightness level from 0 to 4.
 
    screen_width=<numerical value>
 
@@ -69,7 +86,7 @@ Config options:
 
    music_random=[on|off]
 
-      Enable/Disable random music selection.
+      Enable random music selection.
 
    music_time=<numerical value>
 
@@ -99,7 +116,7 @@ Config options:
    pl2_prev=<key>
    pl2_use=<key>
 
-      Specify first and second players keys respectively for left and right moving,
+      Specify first and second players' keys respectively for left and right moving,
       up and down looking, jumping, shooting, weapon change forward and back,
       switching controls.
 
@@ -119,7 +136,8 @@ Config options:
       numlock
       break menu power euro undo compose help
 
-   Double word keys (it means that following keys consists from two words you should write e.g.
+   Double word keys (it means that following keys consists of two words and
+   you should write e.g.
    `pl1_left=caps lock'
    without quotes in your custom config):
 
@@ -155,7 +173,8 @@ Command line parametres:
 
    -vga
 
-      Allow to make screenshots by pressing F1 key. You should not use F1 for pl1_* and pl2_* options with this option.   
+      Allow to make screenshots by pressing F1 key. You should not use F1 for pl1_* and
+      pl2_* options with this option.   
       Screenshots will be saved to $HOME/.doom2d-rembo directory.
 
    -sndvol <numerical value>
@@ -174,9 +193,9 @@ Command line parametres:
 
       Launch in window mode.
 
-   -gamma <numerical value>
+   -gamma <0-4>
 
-      Specify brightness.
+      Specify brightness level from 0 to 4.
 
    -width <numerical value>
 
@@ -192,4 +211,4 @@ Command line parametres:
 
    -mon
 
-      Allow monsters in two player mode "deathmatch".
+      Allow monsters in two player mode "Deathmatch".
