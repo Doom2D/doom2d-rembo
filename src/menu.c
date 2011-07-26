@@ -36,7 +36,8 @@
 #include "menu.h"
 #include "misc.h"
 
-#include "SDL.h"
+#include <SDL.h>
+#include <sys/stat.h>
 extern SDL_Surface *screen;
 
 #define QSND_NUM 14
@@ -418,8 +419,16 @@ extern byte shot_vga;
 
 static void shot(void) {
   static int num=1;
-  char fn[13];
+  char fn[100];//...
+#ifndef WIN32
+  char *e = getenv("HOME");
+  strncpy(fn, e, 60);
+  sprintf(&fn[strlen(fn)],"/.doom2d-rembo",num);
+  mkdir(fn, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  sprintf(&fn[strlen(fn)],"/shot%04d.bmp",num);
+#else
   sprintf(fn,"shot%04d.bmp",num);
+#endif
   SDL_SaveBMP(screen, fn);
   ++num;
 }
