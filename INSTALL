@@ -49,3 +49,25 @@ To proceed installation:
       /usr/local/bin/doom2d
 
       and enjoy game.
+
+Installation with package manager
+=================================
+
+Also deb package for binary installation are provided.
+There are both 32-bit and 64-bit packages.
+
+You can install them in such way:
+
+   dpkg -i doom2d-rembo_1.35.1_i386.deb
+
+   or
+
+   dpkg -i doom2d-rembo_1.35.1_amd64.deb
+
+Music and wad's will be installed at 
+/usr/share/doom2d-rembo directory and
+doom2d binary at /usr/bin
+
+To remove Doom2D:Rembo type
+
+   dpkg -r doom2d-rembo
