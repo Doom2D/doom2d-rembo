@@ -21,6 +21,8 @@
 */
 
 #include "keyb.h"
+#include "vga.h"
+#include "error.h"
 #include <SDL.h>
 
 // стандартная функция обработки клавиш
