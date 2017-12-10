@@ -28,7 +28,6 @@
 //#include <time.h>
 ///#include <dos.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <string.h>
 #include "error.h"
 #include "config.h"

@@ -23,7 +23,6 @@
 #include "glob.h"
 #include <stdio.h>
 //#include <conio.h>
-#include <malloc.h>
 //#include <dos.h>
 #include <string.h>
 #include <stdlib.h>
