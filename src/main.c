@@ -22,11 +22,7 @@
 
 #include "glob.h"
 #include <stdio.h>
-///#include <process.h>
 #include <stdarg.h>
-///#include <conio.h>
-//#include <time.h>
-///#include <dos.h>
 #include <stdlib.h>
 #include <string.h>
 #include "error.h"
@@ -39,7 +35,6 @@
 #include "view.h"
 #include "menu.h"
 #include "player.h"
-#include "misc.h"
 #include "my.h"
 
 #include <SDL.h>

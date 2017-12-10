@@ -20,12 +20,10 @@
 */
 
 #include "glob.h"
-//#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "vga.h"
-#include "error.h"
 #include "view.h"
 #include "fx.h"
 #include "misc.h"

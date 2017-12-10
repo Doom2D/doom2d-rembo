@@ -22,23 +22,15 @@
 
 #include "glob.h"
 #include <stdio.h>
-//#include <conio.h>
-//#include <dos.h>
 #include <string.h>
 #include <stdlib.h>
-//#include <sys\stat.h>
-#include "vga.h"
+#include <sys/stat.h>
 #include "error.h"
-#include "sound.h"
-//#include "snddrv.h"
-#include "memory.h"
 #include "view.h"
 #include "items.h"
 #include "switch.h"
 #include "files.h"
 #include "map.h"
-
-#include <sys/stat.h>
 
 char *S_getinfo(void);
 

@@ -22,7 +22,6 @@
 
 #include "glob.h"
 #include <string.h>
-#include "files.h"
 #include "view.h"
 #include "bmap.h"
 #include "switch.h"

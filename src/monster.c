@@ -21,12 +21,10 @@
 */
 
 #include "glob.h"
-//#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "vga.h"
 #include "files.h"
-#include "error.h"
 #include "view.h"
 #include "bmap.h"
 #include "dots.h"
