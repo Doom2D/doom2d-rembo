@@ -3,17 +3,19 @@ Basic Installation
 
 Currently to install Doom2D:Rembo from sources you need to have:
 
-   1. libSDL headers (SDL.h and SDL_mixer.h) at /usr/include/SDL
+   1. SDL and SDL_mixer (not SDL2!)
 
       In Debian GNU/Linux you can install them with this command:
 
       apt-get install libsdl1.2-dev libsdl-mixer1.2-dev
 
+      On macOS (using MacPorts):
+
+      sudo port install libsdl libsdl_mixer
+
    2. CMake to configure
 
-   3. GCC and make to build
-
-   4. libSDL.so and libSDL_mixer.so at /usr/lib to run
+   3. GCC or Clang to compile and make to build
 
 To proceed installation:
 
