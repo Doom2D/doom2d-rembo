@@ -94,7 +94,7 @@ static cfg_t cfg[]={
   {NULL,"pl2_prev", &pl2.kwl,KEY,0},
   {NULL,"pl2_use",  &pl2.kp,KEY,0},
   {"config",NULL,cfg_file,STRING,0},
-  {NULL,NULL,NONE,0}
+  {NULL,NULL,NULL,NONE,0}
 };
 
 
