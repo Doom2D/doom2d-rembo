@@ -40,6 +40,7 @@
 #include "menu.h"
 #include "player.h"
 #include "misc.h"
+#include "my.h"
 
 #include <SDL.h>
 

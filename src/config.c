@@ -35,6 +35,7 @@
 #include "memory.h"
 #include "view.h"
 #include "player.h"
+#include "my.h"
 
 #include <SDL_keyboard.h>
 
