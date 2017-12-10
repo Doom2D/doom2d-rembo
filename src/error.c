@@ -26,7 +26,6 @@
 //#include <conio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include "keyb.h"
 #include "sound.h"
 #include "vga.h"
