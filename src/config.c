@@ -24,15 +24,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <process.h>
-//#include <dos.h>
 #include "config.h"
 #include "vga.h"
 #include "error.h"
 #include "sound.h"
-#include "keyb.h"
 #include "files.h"
-#include "memory.h"
 #include "view.h"
 #include "player.h"
 #include "my.h"

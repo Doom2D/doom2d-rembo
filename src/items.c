@@ -21,12 +21,8 @@
 */
 
 #include "glob.h"
-//#include <stdio.h>
 #include <stdlib.h>
-#include "vga.h"
 #include "error.h"
-#include "sound.h"
-#include "files.h"
 #include "view.h"
 #include "items.h"
 #include "fx.h"
@@ -34,7 +30,6 @@
 #include "monster.h"
 #include "things.h"
 #include "misc.h"
-#include "memory.h"
 #include "map.h"
 
 extern map_block_t blk;

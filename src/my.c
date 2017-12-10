@@ -22,7 +22,6 @@
 
 #include <SDL.h>
 #include "glob.h"
-#include "keyb.h"
 #include "error.h"
 #include <stdio.h>
 
