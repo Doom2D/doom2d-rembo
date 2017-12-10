@@ -150,6 +150,8 @@ void MN_savegame(FILE* h) {
 
 static void setst(int,int);
 
+static int MN_hit(int n,int d,int o,int t);
+
 void MN_loadgame(FILE* h) {
   int n,c;
 
