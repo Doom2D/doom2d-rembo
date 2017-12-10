@@ -22,6 +22,7 @@
 
 #include "glob.h"
 #include "sound.h"
+#include "files.h"
 #include <SDL.h>
 #include <SDL_mixer.h>
 
