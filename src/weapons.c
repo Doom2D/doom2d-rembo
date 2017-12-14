@@ -22,10 +22,6 @@
 
 #include "glob.h"
 #include <stdlib.h>
-//#include <io.h>
-#include "vga.h"
-#include "error.h"
-#include "sound.h"
 #include "view.h"
 #include "bmap.h"
 #include "dots.h"

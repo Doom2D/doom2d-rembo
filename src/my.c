@@ -22,7 +22,6 @@
 
 #include <SDL.h>
 #include "glob.h"
-#include "keyb.h"
 #include "error.h"
 #include <stdio.h>
 
@@ -99,7 +98,7 @@ void myrandomize(void)
 int fexists(char * filename)
 {
     FILE *f;
-    if (f = fopen(filename, "r"))
+    if ((f = fopen(filename, "r")))
     {
         fclose(f);
         return 1;

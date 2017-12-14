@@ -27,7 +27,6 @@
 #include "files.h"
 #include "memory.h"
 #include "vga.h"
-#include "error.h"
 #include "keyb.h"
 #include "sound.h"
 #include "view.h"

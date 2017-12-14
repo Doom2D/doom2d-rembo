@@ -22,7 +22,7 @@
 
 #include "glob.h"
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "vga.h"
 #include "memory.h"
 #include "files.h"

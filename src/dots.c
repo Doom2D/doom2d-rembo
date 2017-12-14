@@ -21,14 +21,8 @@
 */
 
 #include "glob.h"
-//#include <stdio.h>
 #include <stdlib.h>
-#include "files.h"
-#include "memory.h"
 #include "vga.h"
-#include "error.h"
-#include "keyb.h"
-#include "sound.h"
 #include "view.h"
 #include "dots.h"
 #include "misc.h"

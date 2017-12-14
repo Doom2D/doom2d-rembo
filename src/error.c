@@ -23,20 +23,14 @@
 #include "glob.h"
 #include <stdio.h>
 #include <string.h>
-//#include <conio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include "keyb.h"
 #include "sound.h"
 #include "vga.h"
 #include "memory.h"
-#include "files.h"
 #include "error.h"
 #include "config.h"
-
-#include <SDL.h>
-
 
 void close_all(void) {
   S_done();
