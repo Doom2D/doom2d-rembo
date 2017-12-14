@@ -55,6 +55,8 @@ void S_startmusic(int);
 
 void S_stopmusic(void);
 
+void S_updatemusic(void);
+
 // громкость звука и музыки (0-128)
 extern short snd_vol,mus_vol;
 

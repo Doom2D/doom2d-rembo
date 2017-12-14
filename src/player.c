@@ -23,10 +23,7 @@
 #include "glob.h"
 #include <stdlib.h>
 #include <string.h>
-#include "files.h"
-#include "memory.h"
 #include "vga.h"
-#include "error.h"
 #include "keyb.h"
 #include "view.h"
 #include "dots.h"

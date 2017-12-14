@@ -24,17 +24,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <process.h>
-//#include <dos.h>
 #include "config.h"
 #include "vga.h"
 #include "error.h"
 #include "sound.h"
-#include "keyb.h"
 #include "files.h"
-#include "memory.h"
 #include "view.h"
 #include "player.h"
+#include "my.h"
 
 #include <SDL_keyboard.h>
 
@@ -93,7 +90,7 @@ static cfg_t cfg[]={
   {NULL,"pl2_prev", &pl2.kwl,KEY,0},
   {NULL,"pl2_use",  &pl2.kp,KEY,0},
   {"config",NULL,cfg_file,STRING,0},
-  {NULL,NULL,NONE,0}
+  {NULL,NULL,NULL,NONE,0}
 };
 
 

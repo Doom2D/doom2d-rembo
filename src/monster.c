@@ -21,12 +21,10 @@
 */
 
 #include "glob.h"
-//#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "vga.h"
 #include "files.h"
-#include "error.h"
 #include "view.h"
 #include "bmap.h"
 #include "dots.h"
@@ -149,6 +147,8 @@ void MN_savegame(FILE* h) {
 }
 
 static void setst(int,int);
+
+static int MN_hit(int n,int d,int o,int t);
 
 void MN_loadgame(FILE* h) {
   int n,c;
