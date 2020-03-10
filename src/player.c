@@ -76,16 +76,112 @@ struct {
 } _keys;
 #pragma pack()
 
-void PL_savegame(FILE* h) {
-  myfwrite(&pl1,1,sizeof(pl1)-sizeof(_keys),h);//myfwrite(&pl1,1,sizeof(pl1),h);
-  if(_2pl) myfwrite(&pl2,1,sizeof(pl2)-sizeof(_keys),h);//myfwrite(&pl2,1,sizeof(pl2),h);
-  myfwrite(&PL_JUMP,1,4,h);myfwrite(&PL_RUN,1,4,h);myfwrite(&p_immortal,1,1,h);
+void PL_save_player (player_t *p, FILE *h) {
+  myfwrite32(p->o.x, h);
+  myfwrite32(p->o.y, h);
+  myfwrite32(p->o.xv, h);
+  myfwrite32(p->o.yv, h);
+  myfwrite32(p->o.vx, h);
+  myfwrite32(p->o.vy, h);
+  myfwrite32(p->o.r, h);
+  myfwrite32(p->o.h, h);
+  myfwrite32(p->looky, h);
+  myfwrite32(p->st, h);
+  myfwrite32(p->s, h);
+  myfwrite32(p->life, h);
+  myfwrite32(p->armor, h);
+  myfwrite32(p->hit, h);
+  myfwrite32(p->hito, h);
+  myfwrite32(p->pain, h);
+  myfwrite32(p->air, h);
+  myfwrite32(p->invl, h);
+  myfwrite32(p->suit, h);
+  myfwrite8(p->d, h);
+  myfwrite32(p->frag, h);
+  myfwrite32(p->ammo, h);
+  myfwrite32(p->shel, h);
+  myfwrite32(p->rock, h);
+  myfwrite32(p->cell, h);
+  myfwrite32(p->fuel, h);
+  myfwrite32(p->kills, h);
+  myfwrite32(p->secrets, h);
+  myfwrite8(p->fire, h);
+  myfwrite8(p->cwpn, h);
+  myfwrite8(p->csnd, h);
+  myfwrite8(p->amul, h);
+  myfwrite16(p->wpns, h);
+  myfwrite8(p->wpn, h);
+  myfwrite8(p->f, h);
+  myfwrite8(p->drawst, h);
+  myfwrite8(p->color, h);
+  myfwrite32(p->id, h);
+  myfwrite8(p->keys, h);
+  myfwrite8(p->lives, h);
+  // k* not saved
 }
 
-void PL_loadgame(FILE* h) {
-  myfread(&pl1,1,sizeof(pl1)-sizeof(_keys),h);//myfread(&pl1,1,sizeof(pl1),h);
-  if(_2pl) myfread(&pl2,1,sizeof(pl2)-sizeof(_keys),h);//myfread(&pl2,1,sizeof(pl2),h);
-  myfread(&PL_JUMP,1,4,h);myfread(&PL_RUN,1,4,h);myfread(&p_immortal,1,1,h);
+void PL_savegame (FILE *h) {
+  PL_save_player(&pl1, h);
+  if (_2pl) {
+    PL_save_player(&pl2, h);
+  }
+  myfwrite32(PL_JUMP, h);
+  myfwrite32(PL_RUN, h);
+  myfwrite8(p_immortal, h);
+}
+
+void PL_load_player (player_t *p, FILE *h) {
+  myfread32(&p->o.x, h);
+  myfread32(&p->o.y, h);
+  myfread32(&p->o.xv, h);
+  myfread32(&p->o.yv, h);
+  myfread32(&p->o.vx, h);
+  myfread32(&p->o.vy, h);
+  myfread32(&p->o.r, h);
+  myfread32(&p->o.h, h);
+  myfread32(&p->looky, h);
+  myfread32(&p->st, h);
+  myfread32(&p->s, h);
+  myfread32(&p->life, h);
+  myfread32(&p->armor, h);
+  myfread32(&p->hit, h);
+  myfread32(&p->hito, h);
+  myfread32(&p->pain, h);
+  myfread32(&p->air, h);
+  myfread32(&p->invl, h);
+  myfread32(&p->suit, h);
+  myfread8(&p->d, h);
+  myfread32(&p->frag, h);
+  myfread32(&p->ammo, h);
+  myfread32(&p->shel, h);
+  myfread32(&p->rock, h);
+  myfread32(&p->cell, h);
+  myfread32(&p->fuel, h);
+  myfread32(&p->kills, h);
+  myfread32(&p->secrets, h);
+  myfread8(&p->fire, h);
+  myfread8(&p->cwpn, h);
+  myfread8(&p->csnd, h);
+  myfread8(&p->amul, h);
+  myfread16(&p->wpns, h);
+  myfread8(&p->wpn, h);
+  myfread8(&p->f, h);
+  myfread8(&p->drawst, h);
+  myfread8(&p->color, h);
+  myfread32(&p->id, h);
+  myfread8(&p->keys, h);
+  myfread8(&p->lives, h);
+  // k* not saved
+}
+
+void PL_loadgame (FILE *h) {
+  PL_load_player(&pl1, h);
+  if (_2pl) {
+    PL_load_player(&pl2, h);
+  }
+  myfread32(&PL_JUMP, h);
+  myfread32(&PL_RUN, h);
+  myfread8(&p_immortal, h);
 }
 
 static int nonz(int a) {return (a)?a:1;}

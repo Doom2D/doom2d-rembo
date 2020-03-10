@@ -51,17 +51,46 @@ static weapon_t wp[MAXWPN];
 
 static void throw(int,int,int,int,int,int,int,int);
 
-void WP_savegame(FILE* h) {
-  int n;
-
-  for(n=MAXWPN;--n;) if(wp[n].t) break;
-  ++n;myfwrite(&n,1,4,h);myfwrite(wp,1,n*sizeof(wp[0]),h);
+void WP_savegame (FILE *h) {
+  int i, n;
+  for (n = MAXWPN - 1; n >= 0 && wp[n].t == 0; n--) {
+    // empty
+  }
+  n += 1;
+  myfwrite32(n, h);
+  for (i = 0; i < n; i++) {
+    myfwrite32(wp[i].o.x, h);
+    myfwrite32(wp[i].o.y, h);
+    myfwrite32(wp[i].o.xv, h);
+    myfwrite32(wp[i].o.yv, h);
+    myfwrite32(wp[i].o.vx, h);
+    myfwrite32(wp[i].o.vy, h);
+    myfwrite32(wp[i].o.r, h);
+    myfwrite32(wp[i].o.h, h);
+    myfwrite8(wp[i].t, h);
+    myfwrite8(wp[i].s, h);
+    myfwrite32(wp[i].own, h);
+    myfwrite16(wp[i].target, h);
+  }
 }
 
-void WP_loadgame(FILE* h) {
-  int n;
-
-  myfread(&n,1,4,h);myfread(wp,1,n*sizeof(wp[0]),h);
+void WP_loadgame (FILE *h) {
+  int i, n;
+  myfread32(&n, h);
+  for (i = 0; i < n; i++) {
+    myfread32(&wp[i].o.x, h);
+    myfread32(&wp[i].o.y, h);
+    myfread32(&wp[i].o.xv, h);
+    myfread32(&wp[i].o.yv, h);
+    myfread32(&wp[i].o.vx, h);
+    myfread32(&wp[i].o.vy, h);
+    myfread32(&wp[i].o.r, h);
+    myfread32(&wp[i].o.h, h);
+    myfread8(&wp[i].t, h);
+    myfread8(&wp[i].s, h);
+    myfread32(&wp[i].own, h);
+    myfread16(&wp[i].target, h);
+  }
 }
 
 void WP_alloc(void) {

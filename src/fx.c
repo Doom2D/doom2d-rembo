@@ -104,19 +104,37 @@ static void init_fx1sin(void) {
   }
 }
 
-void FX_savegame(FILE* h) {
-  int i,n;
-
-  for(i=n=0;i<MAXFX;++i) if(fx[i].t) ++n;
-  myfwrite(&n,1,4,h);
-  for(i=0;i<MAXFX;++i) if(fx[i].t) myfwrite(&fx[i],1,sizeof(fx_t),h);
+void FX_savegame (FILE *h) {
+  int i, n;
+  for (i = n = 0; i < MAXFX; ++i) {
+    if (fx[i].t) {
+      ++n;
+    }
+  }
+  myfwrite32(n, h);
+  for (i = 0; i < MAXFX; ++i) {
+    if (fx[i].t) {
+      myfwrite32(fx[i].x, h);
+      myfwrite32(fx[i].y, h);
+      myfwrite32(fx[i].xv, h);
+      myfwrite32(fx[i].yv, h);
+      myfwrite8(fx[i].t, h);
+      myfwrite8(fx[i].s, h);
+    }
+  }
 }
 
-void FX_loadgame(FILE* h) {
-  int n;
-
-  myfread(&n,1,4,h);
-  myfread(fx,1,n*sizeof(fx_t),h);
+void FX_loadgame (FILE *h) {
+  int i, n;
+  myfread32(&n, h);
+  for (i = 0; i < n; i++) {
+    myfread32(&fx[i].x, h);
+    myfread32(&fx[i].y, h);
+    myfread32(&fx[i].xv, h);
+    myfread32(&fx[i].yv, h);
+    myfread8(&fx[i].t, h);
+    myfread8(&fx[i].s, h);
+  }
 }
 
 void FX_alloc(void) {

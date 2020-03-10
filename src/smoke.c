@@ -53,19 +53,39 @@ byte flametab[16]={
 0xBC,0xBA,0xB8,0xB6,0xB4,0xB2,0xB0,0xD5,0xD6,0xD7,0xA1,0xA0,0xE3,0xE2,0xE1,0xE0
 };
 
-void SMK_savegame(FILE* h) {
-  int i,n;
-
-  for(i=n=0;i<MAXSMOK;++i) if(sm[i].t) ++n;
-  myfwrite(&n,1,4,h);
-  for(i=0;i<MAXSMOK;++i) if(sm[i].t) myfwrite(&sm[i],1,sizeof(sm[0]),h);
+void SMK_savegame (FILE *h) {
+  int i, n;
+  for (i = n = 0; i < MAXSMOK; ++i) {
+    if (sm[i].t) {
+      ++n;
+    }
+  }
+  myfwrite32(n, h);
+  for (i = 0; i < MAXSMOK; ++i) {
+    if (sm[i].t) {
+      myfwrite32(sm[i].x, h);
+      myfwrite32(sm[i].y, h);
+      myfwrite32(sm[i].xv, h);
+      myfwrite32(sm[i].xv, h);
+      myfwrite8(sm[i].t, h);
+      myfwrite8(sm[i].s, h);
+      myfwrite16(sm[i].o, h);
+    }
+  }
 }
 
-void SMK_loadgame(FILE* h) {
-  int n;
-
-  myfread(&n,1,4,h);
-  myfread(sm,1,n*sizeof(sm[0]),h);
+void SMK_loadgame (FILE *h) {
+  int i, n;
+  myfread32(&n, h);
+  for (i = 0; i < n; ++i) {
+    myfread32(&sm[i].x, h);
+    myfread32(&sm[i].y, h);
+    myfread32(&sm[i].xv, h);
+    myfread32(&sm[i].xv, h);
+    myfread8(&sm[i].t, h);
+    myfread8(&sm[i].s, h);
+    myfread16(&sm[i].o, h);
+  }
 }
 
 void SMK_init(void) {

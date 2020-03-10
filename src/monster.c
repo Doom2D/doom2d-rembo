@@ -137,27 +137,82 @@ static mnsz_t mnsz[MN_TN+1]={
     8, 26,  400,   70, 8,10,   30,   50		// man
 };
 
-void MN_savegame(FILE* h) {
-  int n;
-
-  for(n=MAXMN;--n;) if(mn[n].t) break;
-  ++n;myfwrite(&n,1,4,h);
-  myfwrite(mn,1,n*sizeof(mn[0]),h);
-  myfwrite(&mnum,1,4,h);myfwrite(&gsndt,1,4,h);
+void MN_savegame (FILE *h) {
+  int i, n;
+  for (n = MAXMN - 1; n >= 0 && mn[n].t == 0; n--) {
+    // empty
+  }
+  n += 1;
+  myfwrite32(n, h);
+  for (i = 0; i < n; i++) {
+    myfwrite32(mn[i].o.x, h);
+    myfwrite32(mn[i].o.y, h);
+    myfwrite32(mn[i].o.xv, h);
+    myfwrite32(mn[i].o.yv, h);
+    myfwrite32(mn[i].o.vx, h);
+    myfwrite32(mn[i].o.vy, h);
+    myfwrite32(mn[i].o.r, h);
+    myfwrite32(mn[i].o.h, h);
+    myfwrite8(mn[i].t, h);
+    myfwrite8(mn[i].d, h);
+    myfwrite8(mn[i].st, h);
+    myfwrite8(mn[i].ftime, h);
+    myfwrite32(mn[i].fobj, h);
+    myfwrite32(mn[i].s, h);
+    myfwrite32(mn[i].ap, h); // useless, changed after load
+    myfwrite32(mn[i].aim, h);
+    myfwrite32(mn[i].life, h);
+    myfwrite32(mn[i].pain, h);
+    myfwrite32(mn[i].ac, h);
+    myfwrite32(mn[i].tx, h);
+    myfwrite32(mn[i].ty, h);
+    myfwrite32(mn[i].ammo, h);
+    myfwrite16(mn[i].atm, h);
+  }
+  myfwrite32(mnum, h);
+  myfwrite32(gsndt, h);
 }
 
 static void setst(int,int);
 
 static int MN_hit(int n,int d,int o,int t);
 
-void MN_loadgame(FILE* h) {
-  int n,c;
-
-  myfread(&n,1,4,h);
-  myfread(mn,1,n*sizeof(mn[0]),h);
-  myfread(&mnum,1,4,h);myfread(&gsndt,1,4,h);
-  for(n=0;n<MAXMN;++n) if(mn[n].t) {
-    c=mn[n].ac;setst(n,mn[n].st);mn[n].ac=c;
+void MN_loadgame (FILE *h) {
+  int i, n, c;
+  myfread32(&n, h);
+  for (i = 0; i < n; i++) {
+    myfread32(&mn[i].o.x, h);
+    myfread32(&mn[i].o.y, h);
+    myfread32(&mn[i].o.xv, h);
+    myfread32(&mn[i].o.yv, h);
+    myfread32(&mn[i].o.vx, h);
+    myfread32(&mn[i].o.vy, h);
+    myfread32(&mn[i].o.r, h);
+    myfread32(&mn[i].o.h, h);
+    myfread8(&mn[i].t, h);
+    myfread8(&mn[i].d, h);
+    myfread8(&mn[i].st, h);
+    myfread8(&mn[i].ftime, h);
+    myfread32(&mn[i].fobj, h);
+    myfread32(&mn[i].s, h);
+    myfread32(&mn[i].ap, h); // useless, changed after loading
+    myfread32(&mn[i].aim, h);
+    myfread32(&mn[i].life, h);
+    myfread32(&mn[i].pain, h);
+    myfread32(&mn[i].ac, h);
+    myfread32(&mn[i].tx, h);
+    myfread32(&mn[i].ty, h);
+    myfread32(&mn[i].ammo, h);
+    myfread16(&mn[i].atm, h);
+  }
+  myfread32(&mnum, h);
+  myfread32(&gsndt, h);
+  for (n = 0; n < MAXMN; ++n) {
+    if (mn[n].t) {
+      c = mn[n].ac;
+      setst(n, mn[n].st);
+      mn[n].ac = c;
+    }
   }
 }
 

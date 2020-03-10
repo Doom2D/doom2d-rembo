@@ -22,6 +22,8 @@
 
 // Miscellaneous functions
 
+#include <stdint.h>
+
 #define MAXDIST 2000000L
 
 enum{
@@ -83,5 +85,5 @@ int Z_getacid(int x,int y,int r,int h);
 
 void Z_clrst();
 
-unsigned short int short2host (unsigned short int x);
-unsigned int int2host (unsigned int x);
+uint16_t short2host (uint16_t x);
+uint32_t int2host (uint32_t x);

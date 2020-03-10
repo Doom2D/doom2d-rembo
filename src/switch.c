@@ -49,36 +49,69 @@ static int swsnd;
 
 int sw_secrets;
 
-void SW_savegame(FILE* h) {
-  int n;
-
-  for(n=MAXSW;--n;) if(sw[n].t) break;
-  ++n;myfwrite(&n,1,4,h);myfwrite(sw,1,n*sizeof(sw[0]),h);
-  myfwrite(&sw_secrets,1,4,h);
+void SW_savegame (FILE *h) {
+  int i, n;
+  for (n = MAXSW - 1; n >= 0 && sw[n].t == 0; n--) {
+    // empty
+  }
+  n += 1;
+  myfwrite32(n, h);
+  for (i = 0; i < n; i++) {
+    myfwrite8(sw[i].x, h);
+    myfwrite8(sw[i].y, h);
+    myfwrite8(sw[i].t, h);
+    myfwrite8(sw[i].tm, h);
+    myfwrite8(sw[i].a, h);
+    myfwrite8(sw[i].b, h);
+    myfwrite8(sw[i].c, h);
+    myfwrite8(sw[i].d, h);
+    myfwrite8(sw[i].f, h);
+  }
+  myfwrite32(sw_secrets, h);
 }
 
-void SW_loadgame(FILE* h) {
-  int n;
-
-  myfread(&n,1,4,h);myfread(sw,1,n*sizeof(sw[0]),h);
-  myfread(&sw_secrets,1,4,h);
+void SW_loadgame (FILE *h) {
+  int i, n;
+  myfread32(&n, h);
+  for (i = 0; i < n; i++) {
+    myfread8(&sw[i].x, h);
+    myfread8(&sw[i].y, h);
+    myfread8(&sw[i].t, h);
+    myfread8(&sw[i].tm, h);
+    myfread8(&sw[i].a, h);
+    myfread8(&sw[i].b, h);
+    myfread8(&sw[i].c, h);
+    myfread8(&sw[i].d, h);
+    myfread8(&sw[i].f, h);
+  }
+  myfread32(&sw_secrets, h);
 }
 
-int SW_load(FILE* h) {
+int SW_load (FILE *h) {
   int i;
-
   switch(blk.t) {
 	case MB_SWITCH2:
-	  sw_secrets=0;
-	  for(i=0;i<MAXSW && blk.sz>0;++i,blk.sz-=sizeof(sw_t)) {
-		myfread(sw+i,1,sizeof(sw_t),h);
-    sw[i].c = short2host(sw[i].c);
-		sw[i].tm=0;sw[i].d=0;
-		sw[i].f|=0x80;
-		if(sw[i].t==SW_SECRET) ++sw_secrets;
+	  sw_secrets = 0;
+	  for (i = 0; i < MAXSW && blk.sz > 0; ++i, blk.sz -= 9) {
+      myfread8(&sw[i].x, h);
+      myfread8(&sw[i].y, h);
+      myfread8(&sw[i].t, h);
+      myfread8(&sw[i].tm, h); // unused
+      myfread8(&sw[i].a, h);
+      myfread8(&sw[i].b, h);
+      myfread8(&sw[i].c, h);
+      myfread8(&sw[i].d, h); // unused
+      myfread8(&sw[i].f, h);
+      sw[i].tm = 0;
+      sw[i].d = 0;
+      sw[i].f |= 0x80;
+      if (sw[i].t == SW_SECRET) {
+        ++sw_secrets;
+      }
 	  }
 	  return 1;
-  }return 0;
+  }
+  return 0;
 }
 
 void SW_alloc(void) {

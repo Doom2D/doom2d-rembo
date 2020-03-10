@@ -24,6 +24,8 @@
 #include "glob.h"
 #include "error.h"
 #include <stdio.h>
+#include <stdint.h>
+#include <assert.h>
 
 void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext)
 {
@@ -78,18 +80,46 @@ void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext)
      }
 }
 
-size_t myfreadc(void *ptr, size_t size, size_t n, FILE *f) {
+size_t myfreadc (void *ptr, size_t size, size_t n, FILE *f) {
   return fread(ptr, size, n, f);
 }
 
-void myfread(void *ptr, size_t size, size_t n, FILE *f) {
+void myfread (void *ptr, size_t size, size_t n, FILE *f) {
   if (myfreadc(ptr, size, n, f) != n) {
     ERR_fatal("File reading error\n");
   }
 }
 
-void myfwrite(void *ptr, size_t n, size_t size, FILE *f) {
-    size_t s = fwrite(ptr,n,size,f);
+void myfread8 (uint8_t *x, FILE *f) {
+  myfread(x, 1, 1, f);
+}
+
+void myfread16 (uint16_t *x, FILE *f) {
+  myfread(x, 2, 1, f);
+  *x = short2host(*x);
+}
+
+void myfread32 (uint32_t *x, FILE *f) {
+  myfread(x, 4, 1, f);
+  *x = int2host(*x);
+}
+
+void myfwrite (void *ptr, size_t size, size_t n, FILE *f) {
+  assert(fwrite(ptr, size, n, f) == n);
+}
+
+void myfwrite8 (uint8_t x, FILE *f) {
+  myfwrite(&x, 1, 1, f);
+}
+
+void myfwrite16 (uint16_t x, FILE *f) {
+  x = short2host(x);
+  myfwrite(&x, 2, 1, f);
+}
+
+void myfwrite32 (uint32_t x, FILE *f) {
+  x = int2host(x);
+  myfwrite(&x, 4, 1, f);
 }
 
 void myrandomize(void)
