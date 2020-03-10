@@ -112,29 +112,57 @@ static void set_trans(int st) {
 }
 
 void G_savegame(FILE* h) {
-  myfwrite(&_2pl,1,1,h);myfwrite(&g_dm,1,1,h);myfwrite(&g_exit,1,1,h);myfwrite(&g_map,1,1,h);
-  myfwrite(&g_time,1,4,h);myfwrite(&dm_pl1p,1,4,h);myfwrite(&dm_pl2p,1,4,h);
-  myfwrite(&dm_pnum,1,4,h);myfwrite(dm_pos,1,dm_pnum*sizeof(pos_t),h);
-  myfwrite(&cheat,1,1,h);
-  myfwrite(g_music,1,8,h);
+  myfwrite8(_2pl, h);
+  myfwrite8(g_dm, h);
+  myfwrite8(g_exit, h);
+  myfwrite8(g_map, h);
+  myfwrite32(g_time, h);
+  myfwrite32(dm_pl1p, h);
+  myfwrite32(dm_pl2p, h);
+  myfwrite32(dm_pnum, h);
+  int i = 0;
+  while (i < dm_pnum) {
+    myfwrite32(dm_pos[i].x, h);
+    myfwrite32(dm_pos[i].y, h);
+    myfwrite8(dm_pos[i].d, h);
+    i += 1;
+  }
+  myfwrite8(cheat, h);
+  myfwrite(g_music, 8, 1, h);
 }
 
 void G_loadgame(FILE* h) {
-  myfread(&_2pl,1,1,h);myfread(&g_dm,1,1,h);myfread(&g_exit,1,1,h);myfread(&g_map,1,1,h);
-  myfread(&g_time,1,4,h);myfread(&dm_pl1p,1,4,h);myfread(&dm_pl2p,1,4,h);
-  myfread(&dm_pnum,1,4,h);myfread(dm_pos,1,dm_pnum*sizeof(pos_t),h);
-  myfread(&cheat,1,1,h);
-  myfread(g_music,1,8,h);F_loadmus(g_music);
+  myfread8(&_2pl, h);
+  myfread8(&g_dm, h);
+  myfread8(&g_exit, h);
+  myfread8(&g_map, h);
+  myfread32(&g_time, h);
+  myfread32(&dm_pl1p, h);
+  myfread32(&dm_pl2p, h);
+  myfread32(&dm_pnum, h);
+  int i = 0;
+  while (i < dm_pnum) {
+    myfread32(&dm_pos[i].x, h);
+    myfread32(&dm_pos[i].y, h);
+    myfread8(&dm_pos[i].d, h);
+    i += 1;
+  }
+  myfread8(&cheat, h);
+  myfread(g_music, 8, 1, h);
+  F_loadmus(g_music);
 }
 
-int G_load(FILE* h) {
-  switch(blk.t) {
+int G_load (FILE *h) {
+  switch (blk.t) {
 	case MB_MUSIC:
-	  myfread(g_music,1,8,h);
-	  if (music_random) F_randmus(g_music);
-          F_loadmus(g_music);
+	  myfread(g_music, 8, 1, h);
+	  if (music_random) {
+      F_randmus(g_music);
+    }
+    F_loadmus(g_music);
 	  return 1;
-  }return 0;
+  }
+  return 0;
 }
 
 void load_game(int n) {

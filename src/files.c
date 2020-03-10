@@ -103,60 +103,68 @@ char *getsavfpname(int n, int ro)
   return p;
 }
 
-void F_getsavnames(void) {
-
-  int i; FILE *h;
+void F_getsavnames (void) {
+  int i;
+  FILE *h;
   short ver;
   char *p;
-
-  for(i=0;i<7;++i) {
-    p = getsavfpname(i,1);
-    memset(savname[i],0,24);savok[i]=0;
-    if((h=fopen(p,"rb"))==NULL) continue; //if((h=open(n,O_RDONLY|O_BINARY))==-1) continue;
-    myfread(savname[i],1,24,h);ver=-1;myfread(&ver,1,2,h);
-    fclose(h);savname[i][23]=0;savok[i]=(ver==3)?1:0;//savok[i]=(ver==2)?1:0;
+  for (i = 0; i < 7; ++i) {
+    p = getsavfpname(i, 1);
+    memset(savname[i], 0, 24);
+    savok[i] = 0;
+    h = fopen(p, "rb");
+    if (h != NULL) {
+      ver = -1;
+      myfread(savname[i], 24, 1, h);
+      myfread16(&ver, h);
+      savname[i][23] = 0;
+      savok[i] = (ver == 3) ? 1 : 0;
+      fclose(h);
+    }
   }
 }
 
-void F_savegame(int n,char *s) {
-
-  FILE* h;
-  char *p;
-  p=getsavfpname(n,0);
-  if((h=fopen(p,"wb"))==NULL) return;
-  myfwrite(s,1,24,h);myfwrite("\3\0",1,2,h);//myfwrite("\2\0",1,2,h);
-  G_savegame(h);
-  W_savegame(h);
-  DOT_savegame(h);
-  SMK_savegame(h);
-  FX_savegame(h);
-  IT_savegame(h);
-  MN_savegame(h);
-  PL_savegame(h);
-  SW_savegame(h);
-  WP_savegame(h);
-  fclose(h);
+void F_savegame (int n, char *s) {
+  char *p = getsavfpname(n, 0);
+  FILE *h = fopen(p, "wb");
+  if (h != NULL) {
+    myfwrite(s, 24, 1, h); // slot name
+    myfwrite16(3, h); // version
+    G_savegame(h);
+    W_savegame(h);
+    DOT_savegame(h);
+    SMK_savegame(h);
+    FX_savegame(h);
+    IT_savegame(h);
+    MN_savegame(h);
+    PL_savegame(h);
+    SW_savegame(h);
+    WP_savegame(h);
+    fclose(h);
+  }
 }
 
-void F_loadgame(int n) {
-  FILE* h;
+void F_loadgame (int n) {
   short ver;
-  char *p;
-  p=getsavfpname(n,1);
-  
-  if((h=fopen(p,"rb"))==NULL) return;//if((h=open(fn,O_BINARY|O_RDONLY))==-1) return;
-  fseek(h,24,SEEK_SET);myfread(&ver,1,2,h);if(ver!=3) return;//if(ver!=2) return;
-  G_loadgame(h);
-  W_loadgame(h);
-  DOT_loadgame(h);
-  SMK_loadgame(h);
-  FX_loadgame(h);
-  IT_loadgame(h);
-  MN_loadgame(h);
-  PL_loadgame(h);
-  SW_loadgame(h);
-  WP_loadgame(h);
-  fclose(h);
+  char *p = getsavfpname(n, 1);
+  FILE *h = fopen(p, "rb");
+  if (h != NULL) {
+    fseek(h, 24, SEEK_SET); // skip name
+    myfread16(&ver, h); // version
+    if (ver == 3) {
+      G_loadgame(h);
+      W_loadgame(h);
+      DOT_loadgame(h);
+      SMK_loadgame(h);
+      FX_loadgame(h);
+      IT_loadgame(h);
+      MN_loadgame(h);
+      PL_loadgame(h);
+      SW_loadgame(h);
+      WP_loadgame(h);
+    }
+    fclose(h);
+  }
 }
 
 void F_addwad(char *fn) {
@@ -445,36 +453,41 @@ void F_readstrz(FILE* h,char *s,int m) {
 map_block_t blk;
 
 void F_loadmap(char n[8]) {
-
-  int r;
+  int r, o;
   FILE *h;
   map_header_t hdr;
-  int o;
-
   W_init();
-  r=F_getresid(n);
-  fseek(h=wadh[wad[r].f],wad[r].o,SEEK_SET);
-  myfread(&hdr,1,sizeof(hdr),h);
-  hdr.ver = short2host(hdr.ver);
-  if(memcmp(hdr.id,"Doom2D\x1A",8)!=0)
-	ERR_fatal("%.8s не является уровнем",n);
-  for(;;) {
-	myfread(&blk,1,sizeof(blk),h);
-  blk.t = short2host(blk.t);
-  blk.st = short2host(blk.st);
-  blk.sz = int2host(blk.sz);
-	if(blk.t==MB_END) break;
-	if(blk.t==MB_COMMENT)
-	  {fseek(h,blk.sz,SEEK_CUR);continue;}
-	o=ftell(h)+blk.sz;
-	if(!G_load(h))
-	if(!W_load(h))
-	if(!IT_load(h))
-	if(!SW_load(h))
-	  ERR_fatal("Неизвестный блок %d(%d) в уровне %.8s",blk.t,blk.st,n);
-	fseek(h,o,SEEK_SET);
+  r = F_getresid(n);
+  h = wadh[wad[r].f];
+  fseek(h, wad[r].o, SEEK_SET);
+  myfread(hdr.id, 8, 1, h);
+  myfread16(&hdr.ver, h);
+  if (memcmp(hdr.id, "Doom2D\x1A", 8) != 0) {
+    ERR_fatal("%.8s не является уровнем", n);
   }
-
+  for(;;) {
+    myfread16(&blk.t, h);
+    myfread16(&blk.st, h);
+    myfread32(&blk.sz, h);
+    if(blk.t == MB_END) {
+      break;
+    }
+    if(blk.t == MB_COMMENT) {
+      fseek(h, blk.sz, SEEK_CUR);
+      continue;
+    }
+    o = ftell(h) + blk.sz;
+    if(!G_load(h)) {
+      if(!W_load(h)) {
+        if(!IT_load(h)) {
+          if(!SW_load(h)) {
+            ERR_fatal("Неизвестный блок %d(%d) в уровне %.8s", blk.t, blk.st, n);
+          }
+        }
+      }
+    }
+    fseek(h, o, SEEK_SET);
+  }
 }
 
 /*void F_freemus(void) {

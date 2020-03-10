@@ -95,43 +95,59 @@ static short getani(char *n) {
 void W_savegame(FILE* h) {
   char s[8];
   int i;
-
-  myfwrite(&sky_type,1,4,h);
-  for(i=1;i<256;++i) {
-    getname(i,s);myfwrite(s,1,8,h);
+  myfwrite32(sky_type, h);
+  for(i = 1; i < 256; ++i) {
+    getname(i, s);
+    myfwrite(s, 8, 1, h);
   }
-  myfwrite(walf,1,sizeof(walf),h);
-  myfwrite(walswp,1,sizeof(walswp),h);
-  myfwrite(fldb,1,FLDW*FLDH,h);
-  myfwrite(fld,1,FLDW*FLDH,h);
-  myfwrite(fldf,1,FLDW*FLDH,h);
+  for (i = 0; i < 256; i++) {
+    myfwrite32(walf[i], h);
+  }
+  for (i = 0; i < 256; i++) {
+    myfwrite8(walswp[i], h);
+  }
+  myfwrite(fldb, FLDW*FLDH, 1, h);
+  myfwrite(fld, FLDW*FLDH, 1, h);
+  myfwrite(fldf, FLDW*FLDH, 1, h);
 }
 
 void W_loadgame(FILE* h) {
   char s[8];
   int i;
-
-  myfread(&sky_type,1,4,h);
-  for(i=1;i<256;++i) {
+  myfread32(&sky_type, h);
+  for (i = 1; i < 256; ++i) {
     walani[i]=0;
-    myfread(s,1,8,h);if(!s[0]) {walh[i]=-1;walp[i]=NULL;continue;}
-    walani[i]=getani(s);
-    if(strncasecmp(s,"_WATER_",7)==0) { //if(memicmp(s,"_WATER_",7)==0) {
-      walh[i]=-2;walp[i]=(void*)(s[7]-'0'+1);
+    myfread(s, 8, 1, h);
+    if (!s[0]) {
+      walh[i] = -1;
+      walp[i] = NULL;
     } else {
-      walh[i]=F_getresid(s);
-      walp[i]=V_getvgaimg(walh[i]);
+      walani[i] = getani(s);
+      if (strncasecmp(s, "_WATER_", 7) == 0) {
+        walh[i] = -2;
+        walp[i] = (void*)(s[7] - '0' + 1);
+      } else {
+        walh[i] = F_getresid(s);
+        walp[i] = V_getvgaimg(walh[i]);
+      }
     }
   }
-  myfread(walf,1,sizeof(walf),h);
-  for(i=1;i<256;++i) if(walf[i]&1) walh[i]|=0x8000;
-  myfread(walswp,1,sizeof(walswp),h);
-  myfread(fldb,1,FLDW*FLDH,h);
-  myfread(fld,1,FLDW*FLDH,h);
-  myfread(fldf,1,FLDW*FLDH,h);
-  strcpy(s,"RSKY1");s[4]=sky_type+'0';
+  for (i = 0; i < 256; i++) {
+    myfread32(&walf[i], h);
+    if (i > 0 && walf[i] & 1) {
+      walh[i] |= 0x8000;
+    }
+  }
+  for (i = 0; i < 256; i++) {
+    myfread8(&walswp[i], h);
+  }
+  myfread(fldb, FLDW*FLDH, 1, h);
+  myfread(fld, FLDW*FLDH, 1, h);
+  myfread(fldf, FLDW*FLDH, 1, h);
+  strcpy(s, "RSKY1");
+  s[4] = '0' + sky_type;
   M_unlock(horiz);
-  horiz=V_loadvgaimg(s);
+  horiz = V_loadvgaimg(s);
 }
 
 void W_adjust(void) {
@@ -258,59 +274,93 @@ static void unpack(void *buf, int len, void *obuf) {
   }
 }
 
-int W_load(FILE* h) {
-  int i,j,k,g;
-  static wall_t w;
-  void *p,*buf;
-
-  switch(blk.t) {
-	case MB_WALLNAMES:
-	  for(i=0;i<256;++i) {walh[i]=-1;walswp[i]=i;walani[i]=0;}
-	  for(i=1;i<256 && blk.sz>0;++i,blk.sz-=sizeof(w)) {
-		myfread(&w,1,sizeof(w),h);
-
-                if(strncasecmp(w.n,"_WATER_",7)==0) //if(memicmp(w.n,"_WATER_",7)==0)
-		  {walp[i]=(void*)(w.n[7]-'0'+1);walh[i]=-2;continue;}
-
-    walh[i]=F_getresid(w.n);
-		walp[i]=V_getvgaimg(walh[i]);
-		if(w.n[0]=='S' && w.n[1]=='W' && w.n[4]=='_') walswp[i]=0;
-		walf[i]=(w.t)?1:0;if(w.t) walh[i]|=0x8000;
-
-                if(strncasecmp(w.n,"VTRAP01",8)==0) walf[i]|=2; //if(memicmp(w.n,"VTRAP01",8)==0) walf[i]|=2;
-		walani[i]=getani(w.n);
+int W_load (FILE *h) {
+  int i, j, k, g;
+  void *p, *buf;
+  wall_t w;
+  switch (blk.t) {
+  case MB_WALLNAMES:
+	  for (i = 0; i < 256; ++i) {
+      walh[i] = -1;
+      walswp[i] = i;
+      walani[i] = 0;
+    }
+	  for (i = 1; i < 256 && blk.sz > 0; ++i, blk.sz -= 9) {
+      myfread(w.n, 8, 1, h);
+      myfread8(&w.t, h);
+      if (strncasecmp(w.n, "_WATER_", 7) == 0) {
+        walp[i] = (void*)(w.n[7] - '0' + 1);
+        walh[i] = -2;
+      } else {
+        walh[i] = F_getresid(w.n);
+        walp[i] = V_getvgaimg(walh[i]);
+        if (w.n[0] == 'S' && w.n[1] == 'W' && w.n[4] == '_') {
+          walswp[i] = 0;
+        }
+        walf[i] = w.t ? 1 : 0;
+        if (w.t) {
+          walh[i] |= 0x8000;
+        }
+        if (strncasecmp(w.n, "VTRAP01", 8) == 0) {
+          walf[i] |= 2;
+        }
+        walani[i] = getani(w.n);
+      }
 	  }
-	  for(j=i,i=1;i<256;++i) if(walswp[i]==0) {
-		if(j>=256) break;
-		F_getresname(w.n,walh[i]&0x7FFF);
-		w.n[5]^=1;
-		g=F_getresid(w.n)|(walh[i]&0x8000);
-		for(k=1;k<256;++k) if(walh[k]==g) break;
-		if(k>=256) {
-		  walh[k=j++]=g;walp[k]=V_getvgaimg(g);
-		  walf[k]=(g&0x8000)?1:0;
-		}
-		walswp[i]=k;walswp[k]=i;
-	  }
+	  for (j = i, i = 1; i < 256 && j < 256; ++i) {
+      if (walswp[i] == 0) {
+        F_getresname(w.n, walh[i] & 0x7FFF);
+        w.n[5] ^= 1;
+        g = F_getresid(w.n) | (walh[i] & 0x8000);
+        k = 1;
+        while (k < 256 && walh[k] != g) {
+          k += 1;
+        }
+        if(k >= 256) {
+          k = j;
+          j += 1;
+          walh[k] = g;
+          walp[k] = V_getvgaimg(g);
+          walf[k] = g & 0x8000 ? 1 : 0;
+        }
+        walswp[i] = k;
+        walswp[k] = i;
+      }
+    }
 	  return 1;
-	case MB_BACK:  p=fldb;goto unp;
-	case MB_WTYPE: p=fld;goto unp;
-	case MB_FRONT: p=fldf;
-	unp: switch(blk.st) {
-	    case 0: myfread(p,1,FLDW*FLDH,h);break;
+	case MB_BACK:
+    p = fldb;
+    goto unp;
+	case MB_WTYPE:
+    p = fld;
+    goto unp;
+	case MB_FRONT:
+    p = fldf;
+  unp:
+    switch (blk.st) {
+	    case 0:
+        myfread(p, FLDW * FLDH, 1, h);
+        break;
 	    case 1:
-	      if(!(buf=malloc(blk.sz)))
+        buf = malloc(blk.sz);
+	      if(buf == NULL) {
 	        ERR_fatal("Не хватает памяти");
-	      myfread(buf,1,blk.sz,h);
-	      unpack(buf,blk.sz,p);free(buf);break;
-	    default: return 0;
-	  }return 1;
+        }
+	      myfread(buf, blk.sz, 1, h);
+	      unpack(buf, blk.sz, p);
+        free(buf);
+        break;
+	    default:
+        return 0;
+	  }
+    return 1;
 	case MB_SKY:
-	  sky_type=0;myfread(&sky_type,2,1,h);
-    sky_type = short2host(sky_type);
-	  strcpy(w.n,"RSKY1");w.n[4]=sky_type+'0';
+    myfread16(&sky_type, h);
+	  strcpy(w.n, "RSKY1");
+    w.n[4] = '0' + sky_type;
 	  M_unlock(horiz);
-	  horiz=V_loadvgaimg(w.n);
+	  horiz = V_loadvgaimg(w.n);
 	  return 1;
-  }return 0;
+  }
+  return 0;
 }

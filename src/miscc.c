@@ -613,32 +613,42 @@ void Z_calc_time(dword t,word *h,word *m,word *s)
     *h = t;
 }
 
-unsigned short int short2host (unsigned short int x) {
-#if __BIG_ENDIAN__
+#define SWAP_VAR(a, b) do { unsigned char t = a; a = b; b = t; } while(0)
+
+uint16_t short2swap (uint16_t x) {
   union {
-    unsigned char a[2];
-    unsigned short int x;
+    uint8_t a[2];
+    uint16_t x;
   } y;
   y.x = x;
-  unsigned char t = y.a[0]; y.a[0] = y.a[1]; y.a[1] = t;
+  SWAP_VAR(y.a[0], y.a[1]);
   return y.x;
+}
+
+uint32_t int2swap (uint32_t x) {
+  union {
+    uint8_t a[4];
+    uint32_t x;
+  } y;
+  y.x = x;
+  SWAP_VAR(y.a[0], y.a[3]);
+  SWAP_VAR(y.a[1], y.a[2]);
+  return y.x;
+}
+
+#undef SWAP_VAR
+
+uint16_t short2host (uint16_t x) {
+#if __BIG_ENDIAN__
+  return short2swap(x);
 #else
   return x;
 #endif
 }
 
-unsigned int int2host (unsigned int x) {
+uint32_t int2host (uint32_t x) {
 #if __BIG_ENDIAN__
-  union {
-    unsigned char a[4];
-    unsigned int x;
-  } y;
-  y.x = x;
-  #define SWAP_VAR(a, b) do { unsigned char t = a; a = b; b = t; } while(0)
-  SWAP_VAR(y.a[0], y.a[3]);
-  SWAP_VAR(y.a[1], y.a[2]);
-  #undef SWAP_VAR
-  return y.x;
+  return int2swap(x);
 #else
   return x;
 #endif

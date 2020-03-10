@@ -49,21 +49,44 @@ static item_t it[MAXITEM];
 
 int itm_rtime=1092;
 
-void IT_savegame(FILE* h) {
-  int n;
-
-  for(n=MAXITEM;--n;) if(it[n].t) break;
-  ++n;myfwrite(&n,1,4,h);
-  myfwrite(it,1,n*sizeof(it[0]),h);
-  myfwrite(&itm_rtime,1,4,h);
+void IT_savegame (FILE *h) {
+  int i, n;
+  for (n = MAXITEM - 1; n >= 0 && it[n].t == 0; n--) {
+    // empty
+  }
+  n += 1;
+  myfwrite32(n, h);
+  for (i = 0; i < n; i++) {
+    myfwrite32(it[i].o.x, h);
+    myfwrite32(it[i].o.y, h);
+    myfwrite32(it[i].o.xv, h);
+    myfwrite32(it[i].o.yv, h);
+    myfwrite32(it[i].o.vx, h);
+    myfwrite32(it[i].o.vy, h);
+    myfwrite32(it[i].o.r, h);
+    myfwrite32(it[i].o.h, h);
+    myfwrite32(it[i].t, h);
+    myfwrite32(it[i].s, h);
+  }
+  myfwrite32(itm_rtime, h);
 }
 
-void IT_loadgame(FILE* h) {
-  int n;
-
-  myfread(&n,1,4,h);
-  myfread(it,1,n*sizeof(it[0]),h);
-  myfread(&itm_rtime,1,4,h);
+void IT_loadgame (FILE *h) {
+  int i, n;
+  myfread32(&n, h);
+  for (i = 0; i < n; i++) {
+    myfread32(&it[i].o.x, h);
+    myfread32(&it[i].o.y, h);
+    myfread32(&it[i].o.xv, h);
+    myfread32(&it[i].o.yv, h);
+    myfread32(&it[i].o.vx, h);
+    myfread32(&it[i].o.vy, h);
+    myfread32(&it[i].o.r, h);
+    myfread32(&it[i].o.h, h);
+    myfread32(&it[i].t, h);
+    myfread32(&it[i].s, h);
+  }
+  myfread32(&itm_rtime, h);
 }
 
 void IT_alloc(void) {
@@ -112,56 +135,97 @@ void IT_init(void) {
   tsndtm=rsndtm=0;
 }
 
-int IT_load(FILE* h) {
-  int m,i,j;
+int IT_load (FILE *h) {
+  int m, i, j;
   old_thing_t t;
-
-  switch(blk.t) {
+  switch (blk.t) {
 	case MB_THING:
-	  for(i=0;blk.sz>0;++i,blk.sz-=8) {
-		myfread(&t,1,sizeof(t),h);
-    t.x = short2host(t.x);
-    t.y = short2host(t.y);
-    t.t = short2host(t.t);
-    t.f = short2host(t.f);
-		it[i].o.x=t.x;it[i].o.y=t.y;
-		it[i].t=t.t;it[i].s=t.f;
-		if(!it[i].t) break;
-		if((it[i].s&THF_DM) && !g_dm) it[i].t=0;
-	  }m=i;
-	  for(i=0,j=-1;i<m;++i) if(it[i].t==TH_PLR1) {j=i;it[i].t=0;}
-	  if(!g_dm) {
-		if(j==-1) ERR_fatal("Предмет игрок_1 не найден");
-		dm_pos[0].x=it[j].o.x;dm_pos[0].y=it[j].o.y;dm_pos[0].d=it[j].s&THF_DIR;
+	  for (i = 0; blk.sz > 0; ++i, blk.sz -= 8) {
+      myfread16(&t.x, h);
+      myfread16(&t.y, h);
+      myfread16(&t.t, h);
+      myfread16(&t.f, h);
+      it[i].o.x = t.x;
+      it[i].o.y = t.y;
+      it[i].t = t.t;
+      it[i].s = t.f;
+      if (it[i].t && (it[i].s & THF_DM) && !g_dm) {
+        it[i].t=0;
+      }
 	  }
-	  for(i=0,j=-1;i<m;++i) if(it[i].t==TH_PLR2) {j=i;it[i].t=0;}
-	  if(!g_dm && _2pl) {
-		if(j==-1) ERR_fatal("Предмет игрок_2 не найден");
-		dm_pos[1].x=it[j].o.x;dm_pos[1].y=it[j].o.y;dm_pos[1].d=it[j].s&THF_DIR;
+    m = i;
+	  for (i = 0, j = -1; i < m; ++i) {
+      if (it[i].t == TH_PLR1) {
+        j = i;
+        it[i].t = 0;
+      }
+    }
+	  if (!g_dm) {
+      if (j == -1) {
+        ERR_fatal("Предмет игрок_1 не найден");
+      }
+      dm_pos[0].x = it[j].o.x;
+      dm_pos[0].y = it[j].o.y;
+      dm_pos[0].d = it[j].s & THF_DIR;
 	  }
-	  for(i=0,j=0;i<m;++i) if(it[i].t==TH_DMSTART) {
-		if(g_dm)
-		  {dm_pos[j].x=it[i].o.x;dm_pos[j].y=it[i].o.y;dm_pos[j].d=it[i].s&THF_DIR;}
-		it[i].t=0;++j;
+	  for (i = 0, j = -1; i < m; ++i) {
+      if (it[i].t == TH_PLR2) {
+        j = i;
+        it[i].t = 0;
+      }
+    }
+	  if (!g_dm && _2pl) {
+      if (j == -1) {
+        ERR_fatal("Предмет игрок_2 не найден");
+      }
+      dm_pos[1].x = it[j].o.x;
+      dm_pos[1].y = it[j].o.y;
+      dm_pos[1].d = it[j].s & THF_DIR;
 	  }
-	  if(g_dm && j<2) ERR_fatal("Меньше 2-ух точек DM");
-	  if(g_dm) {
-	    dm_pnum=j;
-	    dm_pl1p=myrand(dm_pnum);
-	    do{ dm_pl2p=myrand(dm_pnum); }while(dm_pl2p==dm_pl1p);
-	  }else {dm_pl1p=0;dm_pl2p=1;dm_pnum=2;}
-	  PL_spawn(&pl1,dm_pos[dm_pl1p].x,dm_pos[dm_pl1p].y,dm_pos[dm_pl1p].d);
-	  if(_2pl) PL_spawn(&pl2,dm_pos[dm_pl2p].x,dm_pos[dm_pl2p].y,dm_pos[dm_pl2p].d);
-	  for(i=0;i<m;++i)
-		if(it[i].t>=TH_CLIP && it[i].t<TH_DEMON) {
-		  it[i].s=0;it[i].t=it[i].t-TH_CLIP+I_CLIP;
-		  if(it[i].t>=I_KEYR && it[i].t<=I_KEYB) it[i].t|=0x8000;
-		}else if(it[i].t>=TH_DEMON) {
-		  MN_spawn(it[i].o.x,it[i].o.y,it[i].s&THF_DIR,it[i].t-TH_DEMON+MN_DEMON);
-		  it[i].t=0;
-		}
+	  for (i = 0, j = 0; i < m; ++i) {
+      if (it[i].t == TH_DMSTART) {
+        if (g_dm) {
+          dm_pos[j].x = it[i].o.x;
+          dm_pos[j].y = it[i].o.y;
+          dm_pos[j].d = it[i].s & THF_DIR;
+        }
+        it[i].t = 0;
+        ++j;
+      }
+    }
+	  if (g_dm && j < 2) {
+      ERR_fatal("Меньше 2-ух точек DM");
+    }
+	  if (g_dm) {
+	    dm_pnum = j;
+	    dm_pl1p = myrand(dm_pnum);
+	    do {
+        dm_pl2p = myrand(dm_pnum);
+      } while (dm_pl2p == dm_pl1p);
+	  } else {
+      dm_pl1p = 0;
+      dm_pl2p = 1;
+      dm_pnum = 2;
+    }
+	  PL_spawn(&pl1, dm_pos[dm_pl1p].x, dm_pos[dm_pl1p].y, dm_pos[dm_pl1p].d);
+	  if (_2pl) {
+      PL_spawn(&pl2, dm_pos[dm_pl2p].x, dm_pos[dm_pl2p].y, dm_pos[dm_pl2p].d);
+    }
+	  for (i = 0; i < m; ++i) {
+      if (it[i].t >= TH_CLIP && it[i].t < TH_DEMON) {
+        it[i].s = 0;
+        it[i].t = it[i].t - TH_CLIP + I_CLIP;
+        if (it[i].t >= I_KEYR && it[i].t <= I_KEYB) {
+          it[i].t |= 0x8000;
+        }
+      } else if (it[i].t >= TH_DEMON) {
+        MN_spawn(it[i].o.x, it[i].o.y, it[i].s & THF_DIR, it[i].t - TH_DEMON + MN_DEMON);
+        it[i].t = 0;
+      }
+    }
 	  return 1;
-  }return 0;
+  }
+  return 0;
 }
 
 static void takesnd(int t) {
