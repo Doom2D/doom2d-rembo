@@ -195,10 +195,10 @@ void G_init(void) {
   logo("G_init: настройка ресурсов игры ");
   logo_gas(5,GGAS_TOTAL);
   telepsnd=Z_getsnd("TELEPT");
-  scrnh[0]=M_lock(F_getresid("TITLEPIC"));
-  scrnh[1]=M_lock(F_getresid("INTERPIC"));
-  scrnh[2]=M_lock(F_getresid("ENDPIC"));
-  cd_scr=M_lock(F_getresid("CD1PIC"));
+  scrnh[0]=V_loadvgaimg("TITLEPIC");
+  scrnh[1]=V_loadvgaimg("INTERPIC");
+  scrnh[2]=V_loadvgaimg("ENDPIC");
+  cd_scr=V_loadvgaimg("CD1PIC");
   for(i=0;i<2;++i) {
     sprintf(s,"LTN%c",i+'1');
     for(j=0;j<2;++j)

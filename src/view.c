@@ -118,7 +118,10 @@ void W_loadgame(FILE* h) {
     walani[i]=getani(s);
     if(strncasecmp(s,"_WATER_",7)==0) { //if(memicmp(s,"_WATER_",7)==0) {
       walh[i]=-2;walp[i]=(void*)(s[7]-'0'+1);
-    }else walp[i]=M_lock(walh[i]=F_getresid(s));
+    } else {
+      walh[i]=F_getresid(s);
+      walp[i]=V_getvgaimg(walh[i]);
+    }
   }
   myfread(walf,1,sizeof(walf),h);
   for(i=1;i<256;++i) if(walf[i]&1) walh[i]|=0x8000;
@@ -128,7 +131,7 @@ void W_loadgame(FILE* h) {
   myfread(fldf,1,FLDW*FLDH,h);
   strcpy(s,"RSKY1");s[4]=sky_type+'0';
   M_unlock(horiz);
-  horiz=M_lock(F_getresid(s));
+  horiz=V_loadvgaimg(s);
 }
 
 void W_adjust(void) {
@@ -210,7 +213,7 @@ void W_init(void) {
   PL_init();
   MN_init();
   M_unlock(horiz);
-  horiz=M_lock(F_getresid("RSKY1"));
+  horiz=V_loadvgaimg("RSKY1");
 
   free_chunks();
 }
@@ -221,10 +224,11 @@ void W_act(void) {
   if(g_time%3!=0) return;
   for(i=1;i<256;++i) if((a=walani[i])!=0) {
     if(anih[a][++anic[a]]==-1) anic[a]=0;
-    walp[i]=M_lock(anih[a][anic[a]]);
+    walp[i]=V_getvgaimg(anih[a][anic[a]]);
   }
 }
 
+/*
 static void unpack(void *buf,int len,void *obuf) {
   byte *p,*o;
   int l,n;
@@ -232,6 +236,26 @@ static void unpack(void *buf,int len,void *obuf) {
   for(p=(byte*)buf,o=(byte*)obuf,l=len;l;++p,--l) if(*p==255) {
     n=*((word*)(++p));memset(o,*(p+=2),n);o+=n;l-=3;
   }else *(o++)=*p;
+}
+*/
+
+static void unpack(void *buf, int len, void *obuf) {
+  int i = 0;
+  int j = 0;
+  unsigned char *p = buf;
+  unsigned char *q = obuf;
+  while (i < len) {
+    int id = p[i];
+    int step = 1;
+    i += 1;
+    if (id == 0xff) {
+      step = p[i] | p[i + 1] << 8;
+      id = p[i + 2];
+      i += 3;
+    }
+    memset(&q[j], id, step);
+    j += step;
+  }
 }
 
 int W_load(FILE* h) {
@@ -247,7 +271,9 @@ int W_load(FILE* h) {
 
                 if(strncasecmp(w.n,"_WATER_",7)==0) //if(memicmp(w.n,"_WATER_",7)==0)
 		  {walp[i]=(void*)(w.n[7]-'0'+1);walh[i]=-2;continue;}
-		walp[i]=M_lock(walh[i]=F_getresid(w.n));
+
+    walh[i]=F_getresid(w.n);
+		walp[i]=V_getvgaimg(walh[i]);
 		if(w.n[0]=='S' && w.n[1]=='W' && w.n[4]=='_') walswp[i]=0;
 		walf[i]=(w.t)?1:0;if(w.t) walh[i]|=0x8000;
 
@@ -261,7 +287,7 @@ int W_load(FILE* h) {
 		g=F_getresid(w.n)|(walh[i]&0x8000);
 		for(k=1;k<256;++k) if(walh[k]==g) break;
 		if(k>=256) {
-		  walh[k=j++]=g;walp[k]=M_lock(g);
+		  walh[k=j++]=g;walp[k]=V_getvgaimg(g);
 		  walf[k]=(g&0x8000)?1:0;
 		}
 		walswp[i]=k;walswp[k]=i;
@@ -280,10 +306,11 @@ int W_load(FILE* h) {
 	    default: return 0;
 	  }return 1;
 	case MB_SKY:
-	  sky_type=0;myfread(&sky_type,1,2,h);
+	  sky_type=0;myfread(&sky_type,2,1,h);
+    sky_type = short2host(sky_type);
 	  strcpy(w.n,"RSKY1");w.n[4]=sky_type+'0';
 	  M_unlock(horiz);
-	  horiz=M_lock(F_getresid(w.n));
+	  horiz=V_loadvgaimg(w.n);
 	  return 1;
   }return 0;
 }

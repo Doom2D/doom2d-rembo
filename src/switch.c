@@ -72,6 +72,7 @@ int SW_load(FILE* h) {
 	  sw_secrets=0;
 	  for(i=0;i<MAXSW && blk.sz>0;++i,blk.sz-=sizeof(sw_t)) {
 		myfread(sw+i,1,sizeof(sw_t),h);
+    sw[i].c = short2host(sw[i].c);
 		sw[i].tm=0;sw[i].d=0;
 		sw[i].f|=0x80;
 		if(sw[i].t==SW_SECRET) ++sw_secrets;

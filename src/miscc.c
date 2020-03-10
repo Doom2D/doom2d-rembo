@@ -69,7 +69,8 @@ void *Z_getspr(char n[4],int s,int d,char *dir) {
 
   h=F_getsprid(n,s,d);
   if(dir) *dir=(h&0x8000)?1:0;
-  return M_lock(h);
+  //return M_lock(h);
+  return V_getvgaimg(h);
 }
 
 void *Z_getsnd(char n[6]) {
@@ -78,7 +79,17 @@ void *Z_getsnd(char n[6]) {
   //if(snd_type==-1) return NULL;
   strncpy(s+2,n,6);s[0]='D';
   s[1]='S';
-  return M_lock(F_getresid(s));
+
+  int id = F_getresid(s);
+  int loaded = M_was_locked(id);
+  snd_t *snd = M_lock(id);
+  if (snd != NULL && !loaded) {
+    snd->len = int2host(snd->len);
+    snd->rate = int2host(snd->rate);
+    snd->lstart = int2host(snd->lstart);
+    snd->llen = int2host(snd->llen);
+  }
+  return snd;
 }
 
 int Z_sound(void *s,int v) {
@@ -102,30 +113,30 @@ void Z_initst(void) {
 	"PLASA0","BFUGA0","GUN2A0"
   };
 
-  stone=M_lock(F_getresid("STONE"));
-  stone2=M_lock(F_getresid("STONE2"));
-  keys[0]=M_lock(F_getresid("KEYRA0"));
-  keys[1]=M_lock(F_getresid("KEYGA0"));
-  keys[2]=M_lock(F_getresid("KEYBA0"));
+  stone=V_loadvgaimg("STONE");
+  stone2=V_loadvgaimg("STONE2");
+  keys[0]=V_loadvgaimg("KEYRA0");
+  keys[1]=V_loadvgaimg("KEYGA0");
+  keys[2]=V_loadvgaimg("KEYBA0");
   for(i=0;i<22;++i)
-    sth[i]=M_lock(F_getresid(nm[i]));
+    sth[i]=V_loadvgaimg(nm[i]);
   strcpy(s,"STBF_*");
   for(i='!';i<160;++i) {
 	s[5]=i;
-	bfh[i-'!']=M_lock(F_findres(s));
+	bfh[i-'!']=V_getvgaimg(F_findres(s));
 	if(!(i&15)) logo_gas(GAS_START+((i-'!')>>4),GAS_TOTAL);
   }
   for(i='!';i<160;++i) {
 	sprintf(s,"STCFN%03d",i);
-	sfh[i-'!']=M_lock(F_findres(s));
+	sfh[i-'!']=V_getvgaimg(F_findres(s));
 	if(!(i&15)) logo_gas(GAS_START+8+((i-'!')>>4),GAS_TOTAL);
   }
   strcpy(s,"WINUM*");
   for(i='0';i<='9';++i) {
 	s[5]=i;
-	bfh[i-'!']=M_lock(F_getresid(s));
+	bfh[i-'!']=V_loadvgaimg(s);
   }
-  bfh[':'-'!']=M_lock(F_getresid("WICOLON"));
+  bfh[':'-'!']=V_loadvgaimg("WICOLON");
   bulsnd[0]=Z_getsnd("BUL1");
   bulsnd[1]=Z_getsnd("BUL2");
 }
@@ -600,4 +611,35 @@ void Z_calc_time(dword t,word *h,word *m,word *s)
     t = t - *m;
     t = t / 60;
     *h = t;
+}
+
+unsigned short int short2host (unsigned short int x) {
+#if __BIG_ENDIAN__
+  union {
+    unsigned char a[2];
+    unsigned short int x;
+  } y;
+  y.x = x;
+  unsigned char t = y.a[0]; y.a[0] = y.a[1]; y.a[1] = t;
+  return y.x;
+#else
+  return x;
+#endif
+}
+
+unsigned int int2host (unsigned int x) {
+#if __BIG_ENDIAN__
+  union {
+    unsigned char a[4];
+    unsigned int x;
+  } y;
+  y.x = x;
+  #define SWAP_VAR(a, b) do { unsigned char t = a; a = b; b = t; } while(0)
+  SWAP_VAR(y.a[0], y.a[3]);
+  SWAP_VAR(y.a[1], y.a[2]);
+  #undef SWAP_VAR
+  return y.x;
+#else
+  return x;
+#endif
 }

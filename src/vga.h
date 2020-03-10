@@ -52,6 +52,9 @@ typedef void redraw_f(void);
 
 typedef void spr_f(int, int, unsigned char);//typedef void spr_f(void);
 
+vgaimg *V_getvgaimg (int id);
+vgaimg *V_loadvgaimg (char *name);
+
 // переключение в режим VGA 320x200,256 цветов
 // возвращает 0, если все о'кей
 short V_init(void);

@@ -90,3 +90,13 @@ void M_unlock(void *p) {
   if(!resl[h]) return;
   --resl[h];
 }
+
+int M_locked (int h) {
+  h&=-1-0x8000;
+  return (h != -1) && (h != 0xFFFF) && (resl[h] != 0);
+}
+
+int M_was_locked (int h) {
+  h&=-1-0x8000;
+  return (h != -1) && (h != 0xFFFF) && (resp[h] != NULL);
+}

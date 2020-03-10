@@ -25,3 +25,5 @@ void M_startup(void);
 void M_shutdown(void);
 void *M_lock(int);
 void M_unlock(void *);
+int M_locked(int);
+int M_was_locked(int);

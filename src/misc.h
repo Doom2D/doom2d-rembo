@@ -82,3 +82,6 @@ void Z_gotoxy(int,int);
 int Z_getacid(int x,int y,int r,int h);
 
 void Z_clrst();
+
+unsigned short int short2host (unsigned short int x);
+unsigned int int2host (unsigned int x);
