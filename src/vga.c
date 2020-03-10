@@ -25,6 +25,9 @@
 #include <SDL.h>
 #include "error.h"
 #include "view.h"
+#include "memory.h"
+
+#include <assert.h>
 
 
 // адрес экранного буфера
@@ -44,6 +47,22 @@ int cx1,cx2,cy1,cy2;
 char fullscreen = OFF;
 
 #define HQ 2
+
+vgaimg *V_getvgaimg (int id) {
+  int loaded = M_was_locked(id);
+  vgaimg *v = M_lock(id);
+  if (v != NULL && !loaded) {
+    v->w = short2host(v->w);
+    v->h = short2host(v->h);
+    v->sx = short2host(v->sx);
+    v->sy = short2host(v->sy);
+  }
+  return v;
+}
+
+vgaimg *V_loadvgaimg (char *name) {
+  return V_getvgaimg(F_getresid(name));
+}
 
 short V_init(void)
 {

@@ -120,6 +120,10 @@ int IT_load(FILE* h) {
 	case MB_THING:
 	  for(i=0;blk.sz>0;++i,blk.sz-=8) {
 		myfread(&t,1,sizeof(t),h);
+    t.x = short2host(t.x);
+    t.y = short2host(t.y);
+    t.t = short2host(t.t);
+    t.f = short2host(t.f);
 		it[i].o.x=t.x;it[i].o.y=t.y;
 		it[i].t=t.t;it[i].s=t.f;
 		if(!it[i].t) break;

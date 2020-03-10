@@ -180,67 +180,120 @@ int myfilelength(FILE *h)
 
 extern void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext);
 
+static int myread_int32 (FILE *f) {
+  int x;
+  myfread(&x, 4, 1, f);
+  return int2host(x);
+}
+
 // build wad directory
-void F_initwads(void) {
-  int i,j,k,p;
+void F_initwads (void) {
+  int i, j, k, p;
   FILE *h;
   char s[4];
-  int n,o;
+  int n, o;
   wad_t w;
 
   logo("F_initwads: подключение WAD-файлов\n");
-  for(i=0;i<MAX_WAD;++i) wad[i].n[0]=0;
-  logo("   подключается  %s\n",wads[0]);
-  if((wadh[0]=h=fopen(wads[0],"rb"))==NULL)//if((wadh[0]=h=open(wads[0],O_RDWR|O_BINARY))==-1)
-	ERR_failinit("Не могу открыть файл: %s",wads[0]);//sys_errlist[errno]);
-  *s=0;myfread(s,1,4,h);
-  if(strncmp(s,"IWAD",4)!=0 && strncmp(s,"PWAD",4)!=0)
-	ERR_failinit("Нет подписи IWAD или PWAD");
-  myfread(&n,1,4,h);myfread(&o,1,4,h);fseek(h,o,SEEK_SET);
-  for(j=0,p=0;j<n;++j) {
-	myfread(&w,1,16,h);
-	if(p>=MAX_WAD) ERR_failinit("Слишком много элементов WAD'а");
-	memcpy(wad[p].n,w.n,8);
-	wad[p].o=w.o;wad[p].l=w.l;wad[p].f=0;
-	++p;
+  for (i = 0; i < MAX_WAD; ++i) {
+    wad[i].n[0] = 0;
   }
+
+  logo("   подключается  %s\n", wads[0]);
+  if ((wadh[0] = h = fopen(wads[0], "rb")) == NULL) {
+    ERR_failinit("Не могу открыть файл: %s", wads[0]);
+  }
+
+  s[0] = '\0';
+  myfread(s, 1, 4, h);
+  if (strncmp(s, "IWAD", 4) != 0 && strncmp(s, "PWAD", 4) != 0) {
+    ERR_failinit("Нет подписи IWAD или PWAD (1)");
+  }
+
+  p = 0; // wad number
+  n = myread_int32(h); // num
+  o = myread_int32(h); // offset
+  fseek(h, o, SEEK_SET);
+  for (j = 0; j < n; ++j) {
+    w.o = myread_int32(h); // offset
+    w.l = myread_int32(h); // len
+    myfread(w.n, 1, 8, h); // name
+    if (p >= MAX_WAD) {
+      ERR_failinit("Слишком много элементов WAD'а");
+    }
+    wad[p].o = w.o;
+    wad[p].l = w.l;
+    memcpy(wad[p].n, w.n, 8);
+    wad[p].f = 0;
+    ++p;
+  }
+
   //fclose(h);
-  for(i=1;i<MAX_WADS;++i) if(wads[i][0]!=0) {
-      
-	logo("  подключается %s\n",wads[i]);
-	if((wadh[i]=h=fopen(wads[i], "rb"))==NULL) //if((wadh[i]=h=open(wads[i],O_RDONLY|O_BINARY))==-1)
-	  ERR_failinit("Не могу открыть файл2:  %s",wads[i]);//sys_errlist[errno]);
-	mysplitpath(wads[i],f_drive,f_dir,f_name,f_ext);
-	if(strcasecmp(f_ext,".lmp")==0) {
-	  for(k=0;k<MAX_WAD;++k) if(strncasecmp(wad[k].n,f_name,8)==0)
-		{wad[k].o=0L;wad[k].l=myfilelength(h);wad[k].f=i;break;}
-	  if(k>=MAX_WAD) {
-		if(p>=MAX_WAD) ERR_failinit("Слишком много элементов WAD'а");
-		memset(wad[p].n,0,8);
-		strncpy(wad[p].n,f_name,8);
-		wad[p].o=0L;wad[p].l=myfilelength(h);wad[p].f=i;
-		++p;
-	  }
-	  continue;
-	}
-	*s=0;myfread(s,1,4,h);
-	if(strncmp(s,"IWAD",4)!=0 && strncmp(s,"PWAD",4)!=0)
-	  ERR_failinit("Нет подписи IWAD или PWAD");
-    myfread(&n,1,4,h);myfread(&o,1,4,h);fseek(h,o,SEEK_SET);
-    for(j=0;j<n;++j) {
-	  myfread(&w,1,16,h);
-	  for(k=0;k<MAX_WAD;++k) if(strncasecmp(wad[k].n,w.n,8)==0)
-		{wad[k].o=w.o;wad[k].l=w.l;wad[k].f=i;break;}
-	  if(k>=MAX_WAD) {
-		if(p>=MAX_WAD) ERR_failinit("Слишком много элементов WAD'а");
-		memcpy(wad[p].n,w.n,8);
-		wad[p].o=w.o;wad[p].l=w.l;wad[p].f=i;
-		++p;
+
+  for (i = 1; i < MAX_WADS; ++i) {
+    if (wads[i][0] != 0) {
+      logo("  подключается %s\n", wads[i]);
+      if ((wadh[i] = h = fopen(wads[i], "rb")) == NULL) {
+        ERR_failinit("Не могу открыть файл2:  %s", wads[i]);
+      }
+      mysplitpath(wads[i], f_drive, f_dir, f_name, f_ext);
+      if (strcasecmp(f_ext, ".lmp") == 0) {
+        for (k = 0; k < MAX_WAD; ++k) {
+          if (strncasecmp(wad[k].n, f_name, 8) == 0) {
+            wad[k].o = 0;
+            wad[k].l = myfilelength(h);
+            wad[k].f = i;
+            break;
+          }
+          if (k >= MAX_WAD) {
+            if (p >= MAX_WAD) {
+              ERR_failinit("Слишком много элементов WAD'а");
+            }
+            memset(wad[p].n, 0, 8);
+            strncpy(wad[p].n, f_name, 8);
+            wad[p].o = 0;
+            wad[p].l = myfilelength(h);
+            wad[p].f = i;
+            ++p;
+          }
+        }
+
+        s[0] = '\0';
+        myfread(s, 1, 4, h);
+        if (strncmp(s, "IWAD", 4) != 0 && strncmp(s, "PWAD", 4) != 0) {
+          ERR_failinit("Нет подписи IWAD или PWAD (2)");
+        }
+        n = myread_int32(h); // num
+        o = myread_int32(h); // offset
+        fseek(h, o, SEEK_SET);
+        for (j = 0; j < n; ++j) {
+          w.o = myread_int32(h); // offset
+          w.l = myread_int32(h); // len
+          myfread(w.n, 1, 8, h); // name
+          for (k = 0; k < MAX_WAD; ++k) {
+            if (strncasecmp(wad[k].n, w.n, 8) == 0) {
+              wad[k].o = w.o;
+              wad[k].l = w.l;
+              wad[k].f = i;
+              break;
+            }
+            if (k >= MAX_WAD) {
+              if (p >= MAX_WAD) {
+                ERR_failinit("Слишком много элементов WAD'а");
+              }
+              memcpy(wad[p].n, w.n, 8);
+              wad[p].o = w.o;
+              wad[p].l = w.l;
+              wad[p].f = i;
+              ++p;
+            }
+          }
+        }
       }
     }
-  }
-  wad_num=p;
-   
+	}
+
+  wad_num = p;
 }
 
 // allocate resources
@@ -356,31 +409,37 @@ void F_randmus(char *s) {
 }
 
 // reads bytes from file until CR
-void F_readstr(FILE* h,char *s,int m) {
-  int i;
-  static char c;
-
-  for(i=0;;) {
-    c=13;
-    myfreadc(&c,1,1,h);
-    if(c==13) break;
-    if(i<m) s[i++]=c;
+void F_readstr(FILE* h, char *s, int m) {
+  int i = 0;
+  size_t len = 0;
+  static char c = 0;
+  while (i < m) {
+    c = 13;
+    len = myfreadc(&c, 1, 1, h);
+    if (len == 0 || c == 13 || c == 10) {
+      break;
+    }
+    s[i] = c;
+    i++;
   }
-  s[i]=0;
+  s[i] = 0;
 }
 
 // reads bytes from file until NUL
 void F_readstrz(FILE* h,char *s,int m) {
-  int i;
-  static char c;
-
-  for(i=0;;) {
-    c=0;
-    myfreadc(&c,1,1,h);
-    if(c==0) break;
-    if(i<m) s[i++]=c;
+  int i = 0;
+  size_t len = 0;
+  static char c = 0;
+  while (i < m) {
+    c = 0;
+    len = myfreadc(&c, 1, 1, h);
+    if (len == 0 || c == 0) {
+      break;
+    }
+    s[i] = c;
+    i++;
   }
-  s[i]=0;
+  s[i] = 0;
 }
 
 map_block_t blk;
@@ -396,10 +455,14 @@ void F_loadmap(char n[8]) {
   r=F_getresid(n);
   fseek(h=wadh[wad[r].f],wad[r].o,SEEK_SET);
   myfread(&hdr,1,sizeof(hdr),h);
+  hdr.ver = short2host(hdr.ver);
   if(memcmp(hdr.id,"Doom2D\x1A",8)!=0)
 	ERR_fatal("%.8s не является уровнем",n);
   for(;;) {
 	myfread(&blk,1,sizeof(blk),h);
+  blk.t = short2host(blk.t);
+  blk.st = short2host(blk.st);
+  blk.sz = int2host(blk.sz);
 	if(blk.t==MB_END) break;
 	if(blk.t==MB_COMMENT)
 	  {fseek(h,blk.sz,SEEK_CUR);continue;}

@@ -78,12 +78,14 @@ void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext)
      }
 }
 
-void myfread(void *ptr, size_t n, size_t size, FILE *f) {
-    if (fread(ptr,n,size,f) != size) ERR_fatal("File reading error\n");
+size_t myfreadc(void *ptr, size_t size, size_t n, FILE *f) {
+  return fread(ptr, size, n, f);
 }
 
-size_t myfreadc(void *ptr, size_t n, size_t size, FILE *f) {
-    return fread(ptr,n,size,f);
+void myfread(void *ptr, size_t size, size_t n, FILE *f) {
+  if (myfreadc(ptr, size, n, f) != n) {
+    ERR_fatal("File reading error\n");
+  }
 }
 
 void myfwrite(void *ptr, size_t n, size_t size, FILE *f) {

@@ -202,43 +202,51 @@ void CFG_load(void) {
   }
   while(!feof(h)) {
     F_readstr(h,s,127);
-	if(*s==';' || s[1]==';') continue; // comment
-    if(!(p1=strtok(s,"\r\n\t=;"))) continue;//if(!(p1=strtok(s,"\r\n\t =;"))) continue;
-    if(!(p2=strtok(NULL,"\r\n\t=;"))) continue;//if(!(p2=strtok(NULL,"\r\n\t =;"))) continue;
-    for(j=0;cfg[j].t;++j) if(cfg[j].cfg && !cfg[j].o)
-     if(strcasecmp(p1,cfg[j].cfg)==0) {
-      switch(cfg[j].t) {
-	case BYTE:
-	  n=strtol(p2,NULL,0);
-	  *((byte *)cfg[j].p)=(byte)n;
-	  break;
-	case WORD:
-	  n=strtol(p2,NULL,0);
-	  *((word *)cfg[j].p)=(word)n;
-	  break;
-	case DWORD:
-	  n=strtol(p2,NULL,0);
-	  *((dword *)cfg[j].p)=n;
-	  break;
-	case STRING:
-	  strcpy((char *)cfg[j].p,p2);
-	  break;
-	case SW_ON:
-	case SW_OFF:
-	  if(strcasecmp(p2,"ON")==0) {*((byte *)cfg[j].p)=ON;break;}
-	  if(strcasecmp(p2,"OFF")==0) {*((byte *)cfg[j].p)=OFF;break;}
-	  *((byte *)cfg[j].p)=strtol(p2,NULL,0);
-	  break;
-	case FILES:
-	  break;
-
-        case KEY:
-        {
-            int k = get_key(p2);
-            if (k) {
-                *((int *)cfg[j].p)=k;
-            }
-            else {
+    if(*s==';' || s[1]==';')
+      continue; // comment
+    if(!(p1=strtok(s,"\r\n\t=;")))
+      continue; //if(!(p1=strtok(s,"\r\n\t =;"))) continue;
+    if(!(p2=strtok(NULL,"\r\n\t=;")))
+      continue;//if(!(p2=strtok(NULL,"\r\n\t =;"))) continue;
+    for(j=0;cfg[j].t;++j) {
+      if(cfg[j].cfg && !cfg[j].o) {
+        if(strcasecmp(p1,cfg[j].cfg)==0) {
+          switch(cfg[j].t) {
+          case BYTE:
+            n=strtol(p2,NULL,0);
+            *((byte *)cfg[j].p)=(byte)n;
+            break;
+          case WORD:
+            n=strtol(p2,NULL,0);
+            *((word *)cfg[j].p)=(word)n;
+            break;
+          case DWORD:
+            n=strtol(p2,NULL,0);
+            *((dword *)cfg[j].p)=n;
+            break;
+          case STRING:
+            strcpy((char *)cfg[j].p,p2);
+            break;
+          case SW_ON:
+          case SW_OFF:
+            if(strcasecmp(p2,"ON")==0) {
+            *((byte *)cfg[j].p)=ON;
+            break;
+          }
+          if(strcasecmp(p2,"OFF")==0) {
+            *((byte *)cfg[j].p)=OFF;
+            break;
+          }
+          *((byte *)cfg[j].p)=strtol(p2,NULL,0);
+          break;
+          case FILES:
+            break;
+          case KEY:
+          {
+              int k = get_key(p2);
+              if (k) {
+                  *((int *)cfg[j].p)=k;
+              } else {
                 logo("Unknown key in cfg: %s=%s\n",p1,p2);
                 logo("List available key names:\n");
                 int i;
@@ -249,16 +257,17 @@ void CFG_load(void) {
                         logo("%s\n", s);
                     }
                 }
-            }
-        }
-        break;
-
-	default:
-	  ERR_failinit("!!! Неизвестный тип в cfg !!!");
-	  }
-	  break;
-    }
-  }
+              }
+          }
+          break;
+          default:
+            ERR_failinit("!!! Неизвестный тип в cfg !!!");
+          } // switch
+          break;
+        } // if
+      } // if
+    } // for
+  } // while
   fclose(h);
 }
 

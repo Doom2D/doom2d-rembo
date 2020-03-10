@@ -573,16 +573,16 @@ void GM_init(void) {
   msnd4=Z_getsnd("SWTCHX");
   msnd5=Z_getsnd("SUDI");
   msnd6=Z_getsnd("TUDI");
-  msklh[0]=M_lock(F_getresid("M_SKULL1"));
+  msklh[0]=V_loadvgaimg("M_SKULL1");
 //  msklh[0]=load_vga("vga\\spr.vga","M_SKULL1");
-  msklh[1]=M_lock(F_getresid("M_SKULL2"));
-  mbarl=M_lock(F_getresid("M_THERML"));
-  mbarm=M_lock(F_getresid("M_THERMM"));
-  mbarr=M_lock(F_getresid("M_THERMR"));
-  mbaro=M_lock(F_getresid("M_THERMO"));
-  mslotl=M_lock(F_getresid("M_LSLEFT"));
-  mslotm=M_lock(F_getresid("M_LSCNTR"));
-  mslotr=M_lock(F_getresid("M_LSRGHT"));
+  msklh[1]=V_loadvgaimg("M_SKULL2");
+  mbarl=V_loadvgaimg("M_THERML");
+  mbarm=V_loadvgaimg("M_THERMM");
+  mbarr=V_loadvgaimg("M_THERMR");
+  mbaro=V_loadvgaimg("M_THERMO");
+  mslotl=V_loadvgaimg("M_LSLEFT");
+  mslotm=V_loadvgaimg("M_LSCNTR");
+  mslotr=V_loadvgaimg("M_LSRGHT");
   K_setkeyproc(G_keyf);
 }
 
