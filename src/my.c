@@ -23,6 +23,7 @@
 #include <SDL.h>
 #include "glob.h"
 #include "error.h"
+#include "misc.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
@@ -90,34 +91,38 @@ void myfread (void *ptr, size_t size, size_t n, FILE *f) {
   }
 }
 
-void myfread8 (uint8_t *x, FILE *f) {
-  myfread(x, 1, 1, f);
+int8_t myfread8 (FILE *f) {
+  int8_t x;
+  myfread(&x, 1, 1, f);
+  return x;
 }
 
-void myfread16 (uint16_t *x, FILE *f) {
-  myfread(x, 2, 1, f);
-  *x = short2host(*x);
+int16_t myfread16 (FILE *f) {
+  int16_t x;
+  myfread(&x, 2, 1, f);
+  return short2host(x);
 }
 
-void myfread32 (uint32_t *x, FILE *f) {
-  myfread(x, 4, 1, f);
-  *x = int2host(*x);
+int32_t myfread32 (FILE *f) {
+  int32_t x;
+  myfread(&x, 4, 1, f);
+  return int2host(x);
 }
 
 void myfwrite (void *ptr, size_t size, size_t n, FILE *f) {
   assert(fwrite(ptr, size, n, f) == n);
 }
 
-void myfwrite8 (uint8_t x, FILE *f) {
+void myfwrite8 (int8_t x, FILE *f) {
   myfwrite(&x, 1, 1, f);
 }
 
-void myfwrite16 (uint16_t x, FILE *f) {
+void myfwrite16 (int16_t x, FILE *f) {
   x = short2host(x);
   myfwrite(&x, 2, 1, f);
 }
 
-void myfwrite32 (uint32_t x, FILE *f) {
+void myfwrite32 (int32_t x, FILE *f) {
   x = int2host(x);
   myfwrite(&x, 4, 1, f);
 }

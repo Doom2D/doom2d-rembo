@@ -35,6 +35,7 @@
 #include "switch.h"
 #include "player.h"
 #include "misc.h"
+#include "my.h"
 
 extern int hit_xv,hit_yv;
 
@@ -131,46 +132,46 @@ void PL_savegame (FILE *h) {
 }
 
 void PL_load_player (player_t *p, FILE *h) {
-  myfread32(&p->o.x, h);
-  myfread32(&p->o.y, h);
-  myfread32(&p->o.xv, h);
-  myfread32(&p->o.yv, h);
-  myfread32(&p->o.vx, h);
-  myfread32(&p->o.vy, h);
-  myfread32(&p->o.r, h);
-  myfread32(&p->o.h, h);
-  myfread32(&p->looky, h);
-  myfread32(&p->st, h);
-  myfread32(&p->s, h);
-  myfread32(&p->life, h);
-  myfread32(&p->armor, h);
-  myfread32(&p->hit, h);
-  myfread32(&p->hito, h);
-  myfread32(&p->pain, h);
-  myfread32(&p->air, h);
-  myfread32(&p->invl, h);
-  myfread32(&p->suit, h);
-  myfread8(&p->d, h);
-  myfread32(&p->frag, h);
-  myfread32(&p->ammo, h);
-  myfread32(&p->shel, h);
-  myfread32(&p->rock, h);
-  myfread32(&p->cell, h);
-  myfread32(&p->fuel, h);
-  myfread32(&p->kills, h);
-  myfread32(&p->secrets, h);
-  myfread8(&p->fire, h);
-  myfread8(&p->cwpn, h);
-  myfread8(&p->csnd, h);
-  myfread8(&p->amul, h);
-  myfread16(&p->wpns, h);
-  myfread8(&p->wpn, h);
-  myfread8(&p->f, h);
-  myfread8(&p->drawst, h);
-  myfread8(&p->color, h);
-  myfread32(&p->id, h);
-  myfread8(&p->keys, h);
-  myfread8(&p->lives, h);
+  p->o.x = myfread32(h);
+  p->o.y = myfread32(h);
+  p->o.xv = myfread32(h);
+  p->o.yv = myfread32(h);
+  p->o.vx = myfread32(h);
+  p->o.vy = myfread32(h);
+  p->o.r = myfread32(h);
+  p->o.h = myfread32(h);
+  p->looky = myfread32(h);
+  p->st = myfread32(h);
+  p->s = myfread32(h);
+  p->life = myfread32(h);
+  p->armor = myfread32(h);
+  p->hit = myfread32(h);
+  p->hito = myfread32(h);
+  p->pain = myfread32(h);
+  p->air = myfread32(h);
+  p->invl = myfread32(h);
+  p->suit = myfread32(h);
+  p->d = myfread8(h);
+  p->frag = myfread32(h);
+  p->ammo = myfread32(h);
+  p->shel = myfread32(h);
+  p->rock = myfread32(h);
+  p->cell = myfread32(h);
+  p->fuel = myfread32(h);
+  p->kills = myfread32(h);
+  p->secrets = myfread32(h);
+  p->fire = myfread8(h);
+  p->cwpn = myfread8(h);
+  p->csnd = myfread8(h);
+  p->amul = myfread8(h);
+  p->wpns = myfread16(h);
+  p->wpn = myfread8(h);
+  p->f = myfread8(h);
+  p->drawst = myfread8(h);
+  p->color = myfread8(h);
+  p->id = myfread32(h);
+  p->keys = myfread8(h);
+  p->lives = myfread8(h);
   // k* not saved
 }
 
@@ -179,9 +180,9 @@ void PL_loadgame (FILE *h) {
   if (_2pl) {
     PL_load_player(&pl2, h);
   }
-  myfread32(&PL_JUMP, h);
-  myfread32(&PL_RUN, h);
-  myfread8(&p_immortal, h);
+  PL_JUMP = myfread32(h);
+  PL_RUN = myfread32(h);
+  p_immortal = myfread8(h);
 }
 
 static int nonz(int a) {return (a)?a:1;}

@@ -31,6 +31,7 @@
 #include "switch.h"
 #include "files.h"
 #include "map.h"
+#include "my.h"
 
 char *S_getinfo(void);
 
@@ -116,7 +117,7 @@ void F_getsavnames (void) {
     if (h != NULL) {
       ver = -1;
       myfread(savname[i], 24, 1, h);
-      myfread16(&ver, h);
+      ver = myfread16(h);
       savname[i][23] = 0;
       savok[i] = (ver == 3) ? 1 : 0;
       fclose(h);
@@ -150,7 +151,7 @@ void F_loadgame (int n) {
   FILE *h = fopen(p, "rb");
   if (h != NULL) {
     fseek(h, 24, SEEK_SET); // skip name
-    myfread16(&ver, h); // version
+    ver = myfread16(h); // version
     if (ver == 3) {
       G_loadgame(h);
       W_loadgame(h);
@@ -188,12 +189,6 @@ int myfilelength(FILE *h)
 
 extern void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext);
 
-static int myread_int32 (FILE *f) {
-  int x;
-  myfread(&x, 4, 1, f);
-  return int2host(x);
-}
-
 // build wad directory
 void F_initwads (void) {
   int i, j, k, p;
@@ -219,12 +214,12 @@ void F_initwads (void) {
   }
 
   p = 0; // wad number
-  n = myread_int32(h); // num
-  o = myread_int32(h); // offset
+  n = myfread32(h); // num
+  o = myfread32(h); // offset
   fseek(h, o, SEEK_SET);
   for (j = 0; j < n; ++j) {
-    w.o = myread_int32(h); // offset
-    w.l = myread_int32(h); // len
+    w.o = myfread32(h); // offset
+    w.l = myfread32(h); // len
     myfread(w.n, 1, 8, h); // name
     if (p >= MAX_WAD) {
       ERR_failinit("Слишком много элементов WAD'а");
@@ -271,12 +266,12 @@ void F_initwads (void) {
         if (strncmp(s, "IWAD", 4) != 0 && strncmp(s, "PWAD", 4) != 0) {
           ERR_failinit("Нет подписи IWAD или PWAD (2)");
         }
-        n = myread_int32(h); // num
-        o = myread_int32(h); // offset
+        n = myfread32(h); // num
+        o = myfread32(h); // offset
         fseek(h, o, SEEK_SET);
         for (j = 0; j < n; ++j) {
-          w.o = myread_int32(h); // offset
-          w.l = myread_int32(h); // len
+          w.o = myfread32(h); // offset
+          w.o = myfread32(h); // len
           myfread(w.n, 1, 8, h); // name
           for (k = 0; k < MAX_WAD; ++k) {
             if (strncasecmp(wad[k].n, w.n, 8) == 0) {
@@ -461,14 +456,14 @@ void F_loadmap(char n[8]) {
   h = wadh[wad[r].f];
   fseek(h, wad[r].o, SEEK_SET);
   myfread(hdr.id, 8, 1, h);
-  myfread16(&hdr.ver, h);
+  hdr.ver = myfread16(h);
   if (memcmp(hdr.id, "Doom2D\x1A", 8) != 0) {
     ERR_fatal("%.8s не является уровнем", n);
   }
   for(;;) {
-    myfread16(&blk.t, h);
-    myfread16(&blk.st, h);
-    myfread32(&blk.sz, h);
+    blk.t = myfread16(h);
+    blk.st = myfread16(h);
+    blk.sz = myfread32(h);
     if(blk.t == MB_END) {
       break;
     }

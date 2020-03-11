@@ -42,6 +42,7 @@
 #include "menu.h"
 #include "misc.h"
 #include "map.h"
+#include "my.h"
 
 #include <SDL_keysym.h>
 
@@ -79,7 +80,8 @@ extern byte clrmap[256*12];
 
 extern byte cheat;
 
-byte _2pl=0,g_dm=0,g_st=GS_TITLE,g_exit=0,g_map=1,_warp=0,g_music[8]="MENU";
+byte _2pl=0,g_dm=0,g_st=GS_TITLE,g_exit=0,g_map=1,_warp=0;
+char g_music[8]="MENU";
 byte _net=0;
 int g_sttm=1092;
 dword g_time;
@@ -132,22 +134,22 @@ void G_savegame(FILE* h) {
 }
 
 void G_loadgame(FILE* h) {
-  myfread8(&_2pl, h);
-  myfread8(&g_dm, h);
-  myfread8(&g_exit, h);
-  myfread8(&g_map, h);
-  myfread32(&g_time, h);
-  myfread32(&dm_pl1p, h);
-  myfread32(&dm_pl2p, h);
-  myfread32(&dm_pnum, h);
+  _2pl = myfread8(h);
+  g_dm = myfread8(h);
+  g_exit = myfread8(h);
+  g_map = myfread8(h);
+  g_time = myfread32(h);
+  dm_pl1p = myfread32(h);
+  dm_pl2p = myfread32(h);
+  dm_pnum = myfread32(h);
   int i = 0;
   while (i < dm_pnum) {
-    myfread32(&dm_pos[i].x, h);
-    myfread32(&dm_pos[i].y, h);
-    myfread8(&dm_pos[i].d, h);
+    dm_pos[i].x = myfread32(h);
+    dm_pos[i].y = myfread32(h);
+    dm_pos[i].d = myfread8(h);
     i += 1;
   }
-  myfread8(&cheat, h);
+  cheat = myfread8(h);
   myfread(g_music, 8, 1, h);
   F_loadmus(g_music);
 }

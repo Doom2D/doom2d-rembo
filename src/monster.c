@@ -36,6 +36,7 @@
 #include "misc.h"
 #include "fx.h"
 #include "smoke.h"
+#include "my.h"
 
 #define MANCOLOR 0xD0
 
@@ -159,7 +160,7 @@ void MN_savegame (FILE *h) {
     myfwrite8(mn[i].ftime, h);
     myfwrite32(mn[i].fobj, h);
     myfwrite32(mn[i].s, h);
-    myfwrite32(mn[i].ap, h); // useless, changed after load
+    myfwrite32(0, h); // mn[i].ap useless, changed after load
     myfwrite32(mn[i].aim, h);
     myfwrite32(mn[i].life, h);
     myfwrite32(mn[i].pain, h);
@@ -179,34 +180,34 @@ static int MN_hit(int n,int d,int o,int t);
 
 void MN_loadgame (FILE *h) {
   int i, n, c;
-  myfread32(&n, h);
+  n = myfread32(h);
   for (i = 0; i < n; i++) {
-    myfread32(&mn[i].o.x, h);
-    myfread32(&mn[i].o.y, h);
-    myfread32(&mn[i].o.xv, h);
-    myfread32(&mn[i].o.yv, h);
-    myfread32(&mn[i].o.vx, h);
-    myfread32(&mn[i].o.vy, h);
-    myfread32(&mn[i].o.r, h);
-    myfread32(&mn[i].o.h, h);
-    myfread8(&mn[i].t, h);
-    myfread8(&mn[i].d, h);
-    myfread8(&mn[i].st, h);
-    myfread8(&mn[i].ftime, h);
-    myfread32(&mn[i].fobj, h);
-    myfread32(&mn[i].s, h);
-    myfread32(&mn[i].ap, h); // useless, changed after loading
-    myfread32(&mn[i].aim, h);
-    myfread32(&mn[i].life, h);
-    myfread32(&mn[i].pain, h);
-    myfread32(&mn[i].ac, h);
-    myfread32(&mn[i].tx, h);
-    myfread32(&mn[i].ty, h);
-    myfread32(&mn[i].ammo, h);
-    myfread16(&mn[i].atm, h);
+    mn[i].o.x = myfread32(h);
+    mn[i].o.y = myfread32(h);
+    mn[i].o.xv = myfread32(h);
+    mn[i].o.yv = myfread32(h);
+    mn[i].o.vx = myfread32(h);
+    mn[i].o.vy = myfread32(h);
+    mn[i].o.r = myfread32(h);
+    mn[i].o.h = myfread32(h);
+    mn[i].t = myfread8(h);
+    mn[i].d = myfread8(h);
+    mn[i].st = myfread8(h);
+    mn[i].ftime = myfread8(h);
+    mn[i].fobj = myfread32(h);
+    mn[i].s = myfread32(h);
+    mn[i].ap = NULL; myfread32(h); // useless, changed after loading
+    mn[i].aim = myfread32(h);
+    mn[i].life = myfread32(h);
+    mn[i].pain = myfread32(h);
+    mn[i].ac = myfread32(h);
+    mn[i].tx = myfread32(h);
+    mn[i].ty = myfread32(h);
+    mn[i].ammo = myfread32(h);
+    mn[i].atm = myfread16(h);
   }
-  myfread32(&mnum, h);
-  myfread32(&gsndt, h);
+  mnum = myfread32(h);
+  gsndt = myfread32(h);
   for (n = 0; n < MAXMN; ++n) {
     if (mn[n].t) {
       c = mn[n].ac;

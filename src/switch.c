@@ -28,6 +28,7 @@
 #include "player.h"
 #include "misc.h"
 #include "map.h"
+#include "my.h"
 
 #define MAXSW 100
 
@@ -72,19 +73,19 @@ void SW_savegame (FILE *h) {
 
 void SW_loadgame (FILE *h) {
   int i, n;
-  myfread32(&n, h);
+  n = myfread32(h);
   for (i = 0; i < n; i++) {
-    myfread8(&sw[i].x, h);
-    myfread8(&sw[i].y, h);
-    myfread8(&sw[i].t, h);
-    myfread8(&sw[i].tm, h);
-    myfread8(&sw[i].a, h);
-    myfread8(&sw[i].b, h);
-    myfread8(&sw[i].c, h);
-    myfread8(&sw[i].d, h);
-    myfread8(&sw[i].f, h);
+    sw[i].x = myfread8(h);
+    sw[i].y = myfread8(h);
+    sw[i].t = myfread8(h);
+    sw[i].tm = myfread8(h);
+    sw[i].a = myfread8(h);
+    sw[i].b = myfread8(h);
+    sw[i].c = myfread8(h);
+    sw[i].d = myfread8(h);
+    sw[i].f = myfread8(h);
   }
-  myfread32(&sw_secrets, h);
+  sw_secrets = myfread32(h);
 }
 
 int SW_load (FILE *h) {
@@ -93,15 +94,15 @@ int SW_load (FILE *h) {
 	case MB_SWITCH2:
 	  sw_secrets = 0;
 	  for (i = 0; i < MAXSW && blk.sz > 0; ++i, blk.sz -= 9) {
-      myfread8(&sw[i].x, h);
-      myfread8(&sw[i].y, h);
-      myfread8(&sw[i].t, h);
-      myfread8(&sw[i].tm, h); // unused
-      myfread8(&sw[i].a, h);
-      myfread8(&sw[i].b, h);
-      myfread8(&sw[i].c, h);
-      myfread8(&sw[i].d, h); // unused
-      myfread8(&sw[i].f, h);
+      sw[i].x = myfread8(h);
+      sw[i].y = myfread8(h);
+      sw[i].t = myfread8(h);
+      sw[i].tm = myfread8(h); // unused
+      sw[i].a = myfread8(h);
+      sw[i].b = myfread8(h);
+      sw[i].c = myfread8(h);
+      sw[i].d = myfread8(h); // unused
+      sw[i].f = myfread8(h);
       sw[i].tm = 0;
       sw[i].d = 0;
       sw[i].f |= 0x80;

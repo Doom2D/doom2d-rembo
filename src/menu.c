@@ -47,7 +47,7 @@ enum{HIT100,ARMOR,JUMP,WPNS,IMMORTAL,SPEED,OPEN,EXIT};
 extern int PL_JUMP,PL_RUN;
 extern byte _warp,cheat,p_fly;
 
-extern byte g_music[8];
+extern char g_music[8];
 
 extern byte savname[7][24],savok[7];
 void load_game(int);
@@ -62,7 +62,8 @@ byte pcolortab[PCOLORN]={
 };
 int p1color=5,p2color=4;
 
-static byte ibuf[24],input=0;
+static char ibuf[24];
+static byte input=0;
 static int icur;
 
 enum{MENU,MSG};

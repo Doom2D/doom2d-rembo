@@ -26,6 +26,7 @@
 #include "error.h"
 #include "view.h"
 #include "memory.h"
+#include "misc.h"
 
 #include <assert.h>
 

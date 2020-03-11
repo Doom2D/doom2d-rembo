@@ -28,6 +28,7 @@
 #include "smoke.h"
 #include "weapons.h"
 #include "misc.h"
+#include "my.h"
 
 extern int hit_xv,hit_yv;
 
@@ -76,20 +77,20 @@ void WP_savegame (FILE *h) {
 
 void WP_loadgame (FILE *h) {
   int i, n;
-  myfread32(&n, h);
+  n = myfread32(h);
   for (i = 0; i < n; i++) {
-    myfread32(&wp[i].o.x, h);
-    myfread32(&wp[i].o.y, h);
-    myfread32(&wp[i].o.xv, h);
-    myfread32(&wp[i].o.yv, h);
-    myfread32(&wp[i].o.vx, h);
-    myfread32(&wp[i].o.vy, h);
-    myfread32(&wp[i].o.r, h);
-    myfread32(&wp[i].o.h, h);
-    myfread8(&wp[i].t, h);
-    myfread8(&wp[i].s, h);
-    myfread32(&wp[i].own, h);
-    myfread16(&wp[i].target, h);
+    wp[i].o.x = myfread32(h);
+    wp[i].o.y = myfread32(h);
+    wp[i].o.xv = myfread32(h);
+    wp[i].o.yv = myfread32(h);
+    wp[i].o.vx = myfread32(h);
+    wp[i].o.vy = myfread32(h);
+    wp[i].o.r = myfread32(h);
+    wp[i].o.h = myfread32(h);
+    wp[i].t = myfread8(h);
+    wp[i].s = myfread8(h);
+    wp[i].own = myfread32(h);
+    wp[i].target = myfread16(h);
   }
 }
 
