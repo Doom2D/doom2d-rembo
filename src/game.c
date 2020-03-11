@@ -57,6 +57,9 @@ int A8_nextframe(void);
 void A8_close(void);
 
 
+byte transdraw=0;
+
+
 void FX_trans1(int t);
 extern unsigned char fx_scr1[64000],fx_scr2[64000];
 
@@ -67,10 +70,6 @@ extern int hit_xv,hit_yv;
 
 extern vgapal std_pal;
 void setgamma(int);
-
-extern int sw_secrets;
-
-#define PL_FLASH 90
 
 extern int PL_JUMP;
 
@@ -89,7 +88,7 @@ int dm_pnum,dm_pl1p,dm_pl2p;
 pos_t dm_pos[100];
 
 static void *telepsnd;
-static void *scrnh[3];
+void *scrnh[3];
 void *cd_scr;
 
 extern int sky_type;
@@ -290,8 +289,6 @@ int G_end_video(void) {
 }
 
 
-static byte transdraw=0;
-
 void G_act(void) {
   static byte pcnt=0;
 /*
@@ -439,124 +436,6 @@ inter:
 #ifdef DEMO
   if(g_dm && g_time>10920) {set_trans(GS_INTER);}
 #endif
-}
-
-/*
-static void drawview(player_t *p) {
-  if(p->looky<-50) p->looky=-50;
-  else if(p->looky>50) p->looky=50;
-  w_x=p->o.x;w_y=p->o.y-12+p->looky;W_draw();PL_drawst(p);
-}
-*/
-static void drawview(player_t *p) {
-  if(p->looky<-SCRH/4) p->looky=-SCRH/4;
-  else if(p->looky>SCRH/4) p->looky=SCRH/4;
-  w_x=p->o.x;w_y=p->o.y-12+p->looky;
-  W_draw();
-  PL_drawst(p);
-}
-
-static int get_pu_st(int t) {
-  if(t>=PL_FLASH) return 1;
-  if((t/9)&1) return 0;
-  return 1;
-}
-
-static void pl_info(player_t *p,int y) {
-  dword t;
-
-  t=p->kills*10920/g_time;
-  Z_gotoxy(25,y);Z_printbf("KILLS");//Z_gotoxy(25,y);Z_printbf("KILLS");
-  Z_gotoxy(25,y+15);Z_printbf("KPM");//Z_gotoxy(25,y+15);Z_printbf("KPM");
-  Z_gotoxy(25,y+30);Z_printbf("SECRETS %u / %u",p->secrets,sw_secrets);//Z_gotoxy(25,y+30);Z_printbf("SECRETS %u / %u",p->secrets,sw_secrets);
-  Z_gotoxy(255,y);Z_printbf("%u",p->kills);//Z_gotoxy(255,y);Z_printbf("%u",p->kills);
-  Z_gotoxy(255,y+15);Z_printbf("%u.%u",t/10,t%10);//Z_gotoxy(255,y+15);Z_printbf("%u.%u",t/10,t%10);
-}
-
-void G_draw(void) {
-  int h;
-  word hr,mn,sc;
- 
-  if(g_trans && !transdraw) return;
-  switch(g_st) {
-    case GS_ENDANIM: case GS_END2ANIM: case GS_DARKEN:
-    case GS_BVIDEO: case GS_EVIDEO: case GS_END3ANIM:
-      return;
-    case GS_TITLE:
-      V_center(1);//
-      V_pic(0,0,scrnh[0]);
-      V_center(0);//
-      break;
-    case GS_ENDSCR:
-      V_center(1);//
-      V_clr(0,SCRW,0,SCRH,0);V_pic(0,0,scrnh[2]);//V_clr(0,320,0,200,0);V_pic(0,0,scrnh[2]);
-      V_center(0);//
-      break;
-    case GS_INTER:
-        V_center(1);//
-        V_clr(0,SCRW,0,SCRH,0);//
-	  V_pic(0,0,scrnh[1]);
-	  Z_gotoxy(60,20);Z_printbf("LEVEL COMPLETE");
-	  Z_calc_time(g_time,&hr,&mn,&sc);
-	  Z_gotoxy(115,40);Z_printbf("TIME %u:%02u:%02u",hr,mn,sc);
-	  h=60;
-	  if(_2pl) {
-		Z_gotoxy(80,h);Z_printbf("PLAYER ONE");
-		Z_gotoxy(80,h+70);Z_printbf("PLAYER TWO");
-		h+=SCRH/10;//h+=20;
-	  }
-	  pl_info(&pl1,h);
-	  if(_2pl) pl_info(&pl2,h+70);
-          V_center(0);//
-	  break;
-  }
-  V_center(1);//
-  if(g_st!=GS_GAME) {
-    if(g_trans) return;
-    GM_draw();
-    V_copytoscr(0,SCRW,0,SCRH);//V_copytoscr(0,320,0,200);
-    return;
-  }
-  V_center(0);//
-  
-  if(_2pl) {
-	w_o=0;WD=SCRW-120;HT=SCRH/2-2;drawview(&pl1);//w_o=0;drawview(&pl1);
-	w_o=SCRH/2;WD=SCRW-120;HT=SCRH/2-2;drawview(&pl2);//w_o=100;drawview(&pl2);
-  }else{
-	w_o=0;WD=SCRW-120;HT=SCRH-2;drawview(&pl1);//w_o=50;drawview(&pl1);
-  }
-  if(g_trans) return;
-  V_center(1);//
-  if(GM_draw()) {
-    pl1.drawst=pl2.drawst=0xFF;//pl1.drawst=pl2.drawst=0;
-    V_copytoscr(0,SCRW,0,SCRH);//V_copytoscr(0,320,0,200);
-    return;
-  }
-  V_center(0);//
-  if(pl1.invl) h=get_pu_st(pl1.invl)*6;
-  else if(pl1.pain<15) h=0;
-  else if(pl1.pain<35) h=1;
-  else if(pl1.pain<55) h=2;
-  else if(pl1.pain<75) h=3;
-  else if(pl1.pain<95) h=4;
-  else h=5;
-  if(h) V_maptoscr(0,SCRW-120,1,(_2pl)?(SCRH/2-2):(SCRH-2),clrmap+h*256);//if(h) V_maptoscr(0,200,(_2pl)?1:51,98,clrmap+h*256);
-  else V_copytoscr(0,SCRW-120,1,(_2pl)?(SCRH/2-2):(SCRH-2)); //else V_copytoscr(0,200,(_2pl)?1:51,98);
-  if(pl1.drawst) V_copytoscr(SCRW-120,120,0,_2pl?(SCRH/2):SCRH);//if(pl1.drawst) V_copytoscr(200,120,(_2pl)?0:50,100);
-  pl1.drawst=0xFF;//pl1.drawst=0;
-  if(_2pl) {
-    if(pl2.invl) h=get_pu_st(pl2.invl)*6;
-    else if(pl2.pain<15) h=0;
-    else if(pl2.pain<35) h=1;
-    else if(pl2.pain<55) h=2;
-    else if(pl2.pain<75) h=3;
-    else if(pl2.pain<95) h=4;
-    else h=5;
-    if(h) V_maptoscr(0,SCRW-120,SCRH/2+1,SCRH/2-2,clrmap+h*256);//if(h) V_maptoscr(0,200,101,98,clrmap+h*256);
-    else V_copytoscr(0,SCRW-120,SCRH/2+1,SCRH/2-2);//else V_copytoscr(0,200,101,98);
-    if(pl2.drawst) V_copytoscr(SCRW-120,120,SCRH/2,SCRH/2);//if(pl2.drawst) V_copytoscr(200,120,100,100);
-    pl2.drawst=0xFF;//pl2.drawst=0;
-  }
 }
 
 void G_respawn_player(player_t *p) {
