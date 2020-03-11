@@ -213,7 +213,7 @@ void F_freemus(void) {
     muslo = NULL;
 }
 
-extern byte g_music[8];
+extern char g_music[8];
 
 static int volsetcount = 0;
 

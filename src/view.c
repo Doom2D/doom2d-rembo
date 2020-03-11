@@ -39,6 +39,7 @@
 #include "misc.h"
 #include "map.h"
 #include "sound.h"
+#include "my.h"
 
 #define ANIT 5
 
@@ -75,13 +76,15 @@ byte fld[FLDH][FLDW];
 extern int lt_time,lt_type,lt_side,lt_ypos;
 extern void *ltn[2][2];
 
-static void getname(int n,char *s) {
-  if(walh[n]==-1) {memset(s,0,8);return;}
-  if(walh[n]==-2) {
-    memcpy(s,"_WATER_",8);s[7]=(byte)walp[n]-1+'0';
-    return;
+static void getname (int n, char *s) {
+  if (walh[n] == -1) {
+    memset(s, 0, 8);
+  } else if (walh[n] == -2) {
+    memcpy(s, "_WATER_", 8);
+    s[7] = (char)walp[n] - 1 + '0';
+  } else {
+    F_getresname(s, walh[n] & 0x7FFF);
   }
-  F_getresname(s,walh[n]&0x7FFF);
 }
 
 static short getani(char *n) {
@@ -114,7 +117,7 @@ void W_savegame(FILE* h) {
 void W_loadgame(FILE* h) {
   char s[8];
   int i;
-  myfread32(&sky_type, h);
+  sky_type = myfread32(h);
   for (i = 1; i < 256; ++i) {
     walani[i]=0;
     myfread(s, 8, 1, h);
@@ -133,13 +136,13 @@ void W_loadgame(FILE* h) {
     }
   }
   for (i = 0; i < 256; i++) {
-    myfread32(&walf[i], h);
+    walf[i] = myfread32(h);
     if (i > 0 && walf[i] & 1) {
       walh[i] |= 0x8000;
     }
   }
   for (i = 0; i < 256; i++) {
-    myfread8(&walswp[i], h);
+    walswp[i] = myfread8(h);
   }
   myfread(fldb, FLDW*FLDH, 1, h);
   myfread(fld, FLDW*FLDH, 1, h);
@@ -287,7 +290,7 @@ int W_load (FILE *h) {
     }
 	  for (i = 1; i < 256 && blk.sz > 0; ++i, blk.sz -= 9) {
       myfread(w.n, 8, 1, h);
-      myfread8(&w.t, h);
+      w.t = myfread8(h);
       if (strncasecmp(w.n, "_WATER_", 7) == 0) {
         walp[i] = (void*)(w.n[7] - '0' + 1);
         walh[i] = -2;
@@ -355,7 +358,7 @@ int W_load (FILE *h) {
 	  }
     return 1;
 	case MB_SKY:
-    myfread16(&sky_type, h);
+    sky_type = myfread16(h);
 	  strcpy(w.n, "RSKY1");
     w.n[4] = '0' + sky_type;
 	  M_unlock(horiz);

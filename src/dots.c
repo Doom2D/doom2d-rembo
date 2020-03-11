@@ -26,6 +26,7 @@
 #include "view.h"
 #include "dots.h"
 #include "misc.h"
+#include "my.h"
 
 #define MAXINI 50
 #define MAXSR 20
@@ -84,18 +85,18 @@ void DOT_savegame (FILE *h) {
 
 void DOT_loadgame (FILE *h) {
   int i, n;
-  myfread32(&n, h);
+  n = myfread32(h);
   for (i = 0; i < n; i++) {
-    myfread32(&dot[i].o.x, h);
-    myfread32(&dot[i].o.y, h);
-    myfread32(&dot[i].o.xv, h);
-    myfread32(&dot[i].o.yv, h);
-    myfread32(&dot[i].o.vx, h);
-    myfread32(&dot[i].o.vy, h);
-    myfread32(&dot[i].o.r, h);
-    myfread32(&dot[i].o.h, h);
-    myfread8(&dot[i].c, h);
-    myfread8(&dot[i].t, h);
+    dot[i].o.x = myfread32(h);
+    dot[i].o.y = myfread32(h);
+    dot[i].o.xv = myfread32(h);
+    dot[i].o.yv = myfread32(h);
+    dot[i].o.vx = myfread32(h);
+    dot[i].o.vy = myfread32(h);
+    dot[i].o.r = myfread32(h);
+    dot[i].o.h = myfread32(h);
+    dot[i].c = myfread8(h);
+    dot[i].t = myfread8(h);
   }
 }
 

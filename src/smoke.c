@@ -27,6 +27,7 @@
 #include "smoke.h"
 #include "fx.h"
 #include "misc.h"
+#include "my.h"
 
 #define MAXSR 20
 
@@ -76,15 +77,15 @@ void SMK_savegame (FILE *h) {
 
 void SMK_loadgame (FILE *h) {
   int i, n;
-  myfread32(&n, h);
+  n = myfread32(h);
   for (i = 0; i < n; ++i) {
-    myfread32(&sm[i].x, h);
-    myfread32(&sm[i].y, h);
-    myfread32(&sm[i].xv, h);
-    myfread32(&sm[i].xv, h);
-    myfread8(&sm[i].t, h);
-    myfread8(&sm[i].s, h);
-    myfread16(&sm[i].o, h);
+    sm[i].x = myfread32(h);
+    sm[i].y = myfread32(h);
+    sm[i].xv = myfread32(h);
+    sm[i].xv = myfread32(h);
+    sm[i].t = myfread8(h);
+    sm[i].s = myfread8(h);
+    sm[i].o = myfread16(h);
   }
 }
 

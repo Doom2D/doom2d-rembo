@@ -31,6 +31,7 @@
 #include "things.h"
 #include "misc.h"
 #include "map.h"
+#include "my.h"
 
 extern map_block_t blk;
 
@@ -73,20 +74,20 @@ void IT_savegame (FILE *h) {
 
 void IT_loadgame (FILE *h) {
   int i, n;
-  myfread32(&n, h);
+  n = myfread32(h);
   for (i = 0; i < n; i++) {
-    myfread32(&it[i].o.x, h);
-    myfread32(&it[i].o.y, h);
-    myfread32(&it[i].o.xv, h);
-    myfread32(&it[i].o.yv, h);
-    myfread32(&it[i].o.vx, h);
-    myfread32(&it[i].o.vy, h);
-    myfread32(&it[i].o.r, h);
-    myfread32(&it[i].o.h, h);
-    myfread32(&it[i].t, h);
-    myfread32(&it[i].s, h);
+    it[i].o.x = myfread32(h);
+    it[i].o.y = myfread32(h);
+    it[i].o.xv = myfread32(h);
+    it[i].o.yv = myfread32(h);
+    it[i].o.vx = myfread32(h);
+    it[i].o.vy = myfread32(h);
+    it[i].o.r = myfread32(h);
+    it[i].o.h = myfread32(h);
+    it[i].t = myfread32(h);
+    it[i].s = myfread32(h);
   }
-  myfread32(&itm_rtime, h);
+  itm_rtime = myfread32(h);
 }
 
 void IT_alloc(void) {
@@ -141,10 +142,10 @@ int IT_load (FILE *h) {
   switch (blk.t) {
 	case MB_THING:
 	  for (i = 0; blk.sz > 0; ++i, blk.sz -= 8) {
-      myfread16(&t.x, h);
-      myfread16(&t.y, h);
-      myfread16(&t.t, h);
-      myfread16(&t.f, h);
+      t.x = myfread16(h);
+      t.y = myfread16(h);
+      t.t = myfread16(h);
+      t.f = myfread16(h);
       it[i].o.x = t.x;
       it[i].o.y = t.y;
       it[i].t = t.t;

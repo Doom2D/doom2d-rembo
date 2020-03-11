@@ -22,6 +22,9 @@
 
 // View functions
 
+#ifndef VIEW_H_INCLUDED
+#define VIEW_H_INCLUDED
+
 #include <stdio.h>
 
 
@@ -90,3 +93,5 @@ extern int dm_pnum,dm_pl1p,dm_pl2p;
 
 extern int WD; //
 extern int HT; //
+
+#endif /* VIEW_H_INCLUDED */

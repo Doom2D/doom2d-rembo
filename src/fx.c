@@ -27,6 +27,7 @@
 #include "view.h"
 #include "fx.h"
 #include "misc.h"
+#include "my.h"
 
 enum{NONE,TFOG,IFOG,BUBL};
 
@@ -126,14 +127,14 @@ void FX_savegame (FILE *h) {
 
 void FX_loadgame (FILE *h) {
   int i, n;
-  myfread32(&n, h);
+  n = myfread32(h);
   for (i = 0; i < n; i++) {
-    myfread32(&fx[i].x, h);
-    myfread32(&fx[i].y, h);
-    myfread32(&fx[i].xv, h);
-    myfread32(&fx[i].yv, h);
-    myfread8(&fx[i].t, h);
-    myfread8(&fx[i].s, h);
+    fx[i].x = myfread32(h);
+    fx[i].y = myfread32(h);
+    fx[i].xv = myfread32(h);
+    fx[i].yv = myfread32(h);
+    fx[i].t = myfread8(h);
+    fx[i].s = myfread8(h);
   }
 }
 

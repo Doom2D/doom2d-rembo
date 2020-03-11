@@ -23,6 +23,7 @@
 // Miscellaneous functions
 
 #include <stdint.h>
+#include "view.h"
 
 #define MAXDIST 2000000L
 
@@ -85,5 +86,5 @@ int Z_getacid(int x,int y,int r,int h);
 
 void Z_clrst();
 
-uint16_t short2host (uint16_t x);
-uint32_t int2host (uint32_t x);
+int16_t short2host (int16_t x);
+int32_t int2host (int32_t x);

@@ -31,14 +31,14 @@ void mysplitpath (const char *path, char *drv, char *dir, char *name, char *ext)
 size_t myfreadc(void *ptr, size_t size, size_t n, FILE *f);
 
 void myfread (void *ptr, size_t size, size_t n, FILE *f);
-void myfread8 (uint8_t *x, FILE *f);
-void myfread16 (uint16_t *x, FILE *f);
-void myfread32 (uint32_t *x, FILE *f);
+int8_t myfread8 (FILE *f);
+int16_t myfread16 (FILE *f);
+int32_t myfread32 (FILE *f);
 
 void myfwrite(void *ptr, size_t size, size_t n, FILE *f);
-void myfwrite8 (uint8_t x, FILE *f);
-void myfwrite16 (uint16_t x, FILE *f);
-void myfwrite32 (uint32_t x, FILE *f);
+void myfwrite8 (int8_t x, FILE *f);
+void myfwrite16 (int16_t x, FILE *f);
+void myfwrite32 (int32_t x, FILE *f);
 
 void myrandomize (void);
 int fexists (char *filename);
