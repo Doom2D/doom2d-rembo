@@ -81,7 +81,7 @@ static void getname (int n, char *s) {
     memset(s, 0, 8);
   } else if (walh[n] == -2) {
     memcpy(s, "_WATER_", 8);
-    s[7] = (char)walp[n] - 1 + '0';
+    s[7] = (char)((intptr_t)walp[n] - 1 + '0');
   } else {
     F_getresname(s, walh[n] & 0x7FFF);
   }
@@ -128,7 +128,7 @@ void W_loadgame(FILE* h) {
       walani[i] = getani(s);
       if (strncasecmp(s, "_WATER_", 7) == 0) {
         walh[i] = -2;
-        walp[i] = (void*)(s[7] - '0' + 1);
+        walp[i] = (void*)((intptr_t)s[7] - '0' + 1);
       } else {
         walh[i] = F_getresid(s);
         walp[i] = V_getvgaimg(walh[i]);
@@ -292,7 +292,7 @@ int W_load (FILE *h) {
       myfread(w.n, 8, 1, h);
       w.t = myfread8(h);
       if (strncasecmp(w.n, "_WATER_", 7) == 0) {
-        walp[i] = (void*)(w.n[7] - '0' + 1);
+        walp[i] = (void*)((intptr_t)w.n[7] - '0' + 1);
         walh[i] = -2;
       } else {
         walh[i] = F_getresid(w.n);

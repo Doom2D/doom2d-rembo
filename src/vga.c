@@ -321,31 +321,26 @@ void V_remap_rect(int x,int y,int w,int h,byte *cmap)
 extern void *walp[256];
 extern byte clrmap[256*12];
 
-void Z_drawfld(byte *fld, int bg)
+void Z_drawfld (byte *fld, int bg)
 {
     byte *p = fld;
-    int x,y;
-    for (y=0; y<FLDH; y++)
-    {
-        for (x=0; x<FLDW; x++)
-        {
-            int sx = x*CELW-w_x+WD/2;
-            int sy = y*CELH-w_y+HT/2+1+w_o;
-
-
+    int x, y;
+    for (y = 0; y < FLDH; y++) {
+        for (x = 0; x < FLDW; x++) {
+            int sx = x * CELW - w_x + WD / 2;
+            int sy = y * CELH - w_y + HT / 2 + 1 + w_o;
             if (*p) {
-                 vgaimg *pic = walp[*p];
-                if ((int)pic <= 3) {
-                    if (!bg) {
-                        byte *cmap = clrmap + ((int)pic+7)*256;
-                        V_remap_rect(sx, sy, CELW, CELH, cmap);
-                    }
+              vgaimg *pic = walp[*p];
+              // special pointer value setted for _WATER_* in view.c
+              if ((intptr_t)pic <= 3) {
+                if (!bg) {
+                  byte *cmap = clrmap + ((intptr_t)pic+7)*256;
+                  V_remap_rect(sx, sy, CELW, CELH, cmap);
                 }
-                else {
-                    V_pic(sx, sy, pic);
-                }
+              } else {
+                V_pic(sx, sy, pic);
+              }
             }
-
             p++;
         }
     }
