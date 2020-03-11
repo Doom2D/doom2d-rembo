@@ -29,6 +29,8 @@ enum{
   SW_LIFT
 };
 
+extern int sw_secrets;
+
 void SW_init(void);
 void SW_alloc(void);
 int SW_load(FILE*);

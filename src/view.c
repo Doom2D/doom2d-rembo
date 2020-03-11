@@ -153,61 +153,6 @@ void W_loadgame(FILE* h) {
   horiz = V_loadvgaimg(s);
 }
 
-void W_adjust(void) {
-  int MAXX =(FLDW*CELW-WD/2);//
-  int MAXY =(FLDH*CELH-HT/2);//
-
-  if(w_x<WD/2) w_x=WD/2;
-  if(w_y<HT/2) w_y=HT/2;
-  if(w_x>MAXX) w_x=MAXX;
-  if(w_y>MAXY) w_y=MAXY;
-}
-
-void W_draw(void) {
-  W_adjust();
-  V_setrect(0,WD,w_o+1,HT);
-  if(w_horiz) {
-
-
-      //V_pic(127-(word)(w_x-WD/2)*56U/(word)(MAXX-WD/2),w_o+123-(word)(w_y-HT/2)*28U/(word)(MAXY-HT/2),horiz);
-      vgaimg *img = (vgaimg*)horiz;
-      int x=0;
-      int d=0;
-      do {
-         int y=w_o;
-         d &= ~2;
-         do {
-             V_rotspr(x,y,img,d);
-             y+=img->h;
-             d^=2;
-         } while (y<HT+w_o);
-         x+=img->w;
-         d^=1;
-      } while (x<WD);
-
-
-
-    if(sky_type==2) if(lt_time<0) {
-      if(!lt_side) V_spr(0,w_o+lt_ypos,ltn[lt_type][(lt_time<-5)?0:1]);
-      else V_spr2(WD-1,w_o+lt_ypos,ltn[lt_type][(lt_time<-5)?0:1]);
-    }
-  }else V_clr(0,WD,w_o+1,HT,0x97);
-  Z_drawfld((byte *)fldb, 1);
-  DOT_draw();
-  IT_draw();
-  PL_draw(&pl1);
-  if(_2pl) PL_draw(&pl2);
-  MN_draw();
-  WP_draw();
-  SMK_draw();
-  FX_draw();
-  Z_drawfld((byte *)fldf, 0);
-  if(sky_type==2)
-    if(lt_time==-4 || lt_time==-2)
-      V_remap_rect(0,WD,w_o+1,HT,clrmap+256*11);
-}
-
-
 void W_init(void) {
   int i,j;
   static char *anm[ANIT-1][5]={

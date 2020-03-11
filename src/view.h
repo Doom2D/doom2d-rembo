@@ -67,7 +67,6 @@ typedef struct{
 
 #pragma pack()
 
-void W_draw(void);
 void W_act(void);
 
 void W_init(void);
