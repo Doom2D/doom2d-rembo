@@ -92,11 +92,9 @@ void M_unlock(void *p) {
 }
 
 int M_locked (int h) {
-  h&=-1-0x8000;
-  return (h != -1) && (h != 0xFFFF) && (resl[h] != 0);
+  return (h != -1) && (h != 0xFFFF) && (resl[h & (-1 - 0x8000)] != 0);
 }
 
 int M_was_locked (int h) {
-  h&=-1-0x8000;
-  return (h != -1) && (h != 0xFFFF) && (resp[h] != NULL);
+  return (h != -1) && (h != 0xFFFF) && (resp[h & (-1 - 0x8000)] != NULL);
 }
