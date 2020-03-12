@@ -37,18 +37,9 @@ void bfg_fly(int x,int y,int own);
 enum{NONE=0,ROCKET,PLASMA,APLASMA,BALL1,BALL2,BALL7,BFGBALL,BFGHIT,
      MANF,REVF,FIRE};
 
-#pragma pack(1)
-typedef struct{
-  obj_t o;
-  byte t,s;
-  int own;
-  short target;
-}weapon_t;
-#pragma pack()
+weapon_t wp[MAXWPN];
 
-static void *snd[14],*spr[49*2];
-static char sprd[49*2];
-static weapon_t wp[MAXWPN];
+static void *snd[14];
 
 static void throw(int,int,int,int,int,int,int,int);
 
@@ -112,59 +103,6 @@ void WP_alloc(void) {
 	"SPARK1",
 	"SPARK2"
   };
-
-  for(i=0;i<4;++i) {
-	spr[i*2]=Z_getspr("MISL",i,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("MISL",i,2,sprd+i*2+1);
-  }
-  for(;i<6;++i) {
-	spr[i*2]=Z_getspr("PLSS",i-4,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("PLSS",i-4,2,sprd+i*2+1);
-  }
-  for(;i<11;++i) {
-    spr[i*2]=Z_getspr("PLSE",i-6,1,sprd+i*2);
-    spr[i*2+1]=Z_getspr("PLSE",i-6,2,sprd+i*2+1);
-  }
-  for(;i<13;++i) {
-    spr[i*2]=Z_getspr("APLS",i-11,1,sprd+i*2);
-    spr[i*2+1]=Z_getspr("APLS",i-11,2,sprd+i*2+1);
-  }
-  for(;i<18;++i) {
-    spr[i*2]=Z_getspr("APBX",i-13,1,sprd+i*2);
-    spr[i*2+1]=Z_getspr("APBX",i-13,2,sprd+i*2+1);
-  }
-  for(;i<20;++i) {
-    spr[i*2]=Z_getspr("BFS1",i-18,1,sprd+i*2);
-    spr[i*2+1]=Z_getspr("BFS1",i-18,2,sprd+i*2+1);
-  }
-  for(;i<26;++i) {
-	spr[i*2]=Z_getspr("BFE1",i-20,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("BFE1",i-20,2,sprd+i*2+1);
-  }
-  for(;i<30;++i) {
-    spr[i*2]=Z_getspr("BFE2",i-26,1,sprd+i*2);
-    spr[i*2+1]=Z_getspr("BFE2",i-26,2,sprd+i*2+1);
-  }
-  for(;i<32;++i) {
-    spr[i*2]=Z_getspr("MISL",i-30+4,1,sprd+i*2);
-    spr[i*2+1]=Z_getspr("MISL",i-30+4,2,sprd+i*2+1);
-  }
-  for(;i<37;++i) {
-	spr[i*2]=Z_getspr("BAL1",i-32,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("BAL1",i-32,2,sprd+i*2+1);
-  }
-  for(;i<42;++i) {
-	spr[i*2]=Z_getspr("BAL7",i-37,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("BAL7",i-37,2,sprd+i*2+1);
-  }
-  for(;i<47;++i) {
-	spr[i*2]=Z_getspr("BAL2",i-42,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("BAL2",i-42,2,sprd+i*2+1);
-  }
-  for(;i<49;++i) {
-	spr[i*2]=Z_getspr("MANF",i-47,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("MANF",i-47,2,sprd+i*2+1);
-  }
   for(i=0;i<14;++i) snd[i]=Z_getsnd(nm[i]);
 }
 
@@ -251,48 +189,6 @@ void WP_act(void) {
 		break;
 	  default: break;
 	}
-  }
-}
-
-void WP_draw(void) {
-  int i,s,d,x,y;
-
-  for(i=0;i<MAXWPN;++i) {
-    s=-1;d=0;
-    switch(wp[i].t) {
-      case NONE: default: break;
-      case REVF:
-      case ROCKET:
-		if((d=wp[i].s)<2) {
-		  d=(wp[i].o.xv>0)?1:0;
-		  x=abs(wp[i].o.xv);y=wp[i].o.yv;s=0;
-		  if(y<0) {if(-y>=x) s=30;}
-		  else if(y>0) if(y>=x/2) s=31;
-		}else {s=(d-2)/2+1;d=0;}
-		break;
-	  case MANF:
-	    if((s=wp[i].s)>=2) {s/=2;break;}
-	  case PLASMA:
-	  case APLASMA:
-	  case BALL1:
-	  case BALL7:
-	  case BALL2:
-		if((s=wp[i].s)>=2) s=s/2+1;
-		switch(wp[i].t) {
-		  case PLASMA: s+=4;break;
-		  case APLASMA: s+=11;break;
-		  case BALL1: s+=32;break;
-		  case BALL2: s+=42;break;
-		  case BALL7: s+=37;d=(wp[i].o.xv>=0)?1:0;break;
-		  case MANF: s+=47;d=(wp[i].o.xv>=0)?1:0;break;
-		}break;
-	  case BFGBALL:
-		if((s=wp[i].s)>=2) s=s/2+1;
-		s+=18;break;
-	  case BFGHIT:
-		s=wp[i].s/2+26;break;
-    }
-    if(s>=0) Z_drawspr(wp[i].o.x,wp[i].o.y,spr[s*2+d],sprd[s*2+d]);
   }
 }
 

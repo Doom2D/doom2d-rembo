@@ -42,19 +42,13 @@
 
 extern byte z_dot;
 
-#pragma pack(1)
-typedef struct{
-  obj_t o;
-  byte c,t;
-}dot_t;
-#pragma pack()
-
 typedef struct{
   int xv,yv;
   byte c,t;
 }init_t;
 
-static dot_t dot[MAXDOT];
+dot_t dot[MAXDOT];
+
 static init_t bl_ini[MAXINI],sp_ini[MAXINI];
 static int bl_r,sp_r,sr_r,sxr[MAXSR],syr[MAXSR];
 static int ldot;
@@ -162,13 +156,6 @@ void DOT_act(void) {
     if(s&Z_HITCEIL) {dot[i].o.xv=0;dot[i].o.yv=(myrand(100))?-2:0;}
   }
   z_dot=0;
-}
-
-void DOT_draw(void) {
-  int i;
-
-  for(i=0;i<MAXDOT;++i)
-    if(dot[i].t) V_dot(dot[i].o.x-w_x+WD/2,dot[i].o.y-w_y+HT/2+1+w_o,dot[i].c);//if(dot[i].t) V_dot(dot[i].o.x-w_x+100,dot[i].o.y-w_y+50+w_o,dot[i].c);
 }
 
 void DOT_add(int x,int y,char xv,char yv,byte c,byte t) {

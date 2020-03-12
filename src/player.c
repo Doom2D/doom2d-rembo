@@ -45,7 +45,6 @@ extern int hit_xv,hit_yv;
 #define PL_SWUP 4
 #define PL_FLYUP 4
 
-#define PL_AIR 360
 #define PL_AQUA_AIR 1091
 
 byte p_immortal=0,p_fly=0;
@@ -63,12 +62,10 @@ static int aitime;
 static void *aisnd[3];
 static void *pdsnd[5];
 
-static void *spr[27*2],*snd[11];
-static char sprd[27*2];
-static void *wpn[11][6];
-static byte goanim[]="BDACDA",
-  dieanim[]="HHHHIIIIJJJJKKKKLLLLMMMM",
-  slopanim[]="OOPPQQRRSSTTUUVVWW";
+static void *snd[11];
+byte plr_goanim[]="BDACDA",
+  plr_dieanim[]="HHHHIIIIJJJJKKKKLLLLMMMM",
+  plr_slopanim[]="OOPPQQRRSSTTUUVVWW";
 
 
 #pragma pack(1)
@@ -317,17 +314,7 @@ void PL_alloc(void) {
 	"SAWHIT",
 	"PLFALL"
   };
-  static char s[6];
-
-  for(i=0;i<27;++i) {
-	spr[i*2]=Z_getspr("PLAY",i,1,sprd+i*2);
-	spr[i*2+1]=Z_getspr("PLAY",i,2,sprd+i*2+1);
-  }
-  memcpy(s,"PWPx",4);
-  for(i=1;i<11;++i) {
-    s[3]=((i<10)?'0':('A'-10))+i;
-    for(j=0;j<6;++j) wpn[i][j]=Z_getspr(s,j,1,NULL);
-  }
+  char s[6];
   for(i=0;i<11;++i) snd[i]=Z_getsnd(nm[i]);
   memcpy(s,"AIx",4);
   for(i=0;i<3;++i) {
@@ -603,12 +590,12 @@ void PL_act(player_t *p) {
   switch(p->st) {
     case DIE:
       p->o.h=7;
-      if(!dieanim[++p->s]) {p->st=DEAD;MN_killedp();}
+      if(!plr_dieanim[++p->s]) {p->st=DEAD;MN_killedp();}
       p->o.xv=Z_dec(p->o.xv,1);
       break;
     case SLOP:
       p->o.h=6;
-      if(!slopanim[++p->s]) {p->st=MESS;MN_killedp();}
+      if(!plr_slopanim[++p->s]) {p->st=MESS;MN_killedp();}
       p->o.xv=Z_dec(p->o.xv,1);
       break;
 	case GO:
@@ -659,56 +646,6 @@ void PL_act(player_t *p) {
   }
 }
 
-static int standspr(player_t *p) {
-  if(p->f&PLF_UP) return 'X';
-  if(p->f&PLF_DOWN) return 'Z';
-  return 'E';
-}
-
-static int wpnspr(player_t *p) {
-  if(p->f&PLF_UP) return 'C';
-  if(p->f&PLF_DOWN) return 'E';
-  return 'A';
-}
-
-void PL_draw(player_t *p) {
-  int s,w,wx,wy;
-  static int wytab[]={-1,-2,-1,0};
-
-  s='A';w=0;wx=wy=0;
-  switch(p->st) {
-    case STAND:
-      if(p->f&PLF_FIRE) {s=standspr(p)+1;w=wpnspr(p)+1;}
-      else if(p->pain) {s='G';w='A';wx=p->d?2:-2;wy=1;}
-      else {s=standspr(p);w=wpnspr(p);}
-      break;
-    case DEAD:
-      s='N';break;
-    case MESS:
-      s='W';break;
-    case GO:
-      if(p->pain) {s='G';w='A';wx=p->d?2:-2;wy=1;}
-      else {
-        s=goanim[p->s/8];w=(p->f&PLF_FIRE)?'B':'A';
-        wx=p->d?2:-2;wy=1+wytab[s-'A'];
-      }
-      break;
-    case DIE:
-      s=dieanim[p->s];break;
-    case SLOP:
-      s=slopanim[p->s];break;
-    case OUT:
-      s=0;break;
-  }
-  if(p->wpn==0) w=0;
-  if(w) Z_drawspr(p->o.x+wx,p->o.y+wy,wpn[p->wpn][w-'A'],p->d);
-  if(s) Z_drawmanspr(p->o.x,p->o.y,spr[(s-'A')*2+p->d],sprd[(s-'A')*2+p->d],p->color);
-}
-
-void *PL_getspr(int s,int d) {
-  return spr[(s-'A')*2+d];
-}
-
 static void chk_bfg(player_t *p,int x,int y) {
   int dx,dy;
 
@@ -729,35 +666,4 @@ void bfg_fly(int x,int y,int o) {
   if(o!=-1) chk_bfg(&pl1,x,y);
   if(_2pl) if(o!=-2) chk_bfg(&pl2,x,y);
   if(o==-1 || o==-2) MN_warning(x-50,y-50,x+50,y+50);
-}
-
-void PL_drawst(player_t *p) {
-  V_setrect(WD,120,w_o,HT);Z_clrst();
-  int i;
-
-  if(p->drawst&PL_DRAWAIR)
-      if (p->air<PL_AIR)//
-        Z_drawstair(p->air);
-  if(p->drawst&PL_DRAWLIFE)
-    Z_drawstprcnt(0,p->life);
-  if(p->drawst&PL_DRAWARMOR)
-    Z_drawstprcnt(1,p->armor);
-  if(p->drawst&PL_DRAWWPN) {
-    switch(p->wpn) {
-      case 2: case 5:
-	i=p->ammo;break;
-      case 3: case 4: case 9:
-	i=p->shel;break;
-      case 6:
-	i=p->rock;break;
-      case 10:
-	i=p->fuel;break;
-      case 7: case 8:
-	i=p->cell;break;
-    }
-    Z_drawstwpn(p->wpn,i);
-  }
-  if(p->drawst&PL_DRAWFRAG) Z_drawstnum(p->frag);
-  if(p->drawst&PL_DRAWKEYS) Z_drawstkeys(p->keys);
-  if(!_2pl) if(p->drawst&PL_DRAWLIVES) Z_drawstlives(p->lives);
 }

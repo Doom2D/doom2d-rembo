@@ -31,22 +31,11 @@
 
 #define MAXSR 20
 
-#define SMSN 10
-#define FLSN 8
+smoke_t sm[MAXSMOK];
 
-#pragma pack(1)
-typedef struct{
-  int x,y,xv,yv;
-  byte t,s;
-  short o;
-}smoke_t;
-#pragma pack()
-
-static smoke_t sm[MAXSMOK];
 static int sr_r,sxr[MAXSR],syr[MAXSR];
 static int lsm;
 
-static void *spr[SMSN],*fspr[FLSN];
 static void *burnsnd;
 static int burntm=0;
 
@@ -99,10 +88,7 @@ void SMK_init(void) {
 
 void SMK_alloc(void) {
   int i;
-
   burnsnd=Z_getsnd("BURN");
-  for(i=0;i<SMSN;++i) spr[i]=Z_getspr("SMOK",i,0,NULL);
-  for(i=0;i<FLSN;++i) fspr[i]=Z_getspr("FLAM",i,0,NULL);
   for(i=0;i<MAXSR;++i) {
     sxr[i]=myrand(256*2+1)-256;
     syr[i]=myrand(256*2+1)-256;
@@ -155,21 +141,6 @@ void SMK_act(void) {
       }
     }
     --sm[i].t;
-  }
-}
-
-void SMK_draw(void) {
-  int i,s;
-
-  for(i=0;i<MAXSMOK;++i) if(sm[i].t) switch(sm[i].s) {
-    case 0:
-      if((s=sm[i].t)>=(SMSN-1)*3) s=0; else s=SMSN-1-s/3;
-      V_sprf((sm[i].x>>8)-w_x+WD/2,(sm[i].y>>8)-w_y+HT/2+1+w_o,spr[s],&smoke_sprf);//V_sprf((sm[i].x>>8)-w_x+100,(sm[i].y>>8)-w_y+50+w_o,spr[s],&smoke_sprf);
-      break;
-    case 1:
-      if((s=sm[i].t)>=(FLSN-1)) s=0; else s=FLSN-1-s;
-      V_sprf((sm[i].x>>8)-w_x+WD/2,(sm[i].y>>8)-w_y+HT/2+1+w_o,fspr[s],&flame_sprf);//V_sprf((sm[i].x>>8)-w_x+100,(sm[i].y>>8)-w_y+50+w_o,fspr[s],&flame_sprf);
-      break;
   }
 }
 

@@ -29,11 +29,25 @@ typedef struct{
   byte *t;
 }menu_t;
 
+extern menu_t save_mnu;
+
+extern byte *panimp;
+
+#define PCOLORN 10
+extern byte pcolortab[PCOLORN];
+extern int p1color;
+extern int p2color;
+
+extern char ibuf[24];
+extern byte input;
+
+extern menu_t *mnu;
+extern byte gm_redraw;
+
 void GMV_say(char *);
 void GMV_stop(void);
 
 void GM_init(void);
 int GM_act(void);
-int GM_draw(void);
 
 void G_code(void);

@@ -173,8 +173,8 @@ void load_game(int n) {
   set_trans(GS_GAME);
   V_setscr((g_trans)?fx_scr2:scrbuf);V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
   V_clr(0,SCRW,0,SCRH,0);//V_clr(0,320,0,200,0);
-  if(_2pl) {w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {w_o=0;Z_clrst();w_o=100;Z_clrst();}
-  else {w_o=0;Z_clrst();}//else {w_o=50;Z_clrst();}
+//  if(_2pl) {w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {w_o=0;Z_clrst();w_o=100;Z_clrst();}
+//  else {w_o=0;Z_clrst();}//else {w_o=50;Z_clrst();}
   V_setscr(scrbuf);
   pl1.drawst=0xFF;
   if(_2pl) pl2.drawst=0xFF;
@@ -195,8 +195,8 @@ void G_start(void) {
   set_trans(GS_GAME);
   V_setscr((g_trans)?fx_scr2:scrbuf);V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
   V_clr(0,SCRW,0,SCRH,0);//V_clr(0,320,0,200,0);
-  if(_2pl) {w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {w_o=0;Z_clrst();w_o=100;Z_clrst();}
-  else {w_o=0;Z_clrst();}//else {w_o=50;Z_clrst();}
+//  if(_2pl) {w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {w_o=0;Z_clrst();w_o=100;Z_clrst();}
+//  else {w_o=0;Z_clrst();}//else {w_o=50;Z_clrst();}
   V_setscr(scrbuf);
   pl1.drawst=0xFF;
   if(_2pl) pl2.drawst=0xFF;
@@ -224,15 +224,6 @@ void G_init(void) {
   logo("G_init: настройка ресурсов игры ");
   logo_gas(5,GGAS_TOTAL);
   telepsnd=Z_getsnd("TELEPT");
-  scrnh[0]=V_loadvgaimg("TITLEPIC");
-  scrnh[1]=V_loadvgaimg("INTERPIC");
-  scrnh[2]=V_loadvgaimg("ENDPIC");
-  cd_scr=V_loadvgaimg("CD1PIC");
-  for(i=0;i<2;++i) {
-    sprintf(s,"LTN%c",i+'1');
-    for(j=0;j<2;++j)
-      ltn[i][j]=Z_getspr(s,j,0,NULL);
-  }
   ltnsnd[0]=Z_getsnd("THUND1");
   ltnsnd[1]=Z_getsnd("THUND2");
   DOT_alloc();

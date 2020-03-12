@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
   F_loadres(F_getresid("MIXMAP"),mixmap,0,0x10000);
   F_loadres(F_getresid("COLORMAP"),clrmap,0,256*12);
   G_init();
+  R_alloc();
   K_init();
   logo("S_init: настройка звука\n");
   S_init();

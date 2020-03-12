@@ -46,6 +46,7 @@
 #define PLF_UP    4
 #define PLF_DOWN  8
 
+#define PL_AIR 360
 #define PL_POWERUP_TIME 546
 
 #pragma pack(1)
@@ -73,21 +74,20 @@ typedef struct{
 }player_t;
 #pragma pack()
 
+extern byte plr_goanim[], plr_dieanim[], plr_slopanim[];
+
+extern byte p_immortal;
+extern player_t pl1, pl2;
+
 void PL_init(void);
 void PL_alloc(void);
 void PL_spawn(player_t *,int,int,char);
 int PL_hit(player_t *,int,int,int);
 int PL_isdead(player_t *);
 void PL_act(player_t *);
-void PL_draw(player_t *);
-void PL_drawst(player_t *);
 void PL_cry(player_t *);
 void PL_damage(player_t *);
 int PL_give(player_t *,int);
 void G_respawn_player(player_t *);
 
 void PL_reset(void);
-void *PL_getspr(int c,int d);
-
-extern byte p_immortal;
-extern player_t pl1,pl2;
