@@ -40,16 +40,13 @@
 
 #define MAX_YV 30
 
-#define MAXAIR 1091
-
 extern dword walf[256];
 
 byte z_dot=0;
 
 extern void *walp[256];
 
-static void *sth[22],*bfh[160-'!'],*sfh[160-'!'],*bulsnd[2],*stone, *stone2, *keys[3];
-static int prx=0,pry=0;
+static void *bulsnd[2];
 
 int Z_sign(int a) {
   if(a>0) return 1;
@@ -62,15 +59,6 @@ int Z_dec(int a,int b) {
   if(a>0) return a-b;
   if(a<0) return a+b;
   return 0;
-}
-
-void *Z_getspr(char n[4],int s,int d,char *dir) {
-  int h;
-
-  h=F_getsprid(n,s,d);
-  if(dir) *dir=(h&0x8000)?1:0;
-  //return M_lock(h);
-  return V_getvgaimg(h);
 }
 
 void *Z_getsnd(char n[6]) {
@@ -103,200 +91,8 @@ int Z_sound(void *s,int v) {
 #define GAS_TOTAL (MN__LAST-MN_DEMON+16+10)
 
 void Z_initst(void) {
-  int i;
-  char s[10];
-  static char nm[22][8]={
-	"STTNUM0","STTNUM1","STTNUM2","STTNUM3","STTNUM4",
-	"STTNUM5","STTNUM6","STTNUM7","STTNUM8","STTNUM9",
-	"STTMINUS","STTPRCNT",
-	"FISTA0","CSAWA0","PISTA0","SHOTA0","SGN2A0","MGUNA0","LAUNA0",
-	"PLASA0","BFUGA0","GUN2A0"
-  };
-
-  stone=V_loadvgaimg("STONE");
-  stone2=V_loadvgaimg("STONE2");
-  keys[0]=V_loadvgaimg("KEYRA0");
-  keys[1]=V_loadvgaimg("KEYGA0");
-  keys[2]=V_loadvgaimg("KEYBA0");
-  for(i=0;i<22;++i)
-    sth[i]=V_loadvgaimg(nm[i]);
-  strcpy(s,"STBF_*");
-  for(i='!';i<160;++i) {
-	s[5]=i;
-	bfh[i-'!']=V_getvgaimg(F_findres(s));
-	if(!(i&15)) logo_gas(GAS_START+((i-'!')>>4),GAS_TOTAL);
-  }
-  for(i='!';i<160;++i) {
-	sprintf(s,"STCFN%03d",i);
-	sfh[i-'!']=V_getvgaimg(F_findres(s));
-	if(!(i&15)) logo_gas(GAS_START+8+((i-'!')>>4),GAS_TOTAL);
-  }
-  strcpy(s,"WINUM*");
-  for(i='0';i<='9';++i) {
-	s[5]=i;
-	bfh[i-'!']=V_loadvgaimg(s);
-  }
-  bfh[':'-'!']=V_loadvgaimg("WICOLON");
   bulsnd[0]=Z_getsnd("BUL1");
   bulsnd[1]=Z_getsnd("BUL2");
-}
-
-void Z_putbfch(int c) {
-  vgaimg *p;
-
-  if(c>32 && c<160) p=bfh[c-'!']; else p=NULL;
-  if(p) {
-    V_spr(prx,pry,p);
-    prx+=p->w-1;
-  }else prx+=12;
-}
-
-void Z_putsfch(int c) {
-  vgaimg *p;
-
-  if(c>32 && c<160) p=sfh[c-'!']; else p=NULL;
-  if(p) {
-    V_spr(prx,pry,p);
-    prx+=p->w-1;
-  }else prx+=7;
-}
-
-void Z_gotoxy(int x,int y) {prx=x;pry=y;}
-
-void Z_printbf(char *s,...) {
-  int i;
-  va_list ap;
-  char buf[80];
-
-  va_start(ap,s);
-  vsprintf(buf,s,ap);
-  va_end(ap);
-  for(i=0;buf[i];++i) switch(buf[i]) {
-	case '\n':
-	  pry+=13;
-	case '\r':
-	  prx=0;break;
-	default:
-	  Z_putbfch((byte)buf[i]);
-  }
-}
-
-void Z_printsf(char *s,...) {
-  int i;
-  va_list ap;
-  char buf[80];
-
-  va_start(ap,s);
-  vsprintf(buf,s,ap);
-  va_end(ap);
-  for(i=0;buf[i];++i) switch(buf[i]) {
-	case '\n':
-	  pry+=8;
-	case '\r':
-	  prx=0;break;
-	default:
-	  Z_putsfch((byte)buf[i]);
-  }
-}
-
-void Z_drawspr(int x,int y,void *p,char d) {
-  if(d) V_spr2(x-w_x+WD/2,y-w_y+HT/2+1+w_o,p);//if(d) V_spr2(x-w_x+100,y-w_y+HT/2+1+w_o,p);
-    else V_spr(x-w_x+WD/2,y-w_y+HT/2+1+w_o,p);//else V_spr(x-w_x+100,y-w_y+HT/2+1+w_o,p);
-}
-
-void Z_clrst(void) {
-  V_pic(SCRW-120,w_o,stone);//V_pic(200,w_o,stone);
-  int y = ((vgaimg*)stone)->h;
-  while (y<HT) {
-    V_pic(SCRW-120,w_o+y,stone2);
-    y+=((vgaimg*)stone)->h;
-  }
-}
-
-
-void Z_drawstlives(char n) {
-  V_setrect(SCRW-40,30,w_o,40);Z_clrst();//V_setrect(280,30,w_o,40);Z_clrst();
-  V_spr(SCRW-35,w_o+17,sth[n]);//V_spr(285,w_o+17,sth[n]);
-}
-
-void Z_drawstkeys(byte k) {
-  int x,n;
-
-  V_setrect(SCRW-120,70,w_o+77,23);Z_clrst();//V_setrect(200,70,w_o+77,23);Z_clrst();
-  for(k>>=4,n=0,x=SCRW-75;n<3;++n,k>>=1,x+=9)//for(k>>=4,n=0,x=245;n<3;++n,k>>=1,x+=9)
-    if(k&1) V_spr(x,w_o+91,keys[n]);
-}
-
-void Z_drawstair(int a) {
-  V_setrect(SCRW-120,120,w_o+49,2);Z_clrst();//V_setrect(200,120,w_o+49,2);Z_clrst();
-  if(a<=0) return;
-  if(a>MAXAIR) a=MAXAIR;
-  a=a*100/MAXAIR;
-  if(!a) return;
-  V_clr(SCRW-110,a,w_o+49,2,0xC8);//V_clr(210,a,w_o+49,2,0xC8);
-}
-
-void Z_drawstprcnt(int y,int n) {
-  char s[20];
-  int l,i,x,c;
-
-  V_setrect(SCRW-120,70,y*19+7+w_o,19);Z_clrst();//V_setrect(200,70,y*19+7+w_o,19);Z_clrst();
-  sprintf(s,"%3d%%",n);
-  l=strlen(s);x=SCRW-110;//l=strlen(s);x=210;
-  for(i=0;i<l;++i,x+=14) {
-    if(s[i]>='0' && s[i]<='9') c=s[i]-'0';
-    else if(s[i]=='-') c=10;
-    else if(s[i]=='%') c=11;
-    else c=-1;
-    if(c>=0)
-      V_spr(x,y*19+7+w_o,sth[c]);
-  }
-}
-
-void Z_drawstnum(int n) {
-  char s[20];
-  int l,i,x,c;
-
-  V_setrect(SCRW-50,50,w_o+77,23);Z_clrst();//V_setrect(270,50,w_o+77,23);Z_clrst();
-  if(!g_dm) return;
-  sprintf(s,"%d",n);
-  l=strlen(s);x=(115-l*14)+SCRW-120;//l=strlen(s);x=(115-l*14)+200;
-  for(i=0;i<l;++i,x+=14) {
-    if(s[i]>='0' && s[i]<='9') c=s[i]-'0';
-    else if(s[i]=='-') c=10;
-    else if(s[i]=='%') c=11;
-    else c=-1;
-    if(c>=0)
-      V_spr(x,w_o+77+5,sth[c]);
-  }
-}
-
-void Z_drawstwpn(int n,int a) {
-  char s[20];
-  int l,i,x,c;
-
-  i=n;
-  V_setrect(SCRW-120,120,w_o+58,23);Z_clrst();//V_setrect(200,120,w_o+58,23);Z_clrst();
-  if(i>=0) V_spr(SCRW-88,w_o+58+19,sth[i+12]);//if(i>=0) V_spr(232,w_o+58+19,sth[i+12]);
-  if(n>=2) {
-	sprintf(s,"%d",a);
-	l=strlen(s);x=SCRW-10-l*14;//l=strlen(s);x=310-l*14;
-    for(i=0;i<l;++i,x+=14) {
-      if(s[i]>='0' && s[i]<='9') c=s[i]-'0';
-      else if(s[i]=='-') c=10;
-      else if(s[i]=='%') c=11;
-      else c=-1;
-      if(c>=0)
-	V_spr(x,w_o+58+2,sth[c]);
-    }
-  }
-}
-
-
-
-void Z_drawmanspr(int x,int y,void *p,char d,byte color) {
-  if(d) V_manspr2(x-w_x+WD/2,y-w_y+HT/2+1+w_o,p,color);//if(d) V_manspr2(x-w_x+100,y-w_y+HT/2+1+w_o,p,color);
-    else V_manspr(x-w_x+WD/2,y-w_y+HT/2+1+w_o,p,color);//else V_manspr(x-w_x+100,y-w_y+HT/2+1+w_o,p,color);
 }
 
 int Z_canstand(int x,int y,int r) {

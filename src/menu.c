@@ -54,16 +54,15 @@ void load_game(int);
 
 static byte panim[]=
   "BBDDAACCDDAABBDDAACCDDAABBDDAACCDDAAEEEEEFEFEFEFEFEFEFEFEFEFEEEEE";
-static byte *panimp=panim;
+byte *panimp=panim;
 
-#define PCOLORN 10
 byte pcolortab[PCOLORN]={
   0x18,0x20,0x40,0x58,0x60,0x70,0x80,0xB0,0xC0,0xD0
 };
 int p1color=5,p2color=4;
 
-static char ibuf[24];
-static byte input=0;
+char ibuf[24];
+byte input=0;
 static int icur;
 
 enum{MENU,MSG};
@@ -115,7 +114,7 @@ static byte main_typ[]={
   SAVE,SAVE,SAVE,SAVE,SAVE,SAVE,SAVE
 };
 
-static menu_t main_mnu={
+menu_t main_mnu={
   MENU,5,0,80,"MENU",main_txt,main_typ
 },opt_mnu={
   MENU,5,0,75,"OPTIONS",opt_txt,opt_typ
@@ -145,14 +144,12 @@ static menu_t main_mnu={
 
 static menu_t *qmsg[3]={&quit1_msg,&quit2_msg,&quit3_msg};
 
-static menu_t *mnu=NULL;
+menu_t *mnu=NULL;
+byte gm_redraw=0;
 
-static byte gm_redraw=0;
-static int gm_tm=0;
 short lastkey=0;
 static void *csnd1,*csnd2,*msnd1,*msnd2,*msnd3,*msnd4,*msnd5,*msnd6;
 static int movsndt=0;
-static vgaimg *msklh[2],*mbarl,*mbarm,*mbarr,*mbaro,*mslotl,*mslotm,*mslotr;
 static byte cbuf[32];
 
 static snd_t *voc=NULL;
@@ -574,69 +571,5 @@ void GM_init(void) {
   msnd4=Z_getsnd("SWTCHX");
   msnd5=Z_getsnd("SUDI");
   msnd6=Z_getsnd("TUDI");
-  msklh[0]=V_loadvgaimg("M_SKULL1");
-//  msklh[0]=load_vga("vga\\spr.vga","M_SKULL1");
-  msklh[1]=V_loadvgaimg("M_SKULL2");
-  mbarl=V_loadvgaimg("M_THERML");
-  mbarm=V_loadvgaimg("M_THERMM");
-  mbarr=V_loadvgaimg("M_THERMR");
-  mbaro=V_loadvgaimg("M_THERMO");
-  mslotl=V_loadvgaimg("M_LSLEFT");
-  mslotm=V_loadvgaimg("M_LSCNTR");
-  mslotr=V_loadvgaimg("M_LSRGHT");
   K_setkeyproc(G_keyf);
-}
-
-int GM_draw(void) {
-  int i,j,k,y;
-
-  ++gm_tm;
-  V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
-  if(!mnu && !gm_redraw) return 0;
-  gm_redraw=0;
-  if(!mnu) return 1;
-  if(mnu->type==MENU) {
-    y=(200-mnu->n*16-20)/2;
-    Z_gotoxy(mnu->x,y-10);Z_printbf(mnu->ttl);
-    for(i=0;i<mnu->n;++i) {
-	  if(mnu->t[i]==LOAD || mnu->t[i]==SAVE) {
-		V_spr(mnu->x,j=y+i*16+29,mslotl);
-		for(k=8;k<184;k+=8)
-		  V_spr(mnu->x+k,j,mslotm);
-		V_spr(mnu->x+184,j,mslotr);
-		Z_gotoxy(mnu->x+4,j-8);
-		if(input && i==save_mnu.cur) Z_printsf("%s_",ibuf);
-		else Z_printsf("%s",savname[i]);
-	  }else{
-	    Z_gotoxy(mnu->x+((mnu->t[i]>=SVOLM)?((mnu->t[i]>=PL1CM)?50:152):0),y+i*16+20);
-	    Z_printbf(mnu->m[i]);
-	  }
-	  if(mnu->t[i]==MUSIC) {
-	    Z_printbf(" '%.8s'",g_music);
-	  }else if(mnu->t[i]==INTERP) {
-	    Z_printbf("%s",fullscreen?"ON":"OFF");
-	  }else if(mnu->t[i]>=PL1CM) {
-	    V_manspr(mnu->x+((mnu->t[i]==PL1CM)?15:35),y+i*16+20+14,
-	      PL_getspr(*panimp,0),
-	      pcolortab[(mnu->t[i]==PL1CM)?p1color:p2color]
-	    );
-	  }else if(mnu->t[i]>=SVOLM) {
-		V_spr(mnu->x,j=y+i*16+20,mbarl);
-		for(k=8;k<144;k+=8)
-		  V_spr(mnu->x+k,j,mbarm);
-		V_spr(mnu->x+144,j,mbarr);
-		switch(mnu->t[i]) {
-		  case SVOLM: k=snd_vol;break;
-		  case MVOLM: k=mus_vol;break;
-		  case GAMMAM: k=gammaa<<5;break;
-		}
-		V_spr(mnu->x+8+k,j,mbaro);
-	  }
-    }
-    V_spr(mnu->x-25,y+mnu->cur*16+20-8,msklh[(gm_tm/6)&1]);
-  }else{
-    Z_gotoxy((320-strlen(mnu->ttl)*7)/2,90);Z_printsf(mnu->ttl);
-    Z_gotoxy(136,100);Z_printsf("(Y/N)");
-  }
-  return 1;
 }

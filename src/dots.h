@@ -23,10 +23,18 @@
 
 #define MAXDOT 400
 
+#pragma pack(1)
+typedef struct{
+  obj_t o;
+  byte c,t;
+}dot_t;
+#pragma pack()
+
+extern dot_t dot[MAXDOT];
+
 void DOT_init(void);
 void DOT_alloc(void);
 void DOT_act(void);
-void DOT_draw(void);
 void DOT_add(int x,int y,char xv,char yv,byte color,byte time);
 void DOT_blood(int,int,int,int,int);
 void DOT_spark(int,int,int,int,int);

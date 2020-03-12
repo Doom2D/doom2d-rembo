@@ -31,16 +31,9 @@
 
 enum{NONE,TFOG,IFOG,BUBL};
 
-#pragma pack(1)
-typedef struct{
-  int x,y,xv,yv;
-  char t,s;
-}fx_t;
-#pragma pack()
+fx_t fx[MAXFX];
 
-static void *spr[15],*bsnd[2];
-static char sprd[15];
-static fx_t fx[MAXFX];
+static void *bsnd[2];
 static char bubsn;
 static int last;
 
@@ -139,10 +132,6 @@ void FX_loadgame (FILE *h) {
 }
 
 void FX_alloc(void) {
-  int i;
-
-  for(i=0;i<10;++i) spr[i]=Z_getspr("TFOG",i,0,sprd+i);
-  for(;i<15;++i) spr[i]=Z_getspr("IFOG",i-10,0,sprd+i);
   bsnd[0]=Z_getsnd("BUBL1");
   bsnd[1]=Z_getsnd("BUBL2");
   init_fx1sin();
@@ -175,22 +164,6 @@ void FX_act(void) {
       fx[i].y+=fx[i].yv;
       if((b=fld[fx[i].y>>11][fx[i].x>>11]) < 5 || b>7) fx[i].t=0;
       break;
-  }
-}
-
-void FX_draw(void) {
-  int i,s;
-
-  for(i=0;i<MAXFX;++i) {
-    s=-1;
-    switch(fx[i].t) {
-      case TFOG: s=fx[i].s/2;break;
-	  case IFOG: s=fx[i].s/2+10;break;
-	  case BUBL:
-		V_dot((fx[i].x>>8)-w_x+WD/2,(fx[i].y>>8)-w_y+HT/2+1+w_o,0xC0+fx[i].s);//V_dot((fx[i].x>>8)-w_x+100,(fx[i].y>>8)-w_y+50+w_o,0xC0+fx[i].s);
-		continue;
-    }
-    if(s>=0) Z_drawspr(fx[i].x,fx[i].y,spr[s],sprd[s]);
   }
 }
 

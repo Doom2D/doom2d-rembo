@@ -35,18 +35,10 @@
 
 extern map_block_t blk;
 
-#pragma pack(1)
-typedef struct{
-  obj_t o;
-  int t;
-  int s;
-}item_t;
-#pragma pack()
+item_t it[MAXITEM];
 
-static void *snd[4],*spr[58];
-static char sprd[58];
+static void *snd[4];
 static int tsndtm,rsndtm;
-static item_t it[MAXITEM];
 
 int itm_rtime=1092;
 
@@ -90,40 +82,18 @@ void IT_loadgame (FILE *h) {
   itm_rtime = myfread32(h);
 }
 
-void IT_alloc(void) {
-  int i,j,n;
-  static char nm[][6]={
-    "ITEMUP","WPNUP","GETPOW","ITMBK"
-  },snm[][4]={
-	"CLIP","SHEL","ROCK","CELL","AMMO","SBOX","BROK","CELP",
-	"STIM","MEDI","BPAK",
-	"CSAW","SHOT","SGN2","MGUN","LAUN","PLAS","BFUG"
-  },n4[][4]={
-    "SOUL","SMRT","SMGT","SMBT"
-  },n3[][4]={
-    "GOR1","FCAN"
+void IT_alloc (void) {
+  int i, j, n;
+  static char nm[][6] = {
+    "ITEMUP", "WPNUP", "GETPOW", "ITMBK"
   };
-
-//  logo("  items");
-  for(i=0;i<18;++i) spr[i]=Z_getspr(snm[i],0,0,sprd+i);
-  for(;i<20;++i) {
-	spr[i]=Z_getspr("ARM1",i-18,0,sprd+i);
-	spr[i+2]=Z_getspr("ARM2",i-18,0,sprd+i);
-  }i+=2;
-  for(;i<26;++i) spr[i]=Z_getspr("MEGA",i-22,0,sprd+i);
-  for(;i<30;++i) spr[i]=Z_getspr("PINV",i-26,0,sprd+i);
-  spr[30]=Z_getspr("AQUA",0,0,sprd+30);
-  spr[31]=Z_getspr("KEYR",0,0,sprd+31);
-  spr[32]=Z_getspr("KEYG",0,0,sprd+32);
-  spr[33]=Z_getspr("KEYB",0,0,sprd+33);
-  spr[34]=Z_getspr("SUIT",0,0,sprd+34);
-  for(n=35,j=0;j<4;++j)
-    for(i=0;i<4;++i,++n) spr[n]=Z_getspr(n4[j],i,0,sprd+n);
-  for(j=0;j<2;++j)
-    for(i=0;i<3;++i,++n) spr[n]=Z_getspr(n3[j],i,0,sprd+n);
-  spr[57]=Z_getspr("GUN2",0,0,sprd+57);
-  for(i=0;i<4;++i) snd[i]=Z_getsnd(nm[i]);
-  for(i=0;i<MAXITEM;++i) {it[i].o.r=10;it[i].o.h=8;}
+  for (i = 0; i < 4; ++i) {
+    snd[i] = Z_getsnd(nm[i]);
+  }
+  for (i = 0; i < MAXITEM; ++i) {
+    it[i].o.r = 10;
+    it[i].o.h = 8;
+  }
 }
 
 void IT_init(void) {
@@ -279,36 +249,6 @@ void IT_act(void) {
 		  continue;
 		}
 	}
-}
-
-void IT_draw(void) {
-  int i,s;
-
-  for(i=0;i<MAXITEM;++i) {
-    s=-1;
-    if(it[i].t && it[i].s>=0) switch(it[i].t&0x7FFF) {
-          case I_ARM1:
-		s=it[i].s/9+18;break;
-	  case I_ARM2:
-		s=it[i].s/9+20;break;
-	  case I_MEGA:
-		s=it[i].s/2+22;break;
-	  case I_INVL:
-		s=it[i].s/2+26;break;
-	  case I_SUPER: case I_RTORCH: case I_GTORCH: case I_BTORCH:
-		s=it[i].s/2+(it[i].t-I_SUPER)*4+35;break;
-	  case I_GOR1: case I_FCAN:
-		s=it[i].s/2+(it[i].t-I_GOR1)*3+51;break;
-	  case I_AQUA: s=30;break;
-	  case I_SUIT: s=34;break;
-	  case I_KEYR: case I_KEYG: case I_KEYB:
-	    s=(it[i].t&0x7FFF)-I_KEYR+31;break;
-	  case I_GUN2: s=57;break;
-	  default:
-		s=(it[i].t&0x7FFF)-1;
-    }
-	if(s>=0) Z_drawspr(it[i].o.x,it[i].o.y,spr[s],sprd[s]);
-  }
 }
 
 void IT_spawn(int x,int y,int t) {

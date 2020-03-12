@@ -38,29 +38,13 @@
 #include "smoke.h"
 #include "my.h"
 
-#define MANCOLOR 0xD0
-
 #define MAX_ATM 90
-
-#define MN_TN (MN__LAST-MN_DEMON)
 
 extern byte z_mon;
 
 enum{
   SLEEP,GO,RUN,CLIMB,DIE,DEAD,ATTACK,SHOOT,PAIN,WAIT,REVIVE,RUNOUT
 };
-
-#pragma pack(1)
-typedef struct{
-  obj_t o;
-  byte t,d,st,ftime;
-  int fobj;
-  int s;
-  char *ap;
-  int aim,life,pain,ac,tx,ty,ammo;
-  short atm;
-}mn_t;
-#pragma pack(0)
 
 typedef struct{
   int r,h,l,mp,rv,jv,sp,minp;
@@ -105,13 +89,12 @@ static char *sleepanim[MN_TN]={
 };
 
 int hit_xv,hit_yv;
+mn_t mn[MAXMN];
 
-static void *spr[MN_TN][29*2],*fspr[8],*fsnd,*pauksnd,*trupsnd,*sgun[2];
-static char sprd[MN_TN][29*2];
+static void *fsnd,*pauksnd,*trupsnd;
 static void *snd[MN_TN][5],*impsitsnd[2],*impdthsnd[2],*firsnd,*slopsnd,*gsnd[4];
-static void *swgsnd,*pchsnd,*pl_spr[2],*telesnd;
+static void *swgsnd,*pchsnd,*telesnd;
 static void *positsnd[3],*podthsnd[3];
-static mn_t mn[MAXMN];
 static int mnum,gsndt;
 static mnsz_t mnsz[MN_TN+1]={
 //rad  ht  life  pain rv jv  slop min_pn
@@ -242,30 +225,16 @@ void MN_alloc(void) {
 	{"","","","","BAREXP"},
 	{"BSPACT","","BSPWLK","BSPSIT","BSPDTH"},
 	{"HAHA1","PLPAIN","","STOP1","PDIEHI"}
-  },msn[MN_TN][4]={
-	"SARG","TROO","POSS","SPOS","CYBR","CPOS","BOSS","BOS2","HEAD","SKUL",
-	"PAIN","SPID","BSPI","FATT","SKEL","VILE","FISH","BAR1","ROBO","PLAY"
   };
   static char gsn[6]="GOOD0";
-  static int mms[MN_TN]={
-	14*2,21*2,21*2,21*2,16*2,20*2,15*2,15*2,12*2,11*2,13*2,19*2,16*2,
-	20*2,17*2,29*2,6*2,2*2,17*2,23*2
-  };
-
-  sgun[0]=Z_getspr("PWP4",0,1,NULL);
-  sgun[1]=Z_getspr("PWP4",1,1,NULL);
   for(j=0;j<MN_TN;++j) {
-    for(i=0;i<mms[j];++i) spr[j][i]=Z_getspr(msn[j],i/2,(i&1)+1,&sprd[j][i]);
-    if(j==MN_BARREL-1)
-      for(i=4;i<14;++i) spr[j][i]=Z_getspr("BEXP",i/2-2,(i&1)+1,&sprd[j][i]);
     for(i=0;i<5;++i)
-      if(sn[j][i][0]) snd[j][i]=Z_getsnd(sn[j][i]);
-	else snd[j][i]=NULL;
+      if(sn[j][i][0])
+        snd[j][i]=Z_getsnd(sn[j][i]);
+      else
+        snd[j][i]=NULL;
     logo_gas(j+5,GGAS_TOTAL);
   }
-  for(i=0;i<8;++i) fspr[i]=Z_getspr("FIRE",i,0,NULL);
-  pl_spr[0]=Z_getspr("PLAY",'N'-'A',0,NULL);
-  pl_spr[1]=Z_getspr("PLAY",'W'-'A',0,NULL);
   impsitsnd[0]=Z_getsnd("BGSIT1");
   impsitsnd[1]=Z_getsnd("BGSIT2");
   impdthsnd[0]=Z_getsnd("BGDTH1");
@@ -819,34 +788,6 @@ void MN_act(void) {
 void MN_mark(void) {
   int i;
   for(i=0;i<MAXMN;++i) if(mn[i].t!=0) BM_mark(&mn[i].o,BM_MONSTER);
-}
-
-void MN_draw(void) {
-  int i;
-
-  for(i=0;i<MAXMN;++i) if(mn[i].t) {
-
-	if(mn[i].t>=MN_PL_DEAD) {
-	  Z_drawmanspr(mn[i].o.x,mn[i].o.y,pl_spr[mn[i].t-MN_PL_DEAD],0,mn[i].d);
-	  continue;
-	}
-	if((mn[i].t!=MN_SOUL && mn[i].t!=MN_PAIN) || mn[i].st!=DEAD) {
-	  if(mn[i].t!=MN_MAN)
-	    Z_drawspr(mn[i].o.x,mn[i].o.y,
-		spr[mn[i].t-1][(mn[i].ap[mn[i].ac]-'A')*2+mn[i].d],
-		sprd[mn[i].t-1][(mn[i].ap[mn[i].ac]-'A')*2+mn[i].d]);
-	  else{
-	    if(mn[i].ap[mn[i].ac]=='E' || mn[i].ap[mn[i].ac]=='F')
-	      Z_drawspr(mn[i].o.x,mn[i].o.y,sgun[mn[i].ap[mn[i].ac]-'E'],mn[i].d);
-	    Z_drawmanspr(mn[i].o.x,mn[i].o.y,
-		spr[mn[i].t-1][(mn[i].ap[mn[i].ac]-'A')*2+mn[i].d],
-		sprd[mn[i].t-1][(mn[i].ap[mn[i].ac]-'A')*2+mn[i].d],MANCOLOR);
-	  }
-	}
-	if(mn[i].t==MN_VILE && mn[i].st==SHOOT) {
-	  Z_drawspr(mn[i].tx,mn[i].ty,fspr[mn[i].ac/3],0);
-        }
-  }
 }
 
 int MN_hit(int n,int d,int o,int t) {

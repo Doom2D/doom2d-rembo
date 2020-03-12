@@ -31,13 +31,28 @@ enum{
   MN_PL_DEAD=100,MN_PL_MESS
 };
 
+#define MN_TN (MN__LAST-MN_DEMON)
+
+#pragma pack(1)
+typedef struct{
+  obj_t o;
+  byte t,d,st,ftime;
+  int fobj;
+  int s;
+  char *ap;
+  int aim,life,pain,ac,tx,ty,ammo;
+  short atm;
+}mn_t;
+#pragma pack(0)
+
+extern mn_t mn[MAXMN];
+
 void MN_init(void);
 void MN_alloc(void);
 int MN_spawn(int,int,byte,int);
 int MN_spawn_deadpl(obj_t *,byte,int);
 void MN_act(void);
 void MN_mark(void);
-void MN_draw(void);
 void MN_warning(int l,int t,int r,int b);
 
 void MN_killedp(void);

@@ -31,11 +31,20 @@ enum{I_NONE,I_CLIP,I_SHEL,I_ROCKET,I_CELL,I_AMMO,I_SBOX,I_RBOX,I_CELP,
   I_RTORCH,I_GTORCH,I_BTORCH,I_GOR1,I_FCAN,I_GUN2
 };
 
+#pragma pack(1)
+typedef struct{
+  obj_t o;
+  int t;
+  int s;
+}item_t;
+#pragma pack()
+
+extern item_t it[MAXITEM];
+
 void IT_init(void);
 void IT_alloc(void);
 int IT_load(FILE*);
 void IT_act(void);
-void IT_draw(void);
 void IT_spawn(int x,int y,int i);
 void IT_drop_ammo(int i,int n,int x,int y);
 

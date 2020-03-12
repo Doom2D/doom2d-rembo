@@ -23,10 +23,20 @@
 
 #define MAXWPN 300
 
+#pragma pack(1)
+typedef struct{
+  obj_t o;
+  byte t,s;
+  int own;
+  short target;
+}weapon_t;
+#pragma pack()
+
+extern weapon_t wp[MAXWPN];
+
 void WP_init(void);
 void WP_alloc(void);
 void WP_act(void);
-void WP_draw(void);
 void WP_punch(int,int,int,int);
 int WP_chainsaw(int,int,int,int);
 void WP_gun(int,int,int,int,int,int);
