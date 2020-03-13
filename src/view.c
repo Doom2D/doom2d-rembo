@@ -56,7 +56,6 @@ int HT; //
 
 extern map_block_t blk;
 
-extern byte clrmap[256*12];
 void V_remap_rect(int,int,int,int,byte *);
 
 byte w_horiz=ON;

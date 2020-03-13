@@ -22,7 +22,6 @@
 
 #include "glob.h"
 #include <stdlib.h>
-#include "vga.h"
 #include "view.h"
 #include "smoke.h"
 #include "fx.h"
@@ -38,10 +37,6 @@ static int lsm;
 
 static void *burnsnd;
 static int burntm=0;
-
-byte flametab[16]={
-0xBC,0xBA,0xB8,0xB6,0xB4,0xB2,0xB0,0xD5,0xD6,0xD7,0xA1,0xA0,0xE3,0xE2,0xE1,0xE0
-};
 
 void SMK_savegame (FILE *h) {
   int i, n;

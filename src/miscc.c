@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include "files.h"
 #include "memory.h"
-#include "vga.h"
 #include "sound.h"
 #include "view.h"
 #include "bmap.h"

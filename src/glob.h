@@ -41,7 +41,6 @@ typedef unsigned int dword;
 void logo(const char *,...);
 void logo_gas(int,int);
 
-extern int gammaa;
 extern int snd_card;
 extern int _cpu;
 

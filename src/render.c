@@ -48,8 +48,17 @@ static vgaimg *sth[22], *bfh[160 - '!'], *sfh[160 - '!'], *stone, *stone2, *keys
 static int prx = 0, pry = 0;
 // menu
 static vgaimg *msklh[2], *mbarl, *mbarm, *mbarr, *mbaro, *mslotl, *mslotm, *mslotr;
+// low level
+static int gammaa = 0;
+static char main_pal[256][3];
+static char std_pal[256][3];
+static byte gamcor[5][64]={
+  #include "gamma.dat"
+};
 
-extern byte clrmap[256*12]; // main.c
+extern byte bright[256]; // vga.c
+extern byte mixmap[256][256]; // vga.c
+extern byte clrmap[256*12]; // vga.c
 
 extern int g_trans; // game.c
 extern byte transdraw; // game.c
@@ -819,7 +828,7 @@ static void pl_info (player_t *p, int y) {
   Z_gotoxy(255, y + 15); Z_printbf("%u.%u", t / 10, t % 10);
 }
 
-void G_draw (void) {
+void R_draw (void) {
   int h;
   word hr, mn, sc;
   if (g_trans && !transdraw) {
@@ -959,6 +968,7 @@ void G_draw (void) {
 void R_alloc (void) {
   int i, j, n;
   char s[10];
+  logo("R_alloc: загрузка графики\n");
   // game
   scrnh[0] = V_loadvgaimg("TITLEPIC");
   scrnh[1] = V_loadvgaimg("INTERPIC");
@@ -1158,4 +1168,48 @@ void R_alloc (void) {
   mslotl = V_loadvgaimg("M_LSLEFT");
   mslotm = V_loadvgaimg("M_LSCNTR");
   mslotr = V_loadvgaimg("M_LSRGHT");
+}
+
+void R_setgamma(int g) {
+  int t;
+  g = g < 0 ? 0 : (g > 4 ? 4 : g);
+  gammaa = g;
+  for (t = 0; t < 256; ++t) {
+    std_pal[t][0]=gamcor[gammaa][main_pal[t][0]];
+    std_pal[t][1]=gamcor[gammaa][main_pal[t][1]];
+    std_pal[t][2]=gamcor[gammaa][main_pal[t][2]];
+  }
+  VP_setall(std_pal);
+}
+
+int R_getgamma (void) {
+  return gammaa;
+}
+
+void R_toggle_fullscreen (void) {
+  fullscreen = !fullscreen;
+  V_toggle();
+}
+
+void R_init () {
+  int i;
+  F_loadres(F_getresid("PLAYPAL"), main_pal, 0, 768);
+  for (i = 0; i < 256; ++i) {
+    bright[i] = ((int) main_pal[i][0] + main_pal[i][1] + main_pal[i][2]) * 8 / (63 * 3);
+  }
+  F_loadres(F_getresid("MIXMAP"), mixmap, 0, 0x10000);
+  F_loadres(F_getresid("COLORMAP"), clrmap, 0, 256*12);
+  logo("V_init: настройка видео\n");
+  if (V_init() != 0) {
+    ERR_failinit("Не могу установить видеорежим VGA");
+  }
+  //R_setgamma(gammaa);
+  V_setrect(0, SCRW, 0, SCRH);
+  V_setscr(scrbuf);
+  V_clr(0, SCRW, 0, SCRH, 0);
+  R_alloc();
+}
+
+void R_done (void) {
+  V_done();
 }

@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "vga.h"
 #include "view.h"
 #include "fx.h"
 #include "misc.h"
@@ -61,7 +60,7 @@ static void setamp(int a) {
 }
 
 void FX_trans1(int t) {
-
+/*
   int x,y,u,v;
   static unsigned char k;
   unsigned p;
@@ -78,7 +77,7 @@ void FX_trans1(int t) {
         else scra[p]=fx_scr1[v*320+u];
       }else scra[p]=fx_scr2[p];
     }
-
+*/
 }
 
 static void init_fx1sin(void) {
