@@ -23,7 +23,6 @@
 #include "glob.h"
 #include <stdlib.h>
 #include <string.h>
-#include "vga.h"
 #include "files.h"
 #include "view.h"
 #include "bmap.h"

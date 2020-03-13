@@ -47,6 +47,16 @@ int cx1,cx2,cy1,cy2;
 
 char fullscreen = OFF;
 
+byte bright[256];
+byte mixmap[256][256];
+byte clrmap[256*12];
+
+static byte flametab[16] = {
+  0xBC,0xBA,0xB8,0xB6,0xB4,0xB2,0xB0,0xD5,0xD6,0xD7,0xA1,0xA0,0xE3,0xE2,0xE1,0xE0
+};
+
+extern void *walp[256];
+
 #define HQ 2
 
 vgaimg *V_getvgaimg (int id) {
@@ -211,11 +221,6 @@ void V_dot(short x,short y, unsigned char c)
     putpixel(x,y,c);
 }
 
-
-extern byte bright[256];
-extern byte flametab[16];
-extern byte mixmap[256][256];
-
 void smoke_sprf(int x, int y, byte c)
 {
     byte t = getpixel(x,y);
@@ -317,9 +322,6 @@ void V_remap_rect(int x,int y,int w,int h,byte *cmap)
         for (cy=y; cy<y+h; cy++)
             mappixel(cx,cy,cmap);
 }
-
-extern void *walp[256];
-extern byte clrmap[256*12];
 
 void Z_drawfld (byte *fld, int bg)
 {

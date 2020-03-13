@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include "files.h"
 #include "memory.h"
-#include "vga.h"
 #include "error.h"
 #include "keyb.h"
 #include "sound.h"
@@ -155,6 +154,8 @@ static byte cbuf[32];
 static snd_t *voc=NULL;
 static int voc_ch=0;
 
+extern byte shot_vga; // config.c
+
 void GMV_stop(void) {
   if(voc) {
     if(voc_ch) {S_stop(voc_ch);voc_ch=0;}
@@ -237,8 +238,7 @@ void GM_command(int c) {
     case CANCEL:
       GM_set(NULL);break;
     case INTERP:
-      fullscreen=!fullscreen;
-      V_toggle();
+      R_toggle_fullscreen();
       GM_set(mnu);
       break;
     case MUSIC:
@@ -329,8 +329,12 @@ void GM_command(int c) {
 	  S_volumemusic(mus_vol-8);break;
 	case MVOLP:
 	  S_volumemusic(mus_vol+8);break;
-	case GAMMAM: setgamma(gammaa-1);break;
-	case GAMMAP: setgamma(gammaa+1);break;
+	case GAMMAM:
+    R_setgamma(R_getgamma() - 1);
+    break;
+	case GAMMAP:
+    R_setgamma(R_getgamma() + 1);
+    break;
   }
 }
 
@@ -411,9 +415,6 @@ byte get_keychar(int keysym)
     }
     return 0;
 }
-
-extern vgapal main_pal,std_pal;
-extern byte shot_vga;
 
 static void shot(void) {
   static int num=1;

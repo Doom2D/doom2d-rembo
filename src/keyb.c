@@ -21,7 +21,6 @@
 */
 
 #include "keyb.h"
-#include "vga.h"
 #include "error.h"
 #include <SDL.h>
 
@@ -53,10 +52,12 @@ void updatee_keys()
 {
     SDL_Event event;
     while (SDL_PollEvent (&event)) {
+      /*
        if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && event.key.keysym.mod & KMOD_LALT) {
             V_toggle();
        }
-       else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+       else */
+       if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
          if (event.type == SDL_KEYDOWN && key_proc!=NULL)
              key_proc(event.key.keysym.sym, event.type == SDL_KEYDOWN);
        }

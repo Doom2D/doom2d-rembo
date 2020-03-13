@@ -30,7 +30,6 @@
 #include "memory.h"
 #include "keyb.h"
 #include "sound.h"
-#include "vga.h"
 #include "files.h"
 #include "view.h"
 #include "menu.h"
@@ -38,12 +37,6 @@
 #include "my.h"
 
 #include <SDL.h>
-
-int gammaa=0;
-
-char main_pal[256][3],std_pal[256][3];
-byte mixmap[256][256];
-byte clrmap[256*12];
 
 void logo(const char *s,...) {
   va_list ap;
@@ -58,27 +51,7 @@ void logo(const char *s,...) {
 void logo_gas(int cur,int all) {
 }
 
-byte gamcor[5][64]={
-  #include "gamma.dat"
-};
-
-void setgamma(int g) {
-  int t;
-
-  if(g>4) g=4;
-  if(g<0) g=0;
-  gammaa=g;
-  for(t=0;t<256;++t) {
-	std_pal[t][0]=gamcor[gammaa][main_pal[t][0]];
-	std_pal[t][1]=gamcor[gammaa][main_pal[t][1]];
-	std_pal[t][2]=gamcor[gammaa][main_pal[t][2]];
-  }
-  VP_setall(std_pal);
-}
-
 void myrandomize(void);
-
-byte bright[256];
 
 int main(int argc, char *argv[]) {
   if (SDL_Init(SDL_INIT_VIDEO)<0) ERR_failinit("Unable to init SDL: %s\n", SDL_GetError());
@@ -122,23 +95,15 @@ int main(int argc, char *argv[]) {
   F_initwads();
   M_startup();
   F_allocres();
-  F_loadres(F_getresid("PLAYPAL"),main_pal,0,768);
-  for(i=0;i<256;++i)
-    bright[i]=((int)main_pal[i][0]+main_pal[i][1]+main_pal[i][2])*8/(63*3);
-  F_loadres(F_getresid("MIXMAP"),mixmap,0,0x10000);
-  F_loadres(F_getresid("COLORMAP"),clrmap,0,256*12);
   G_init();
-  R_alloc();
   K_init();
   logo("S_init: настройка звука\n");
   S_init();
   S_initmusic();
-  logo("V_init: настройка видео\n");
-  if(V_init()!=0) ERR_failinit("Не могу установить видеорежим VGA");
-  setgamma(gammaa);
-  V_setscr(scrbuf);
+  R_init();
   GM_init();
-  F_loadmus("MENU");S_startmusic(0);
+  F_loadmus("MENU");
+  S_startmusic(0);
   
   Uint32 ticks = 0;
   for(;;) {
@@ -149,7 +114,7 @@ int main(int argc, char *argv[]) {
 
     G_act();
 
-    G_draw();
+    R_draw();
     
     Uint32 t;
     while ((t = SDL_GetTicks())-ticks < DELAY) {

@@ -22,7 +22,6 @@
 
 #include "glob.h"
 #include <stdlib.h>
-#include "vga.h"
 #include "view.h"
 #include "dots.h"
 #include "misc.h"

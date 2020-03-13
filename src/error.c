@@ -27,25 +27,24 @@
 #include <stdlib.h>
 #include "keyb.h"
 #include "sound.h"
-#include "vga.h"
+#include "render.h"
 #include "memory.h"
 #include "error.h"
 #include "config.h"
 
-void close_all(void) {
+static void close_all (void) {
   S_done();
   S_donemusic();
   K_done();
-  V_done();
+  R_done();
   M_shutdown();
 }
 
-void ERR_failinit(char *s,...) {
+void ERR_failinit (char *s, ...) {
   va_list ap;
-
   close_all();
-  va_start(ap,s);
-  vprintf(s,ap);
+  va_start(ap, s);
+  vprintf(s, ap);
   va_end(ap);
   puts("");
   exit(1);
@@ -53,17 +52,16 @@ void ERR_failinit(char *s,...) {
 
 void ERR_fatal(char *s,...) {
   va_list ap;
-
   close_all();
   puts("\nКРИТИЧЕСКАЯ ОШИБКА:");
-  va_start(ap,s);
-  vprintf(s,ap);
+  va_start(ap, s);
+  vprintf(s, ap);
   va_end(ap);
   puts("");
   exit(2);
 }
 
-void ERR_quit(void) {
+void ERR_quit (void) {
   void *p;
   //V_done();
   //if(!(p=malloc(4000)))

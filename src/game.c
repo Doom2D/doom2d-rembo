@@ -26,7 +26,6 @@
 #include <string.h>
 #include "files.h"
 #include "memory.h"
-#include "vga.h"
 #include "keyb.h"
 #include "sound.h"
 #include "view.h"
@@ -68,14 +67,11 @@ extern short lastkey;
 
 extern int hit_xv,hit_yv;
 
-extern vgapal std_pal;
-void setgamma(int);
+//void setgamma(int);
 
 extern int PL_JUMP;
 
 extern map_block_t blk;
-
-extern byte clrmap[256*12];
 
 extern byte cheat;
 
@@ -171,11 +167,6 @@ void load_game(int n) {
   W_init();
   F_loadgame(n);
   set_trans(GS_GAME);
-  V_setscr((g_trans)?fx_scr2:scrbuf);V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
-  V_clr(0,SCRW,0,SCRH,0);//V_clr(0,320,0,200,0);
-//  if(_2pl) {w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {w_o=0;Z_clrst();w_o=100;Z_clrst();}
-//  else {w_o=0;Z_clrst();}//else {w_o=50;Z_clrst();}
-  V_setscr(scrbuf);
   pl1.drawst=0xFF;
   if(_2pl) pl2.drawst=0xFF;
   BM_remapfld();
@@ -193,11 +184,6 @@ void G_start(void) {
   sprintf(s,"MAP%02u",(word)g_map);
   F_loadmap(s);
   set_trans(GS_GAME);
-  V_setscr((g_trans)?fx_scr2:scrbuf);V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
-  V_clr(0,SCRW,0,SCRH,0);//V_clr(0,320,0,200,0);
-//  if(_2pl) {w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {w_o=0;Z_clrst();w_o=100;Z_clrst();}
-//  else {w_o=0;Z_clrst();}//else {w_o=50;Z_clrst();}
-  V_setscr(scrbuf);
   pl1.drawst=0xFF;
   if(_2pl) pl2.drawst=0xFF;
   g_exit=0;

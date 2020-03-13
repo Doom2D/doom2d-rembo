@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
-#include "vga.h"
+//#include "vga.h"
 #include "error.h"
 #include "sound.h"
 #include "files.h"
@@ -60,11 +60,11 @@ static cfg_t cfg[]={
   {"vga","screenshot",&shot_vga,SW_ON,0},
   {"sndvol","sound_volume",&snd_vol,WORD,0},
   {"musvol","music_volume",&mus_vol,WORD,0},
-  {"fullscr","fullscreen",&fullscreen,SW_ON,0},
-  {"window",NULL,&fullscreen,SW_OFF,0},
+//  {"fullscr","fullscreen",&fullscreen,SW_ON,0},
+//  {"window",NULL,&fullscreen,SW_OFF,0},
   {NULL,"sky",&w_horiz,SW_ON,0},
   {"mon",NULL,&nomon,SW_OFF,0},
-  {"gamma","gamma",&gammaa,DWORD,0},
+//  {"gamma","gamma",&gammaa,DWORD,0},
   {"warp",NULL,&_warp,BYTE,0},
   {"width","screen_width",&SCRW,DWORD,0},
   {"height","screen_height",&SCRH,DWORD,0},

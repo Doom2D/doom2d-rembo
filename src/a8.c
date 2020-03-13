@@ -19,18 +19,19 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
+/*
 #include "glob.h"
 #include <stdio.h>
 //#include <io.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include "vga.h"
+//#include "vga.h"
 #include "keyb.h"
 #include "error.h"
 #include "files.h"
 #include "sound.h"
-
+*/
 
 /*
 #define WAIT_SZ 400000
