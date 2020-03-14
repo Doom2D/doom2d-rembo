@@ -1373,7 +1373,7 @@ void R_init () {
   if (V_init() != 0) {
     ERR_failinit("Не могу установить видеорежим VGA");
   }
-  //R_setgamma(gammaa);
+  R_setgamma(gammaa);
   V_setrect(0, SCRW, 0, SCRH);
   V_setscr(scrbuf);
   V_clr(0, SCRW, 0, SCRH, 0);
