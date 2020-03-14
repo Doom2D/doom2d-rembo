@@ -67,7 +67,8 @@ typedef struct{
 
 #pragma pack()
 
-void W_act(void);
+extern dword walf[256];
+extern byte walswp[256];
 
 void W_init(void);
 

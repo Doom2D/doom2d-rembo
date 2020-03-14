@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h> // abs()
+#include <assert.h>
 #include "glob.h"
 #include "render.h"
 #include "view.h"
@@ -15,6 +17,8 @@
 #include "smoke.h"
 #include "fx.h"
 #include "memory.h"
+#include "files.h"
+#include "error.h"
 
 // game
 static vgaimg *scrnh[3]; // TITLEPIC INTERPIC ENDPIC
@@ -55,6 +59,15 @@ static char std_pal[256][3];
 static byte gamcor[5][64]={
   #include "gamma.dat"
 };
+// walls
+#define ANIT 5
+static vgaimg *walp[256];
+static int walh[256];
+static byte walani[256];
+static int anih[ANIT][5];
+static byte anic[ANIT];
+static int max_textures;
+static vgaimg *horiz;
 
 extern byte bright[256]; // vga.c
 extern byte mixmap[256][256]; // vga.c
@@ -62,7 +75,6 @@ extern byte clrmap[256*12]; // vga.c
 
 extern int g_trans; // game.c
 extern byte transdraw; // game.c
-extern void *horiz; // view.c
 extern int sky_type; // view.c
 extern int lt_time, lt_type, lt_side, lt_ypos, lt_force; // game.c
 
@@ -70,8 +82,6 @@ extern byte savname[7][24]; // files.c
 extern char g_music[8]; // game.c
 extern short snd_vol; // sound.c
 extern short mus_vol; // music.c
-
-void Z_drawfld(byte *, int); // vga.c
 
 /* --- misc --- */
 
@@ -284,6 +294,30 @@ static void Z_drawmanspr (int x, int y, void *p, char d, byte color) {
   } else {
     V_manspr(x - w_x + WD / 2, y - w_y + HT / 2 + 1 + w_o, p, color);
   }
+}
+
+static void Z_drawfld (byte *fld, int bg) {
+    byte *p = fld;
+    int x, y;
+    for (y = 0; y < FLDH; y++) {
+        for (x = 0; x < FLDW; x++) {
+            int sx = x * CELW - w_x + WD / 2;
+            int sy = y * CELH - w_y + HT / 2 + 1 + w_o;
+            int id = *p;
+            if (id != 0) {
+              int spc = R_get_special_id(id);
+              if (spc <= 3) {
+                if (!bg) {
+                  byte *cmap = clrmap + (spc + 7) * 256;
+                  V_remap_rect(sx, sy, CELW, CELH, cmap);
+                }
+              } else {
+                V_pic(sx, sy, walp[id]);
+              }
+            }
+            p++;
+        }
+    }
 }
 
 /* --- menu --- */
@@ -828,9 +862,26 @@ static void pl_info (player_t *p, int y) {
   Z_gotoxy(255, y + 15); Z_printbf("%u.%u", t / 10, t % 10);
 }
 
+static void W_act (void) {
+  int i, a;
+  if (g_time % 3 == 0) {
+    for (i = 1; i < 256; ++i) {
+      a = walani[i];
+      if (a != 0) {
+        anic[a]++;
+        if (anih[a][anic[a]] == -1) {
+          anic[a] = 0;
+        }
+        walp[i] = V_getvgaimg(anih[a][anic[a]]);
+      }
+    }
+  }
+}
+
 void R_draw (void) {
   int h;
   word hr, mn, sc;
+  W_act();
   if (g_trans && !transdraw) {
     return;
   }
@@ -1168,6 +1219,125 @@ void R_alloc (void) {
   mslotl = V_loadvgaimg("M_LSLEFT");
   mslotm = V_loadvgaimg("M_LSCNTR");
   mslotr = V_loadvgaimg("M_LSRGHT");
+  // walls
+  static char *anm[ANIT - 1][5] = {
+    {"WALL22_1", "WALL23_1", "WALL23_2", NULL,    NULL},
+    {"WALL58_1", "WALL58_2", "WALL58_3", NULL,    NULL},
+    {"W73A_1",   "W73A_2",   NULL,       NULL,    NULL},
+    {"RP2_1",    "RP2_2",    "RP2_3",    "RP2_4", NULL}
+  };
+  for (i = 1; i < ANIT; i++) {
+    for (j = 0; anm[i - 1][j]; j++) {
+      anih[i][j] = F_getresid(anm[i - 1][j]);
+    }
+    for(; j < 5; j++) {
+      anih[i][j] = -1;
+    }
+  }
+}
+
+void R_get_name (int n, char s[8]) {
+  if (walh[n] == -1) {
+    memset(s, 0, 8);
+  } else if (walh[n] == -2) {
+    memcpy(s, "_WATER_", 8);
+    s[7] = (char)((intptr_t)walp[n] - 1 + '0');
+  } else {
+    F_getresname(s, walh[n] & 0x7FFF);
+  }
+}
+
+static short getani (char n[8]) {
+  if (strncasecmp(n, "WALL22_1", 8) == 0) {
+    return 1;
+  } else if (strncasecmp(n, "WALL58_1", 8) == 0) {
+    return 2;
+  } else if (strncasecmp(n, "W73A_1", 8) == 0) {
+    return 3;
+  } else if (strncasecmp(n, "RP2_1", 8) == 0) {
+    return 4;
+  } else {
+    return 0;
+  }
+}
+
+int R_get_special_id (int n) {
+  assert(n >= 0 && n < 256);
+  intptr_t x = (intptr_t)walp[n] - 1;
+  return x > 0 && x <= 3 ? x : 0;
+}
+
+void R_begin_load (void) {
+  int i;
+  for (i = 0; i < max_textures; i++) {
+//    if (walp[i] != NULL && walh[i] >= 0) {
+//      M_unlock(walp[i]);
+//    }
+    walh[i] = -1;
+    walp[i] = NULL;
+    walswp[i] = i;
+    walani[i] = 0;
+  }
+  memset(anic, 0, sizeof(anic));
+  max_textures = 0;
+}
+
+void R_load (char s[8], int f) {
+  assert(max_textures < 256);
+  if (!s[0]) {
+    walh[max_textures] = -1;
+    walp[max_textures] = NULL;
+  } else {
+    if (strncasecmp(s, "_WATER_", 7) == 0) {
+      walh[max_textures] = -2;
+      walp[max_textures] = (void*)((intptr_t)s[7] - '0' + 1);
+    } else {
+      walh[max_textures] = F_getresid(s);
+      walp[max_textures] = V_getvgaimg(walh[max_textures]);
+      if (f) {
+        walh[max_textures] |= 0x8000;
+      }
+      if (s[0] == 'S' && s[1] == 'W' && s[4] == '_') {
+        walswp[max_textures] = 0;
+      }
+    }
+    walani[max_textures] = getani(s);
+  }
+  max_textures++;
+}
+
+void R_end_load (void) {
+  int i, j, k, g;
+  char s[8];
+  j = max_textures;
+  for (i = 1; i < 256 && j < 256; i++) {
+    if (walswp[i] == 0) {
+      R_get_name(i, s);
+      s[5] ^= 1;
+      g = F_getresid(s) | (walh[i] & 0x8000);
+      k = 1;
+      while (k < 256 && walh[k] != g) {
+        k += 1;
+      }
+      if (k >= 256) {
+        k = j;
+        j += 1;
+        walh[k] = g;
+        walp[k] = V_getvgaimg(g);
+        walf[k] = g & 0x8000 ? 1 : 0;
+      }
+      walswp[i] = k;
+      walswp[k] = i;
+    }
+  }
+}
+
+void R_loadsky (int sky) {
+  char s[6];
+  strcpy(s, "RSKY1");
+  s[4] = '0' + sky;
+  M_unlock(horiz);
+  horiz = V_loadvgaimg(s);
 }
 
 void R_setgamma(int g) {

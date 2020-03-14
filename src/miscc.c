@@ -33,6 +33,7 @@
 #include "dots.h"
 #include "monster.h"
 #include "misc.h"
+#include "render.h"
 
 //#define WD 200
 //#define HT 98
@@ -389,10 +390,9 @@ int Z_moveobj(obj_t *p) {
   return st;
 }
 
-void Z_splash(obj_t *p,int n) {
-  Z_sound(bulsnd[0],128);
-  DOT_water(p->x,p->y-p->h/2,p->xv+p->vx,p->yv+p->vy,n,
-	(intptr_t)walp[wfront]-1);
+void Z_splash (obj_t *p, int n) {
+  Z_sound(bulsnd[0], 128);
+  DOT_water(p->x, p->y-p->h / 2, p->xv + p->vx, p->yv + p->vy, n, R_get_special_id(wfront));
 }
 
 void Z_calc_time(dword t,word *h,word *m,word *s)

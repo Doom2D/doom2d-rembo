@@ -228,6 +228,7 @@ extern void *vf_font;
 // виртуальный экран
 extern unsigned char scrbuf[64000];
 
+void V_remap_rect(int x,int y,int w,int h,byte *cmap);
 
 void V_toggle();
 void V_rotspr (int x, int y, vgaimg* i, int d);
