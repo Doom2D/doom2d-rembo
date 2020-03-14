@@ -304,9 +304,10 @@ static void Z_drawfld (byte *fld, int bg) {
             int sx = x * CELW - w_x + WD / 2;
             int sy = y * CELH - w_y + HT / 2 + 1 + w_o;
             int id = *p;
-            if (id != 0) {
+            if (id) {
+              //intptr_t spc = (intptr_t) walp[id];
               int spc = R_get_special_id(id);
-              if (spc <= 3) {
+              if (spc >= 0 && spc <= 3) {
                 if (!bg) {
                   byte *cmap = clrmap + (spc + 7) * 256;
                   V_remap_rect(sx, sy, CELW, CELH, cmap);
@@ -1263,23 +1264,23 @@ static short getani (char n[8]) {
 
 int R_get_special_id (int n) {
   assert(n >= 0 && n < 256);
-  intptr_t x = (intptr_t)walp[n] - 1;
-  return x > 0 && x <= 3 ? x : 0;
+  intptr_t x = (intptr_t)walp[n];
+  return x >= 0 && x <= 3 ? x : -1;
 }
 
 void R_begin_load (void) {
   int i;
-  for (i = 0; i < max_textures; i++) {
-//    if (walp[i] != NULL && walh[i] >= 0) {
-//      M_unlock(walp[i]);
-//    }
+  for (i = 0; i < 256; i++) {
+    if (walp[i] != NULL && walh[i] >= 0) {
+      M_unlock(walp[i]);
+    }
     walh[i] = -1;
     walp[i] = NULL;
     walswp[i] = i;
     walani[i] = 0;
   }
   memset(anic, 0, sizeof(anic));
-  max_textures = 0;
+  max_textures = 1;
 }
 
 void R_load (char s[8], int f) {
