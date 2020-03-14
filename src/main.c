@@ -35,6 +35,7 @@
 #include "menu.h"
 #include "player.h"
 #include "my.h"
+#include "render.h"
 
 #include <SDL.h>
 

@@ -27,6 +27,7 @@
 #include "view.h"
 #include "memory.h"
 #include "misc.h"
+#include "files.h"
 
 #include <assert.h>
 
@@ -321,31 +322,6 @@ void V_remap_rect(int x,int y,int w,int h,byte *cmap)
     for (cx=x; cx<x+w; cx++)
         for (cy=y; cy<y+h; cy++)
             mappixel(cx,cy,cmap);
-}
-
-void Z_drawfld (byte *fld, int bg)
-{
-    byte *p = fld;
-    int x, y;
-    for (y = 0; y < FLDH; y++) {
-        for (x = 0; x < FLDW; x++) {
-            int sx = x * CELW - w_x + WD / 2;
-            int sy = y * CELH - w_y + HT / 2 + 1 + w_o;
-            if (*p) {
-              vgaimg *pic = walp[*p];
-              // special pointer value setted for _WATER_* in view.c
-              if ((intptr_t)pic <= 3) {
-                if (!bg) {
-                  byte *cmap = clrmap + ((intptr_t)pic+7)*256;
-                  V_remap_rect(sx, sy, CELW, CELH, cmap);
-                }
-              } else {
-                V_pic(sx, sy, pic);
-              }
-            }
-            p++;
-        }
-    }
 }
 
 void V_toggle()

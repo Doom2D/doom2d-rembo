@@ -19,13 +19,14 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
+/*
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 //#include "..\averr.h"
 #include "vga.h"
 #include "glob.h"
-/*
+
 #define MAXRECT 500
 
 typedef struct{short x,w,y,h;}rect;

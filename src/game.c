@@ -294,7 +294,7 @@ void G_act(void) {
       if(g_st==GS_BVIDEO) G_start();
       else goto inter;
     }
-    V_copytoscr(0,SCRW,0,SCRH);//V_copytoscr(0,320,0,200);
+//    V_copytoscr(0,SCRW,0,SCRH);//V_copytoscr(0,320,0,200);
     return;
   }else if(g_st==GS_ENDANIM || g_st==GS_END2ANIM || g_st==GS_END3ANIM) {
     if(!A8_nextframe()) {
@@ -304,7 +304,7 @@ void G_act(void) {
         case GS_END3ANIM: g_st=GS_ENDSCR;lastkey=0;break;
       }g_sttm=0;return;
     }
-    V_copytoscr(0,SCRW,0,SCRH);//V_copytoscr(0,320,0,200);
+//    V_copytoscr(0,SCRW,0,SCRH);//V_copytoscr(0,320,0,200);
     return;
   }else if(g_st==GS_DARKEN) {
       g_st=GS_END2ANIM;A8_start("CREDITS");
@@ -351,7 +351,6 @@ void G_act(void) {
   if(_2pl) {pl2.hit=0;pl2.hito=-3;}
   G_code();
 
-  W_act();
   IT_act();
   SW_act();
   if(_2pl) {

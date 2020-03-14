@@ -67,3 +67,6 @@ void F_randmus(char*);//
 
 extern char wads[MAX_WADS][__MAX_PATH];
 extern int wad_num;
+
+int F_getsprid(char n[4],int s,int d);
+int F_getresid(char *n);

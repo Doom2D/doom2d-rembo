@@ -34,6 +34,7 @@
 #include "switch.h"
 #include "menu.h"
 #include "misc.h"
+#include "render.h"
 
 #include <SDL.h>
 #include <sys/stat.h>
