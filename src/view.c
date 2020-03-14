@@ -86,14 +86,14 @@ void W_loadgame (FILE* h) {
     myfread(s[i], 8, 1, h);
   }
   R_begin_load();
-  R_load("", 0); // empty
   i = myfread32(h); // ignore
   for (i = 1; i < 256; i++) {
     walf[i] = myfread32(h);
     R_load(s[i], walf[i] & 1);
   }
   for (i = 0; i < 256; i++) {
-    walswp[i] = myfread8(h);
+    //walswp[i] = myfread8(h);
+    (void)myfread8(h); // useless in new code
   }
   myfread(fldb, FLDW*FLDH, 1, h);
   myfread(fld, FLDW*FLDH, 1, h);
@@ -140,7 +140,6 @@ int W_load (FILE *h) {
   switch (blk.t) {
   case MB_WALLNAMES:
     R_begin_load();
-    R_load("", 0); // empty
     for (i = 1; i < 256 && blk.sz > 0; i++, blk.sz -= 9) {
       myfread(s, 8, 1, h);
       t = myfread8(h);
