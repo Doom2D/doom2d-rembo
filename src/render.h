@@ -1,3 +1,8 @@
+#ifndef RENDER_H_INCLUDED
+#define RENDER_H_INCLUDED
+
+extern int SCRW, SCRH; // from vga.c
+
 void R_draw (void);
 void R_alloc (void);
 void R_init (void);
@@ -13,3 +18,5 @@ void R_begin_load (void);
 void R_load (char s[8], int f);
 void R_end_load (void);
 void R_loadsky (int sky);
+
+#endif /* RENDER_H_INCLUDED */

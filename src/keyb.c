@@ -24,32 +24,25 @@
 #include "error.h"
 #include <SDL.h>
 
-// стандартная функция обработки клавиш
-key_f def_key_proc;
-
 // массив клавиш: 0 - отпущена, иначе - нажата
 unsigned char *keys = NULL;
 
 static key_f *key_proc = NULL;
 
-
-void K_init()
-{
-    keys = SDL_GetKeyState(NULL);
+void K_init (void) {
+  keys = SDL_GetKeyState(NULL);
 }
 
-void K_done()
-{
-    
+void K_done (void) {
+  // not needed for sdl
 }
+
 // установить функцию обработки клавиш
- void K_setkeyproc(key_f *k)
-{
-     key_proc = k;
+void K_setkeyproc (key_f *k) {
+  key_proc = k;
 }
 
-void updatee_keys()
-{
+void updatee_keys (void) {
     SDL_Event event;
     while (SDL_PollEvent (&event)) {
       /*

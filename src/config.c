@@ -24,19 +24,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
-//#include "vga.h"
-#include "error.h"
-#include "sound.h"
-#include "files.h"
-#include "view.h"
-#include "player.h"
-#include "my.h"
-
 #include <SDL_keyboard.h>
-
-extern byte _warp,fastdraw,nomon;
-extern int mem_chk_sz;
+#include "map.h"
+#include "sound.h"
+#include "music.h"
+#include "view.h"
+#include "monster.h"
+#include "player.h"
+#include "menu.h"
+#include "files.h"
+#include "render.h"
+#include "error.h"
+#include "my.h"
 
 enum{NONE,BYTE,WORD,DWORD,STRING,SW_ON,SW_OFF,FILES,KEY};
 
@@ -46,13 +45,12 @@ typedef struct{
   byte t,o;
 }cfg_t;
 
-
 byte cheat=0;
-
 byte shot_vga=0;
-
-
 char cd_path[128]="";
+char cfg_file[128]="default.cfg";
+
+static char buf[256];
 
 static cfg_t cfg[]={
   {"file",NULL,NULL,FILES,0},
@@ -92,11 +90,6 @@ static cfg_t cfg[]={
   {"config",NULL,cfg_file,STRING,0},
   {NULL,NULL,NULL,NONE,0}
 };
-
-
-char cfg_file[128]="default.cfg";
-
-static char buf[256];
 
 void CFG_args(int argc, char *argv[]) {
   int j;
@@ -161,8 +154,7 @@ next:
   }
 }
 
-int get_key(char *name)
-{
+static int get_key (char *name) {
     int i;
     for(i=1; i<SDLK_LAST; i++) {
         char* s = SDL_GetKeyName(i);

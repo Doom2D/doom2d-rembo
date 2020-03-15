@@ -19,23 +19,32 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Dots
+#ifndef DOTS_H_INCLUDED
+#define DOTS_H_INCLUDED
+
+#include "glob.h"
+#include "view.h" // obj_t
+#include <stdio.h> // FILE
 
 #define MAXDOT 400
 
 #pragma pack(1)
-typedef struct{
+typedef struct {
   obj_t o;
-  byte c,t;
-}dot_t;
+  byte c, t;
+} dot_t;
 #pragma pack()
 
 extern dot_t dot[MAXDOT];
 
-void DOT_init(void);
-void DOT_alloc(void);
-void DOT_act(void);
-void DOT_add(int x,int y,char xv,char yv,byte color,byte time);
-void DOT_blood(int,int,int,int,int);
-void DOT_spark(int,int,int,int,int);
-void DOT_water(int,int,int,int,int,int);
+void DOT_savegame (FILE *h);
+void DOT_loadgame (FILE *h);
+void DOT_init (void);
+void DOT_alloc (void);
+void DOT_act (void);
+void DOT_add (int x, int y, char xv, char yv, byte c, byte t);
+void DOT_blood (int x, int y, int xv, int yv, int n);
+void DOT_spark (int x, int y, int xv, int yv, int n);
+void DOT_water (int x, int y, int xv, int yv, int n, int c);
+
+#endif /* DOTS_H_INCLUDED */

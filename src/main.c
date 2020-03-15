@@ -36,23 +36,10 @@
 #include "player.h"
 #include "my.h"
 #include "render.h"
+#include "game.h"
+#include "music.h"
 
 #include <SDL.h>
-
-void logo(const char *s,...) {
-  va_list ap;
-  int x,y;
-
-  va_start(ap,s);
-  vprintf(s,ap);
-  va_end(ap);
-  fflush(stdout);
-}
-
-void logo_gas(int cur,int all) {
-}
-
-void myrandomize(void);
 
 int main(int argc, char *argv[]) {
   if (SDL_Init(SDL_INIT_VIDEO)<0) ERR_failinit("Unable to init SDL: %s\n", SDL_GetError());

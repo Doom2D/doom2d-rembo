@@ -19,19 +19,22 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Game menus
+#ifndef MENU_H_INCLUDED
+#define MENU_H_INCLUDED
 
-typedef struct{
+#include "glob.h"
+
+typedef struct {
   byte type;
-  int n,cur,x;
+  int n, cur, x;
   char *ttl;
   char **m;
   byte *t;
-}menu_t;
+} menu_t;
 
 extern menu_t save_mnu;
-
 extern byte *panimp;
+extern byte _warp;
 
 #define PCOLORN 10
 extern byte pcolortab[PCOLORN];
@@ -43,11 +46,11 @@ extern byte input;
 
 extern menu_t *mnu;
 extern byte gm_redraw;
+extern short lastkey;
 
-void GMV_say(char *);
-void GMV_stop(void);
+void GMV_say (char *nm);
+void G_code (void);
+int GM_act (void);
+void GM_init (void);
 
-void GM_init(void);
-int GM_act(void);
-
-void G_code(void);
+#endif /* MENU_H_INCLUDED */

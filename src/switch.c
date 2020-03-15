@@ -28,27 +28,28 @@
 #include "player.h"
 #include "misc.h"
 #include "map.h"
+#include "files.h"
+#include "game.h"
 #include "my.h"
+#include "monster.h"
 
 #define MAXSW 100
 
-extern map_block_t blk;
-
 #pragma pack(1)
-typedef struct{
-  byte x,y;
-  byte t,tm;
-  byte a,b,c,d;
+typedef struct {
+  byte x, y;
+  byte t, tm;
+  byte a, b, c, d;
   byte f;
-}sw_t;
+} sw_t;
 #pragma pack()
 
-static sw_t sw[MAXSW];
-
-static void *sndswn,*sndswx,*sndnoway,*sndbdo,*sndbdc,*sndnotele;
-static int swsnd;
-
 int sw_secrets;
+
+static sw_t sw[MAXSW];
+static void *sndswn, *sndswx, *sndnoway, *sndbdo, *sndbdc, *sndnotele;
+static int swsnd;
+static byte cht, chto, chf, f_ch;
 
 void SW_savegame (FILE *h) {
   int i, n;
@@ -91,31 +92,31 @@ void SW_loadgame (FILE *h) {
 int SW_load (FILE *h) {
   int i;
   switch(blk.t) {
-	case MB_SWITCH2:
-	  sw_secrets = 0;
-	  for (i = 0; i < MAXSW && blk.sz > 0; ++i, blk.sz -= 9) {
-      sw[i].x = myfread8(h);
-      sw[i].y = myfread8(h);
-      sw[i].t = myfread8(h);
-      sw[i].tm = myfread8(h); // unused
-      sw[i].a = myfread8(h);
-      sw[i].b = myfread8(h);
-      sw[i].c = myfread8(h);
-      sw[i].d = myfread8(h); // unused
-      sw[i].f = myfread8(h);
-      sw[i].tm = 0;
-      sw[i].d = 0;
-      sw[i].f |= 0x80;
-      if (sw[i].t == SW_SECRET) {
-        ++sw_secrets;
+    case MB_SWITCH2:
+      sw_secrets = 0;
+      for (i = 0; i < MAXSW && blk.sz > 0; ++i, blk.sz -= 9) {
+        sw[i].x = myfread8(h);
+        sw[i].y = myfread8(h);
+        sw[i].t = myfread8(h);
+        sw[i].tm = myfread8(h); // unused
+        sw[i].a = myfread8(h);
+        sw[i].b = myfread8(h);
+        sw[i].c = myfread8(h);
+        sw[i].d = myfread8(h); // unused
+        sw[i].f = myfread8(h);
+        sw[i].tm = 0;
+        sw[i].d = 0;
+        sw[i].f |= 0x80;
+        if (sw[i].t == SW_SECRET) {
+          ++sw_secrets;
+        }
       }
-	  }
-	  return 1;
+      return 1;
   }
   return 0;
 }
 
-void SW_alloc(void) {
+void SW_alloc (void) {
   sndswn=Z_getsnd("SWTCHN");
   sndswx=Z_getsnd("SWTCHX");
   sndnoway=Z_getsnd("NOWAY");
@@ -124,14 +125,13 @@ void SW_alloc(void) {
   sndnotele=Z_getsnd("NOTELE");
 }
 
-void SW_init(void) {
+void SW_init (void) {
   int i;
-
-  for(i=0;i<MAXSW;++i) sw[i].t=0;
-  swsnd=0;
+  for (i = 0; i < MAXSW; i++) {
+    sw[i].t = 0;
+  }
+  swsnd = 0;
 }
-
-static byte cht,chto,chf,f_ch;
 
 static void door(byte x,byte y) {
   byte ex;
@@ -149,7 +149,7 @@ static void door(byte x,byte y) {
   }
 }
 
-void Z_water_trap(obj_t *o) {
+void Z_water_trap (obj_t *o) {
   int i,j,sx,sy,x,y;
 
   if((y=o->y)>=FLDH*CELH+o->h) return;
@@ -166,7 +166,7 @@ void Z_water_trap(obj_t *o) {
 	  }
 }
 
-void Z_untrap(byte t) {
+void Z_untrap (byte t) {
   byte *p;
   word n;
 
@@ -205,7 +205,7 @@ static int shutdoor(int i) {
   return 1;
 }
 
-void SW_act(void) {
+void SW_act (void) {
   int i;
 
   if(swsnd) --swsnd;
@@ -233,7 +233,7 @@ static int doortime(int t) {
   return 0;
 }
 
-void SW_cheat_open(void) {
+void SW_cheat_open (void) {
   int i;
 
   for(i=0;i<MAXSW;++i) if(sw[i].t && !sw[i].tm) switch(sw[i].t) {
@@ -245,7 +245,7 @@ void SW_cheat_open(void) {
   }
 }
 
-int SW_press(int x,int y,int r,int h,byte t,int o) {
+int SW_press (int x, int y, int r, int h, byte t, int o) {
   int sx,sy,i,p;
 
   sx=(x-r)/CELW;sy=(y-h+1)/CELH;

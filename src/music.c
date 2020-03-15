@@ -21,25 +21,24 @@
 */
 
 #include "glob.h"
-#include "sound.h"
 #include "files.h"
+#include "music.h"
+#include "error.h"
+#include "game.h"
 #include <SDL.h>
 #include <SDL_mixer.h>
 
 short mus_vol = 50;
-
-Mix_Music * muslo;
-
 char music_random = ON;
 int music_time = 3;
 int music_fade = 5;
 
-Uint32 muscount;
+static Uint32 muscount;
+static Mix_Music * muslo;
+static int musdisabled = 1;
+static int volsetcount = 0;
 
-int musdisabled = 1;
-
-void S_initmusic(void)
-{
+void S_initmusic (void) {
     if (!SDL_WasInit(SDL_INIT_AUDIO)) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
             fprintf(stderr, "\nUnable to initialize audio:  %s\n", SDL_GetError());
@@ -63,8 +62,7 @@ void S_initmusic(void)
    S_volumemusic(mus_vol);
 }
 
-void S_donemusic(void)
-{
+void S_donemusic (void) {
     if (SDL_WasInit(SDL_INIT_AUDIO)) {
         F_freemus();
         Mix_CloseAudio();
@@ -72,23 +70,20 @@ void S_donemusic(void)
     }
 }
 
-void S_startmusic(int time)
-{
+void S_startmusic (int time) {
     if (musdisabled) return;
     Mix_PlayMusic(muslo, -1);
     Mix_VolumeMusic(mus_vol);
     muscount=time*60*1000/DELAY;
 }
 
-void S_stopmusic(void)
-{
+void S_stopmusic (void) {
     if (musdisabled) return;
     Mix_HaltMusic();
     muscount = 0;
 }
 
-void S_volumemusic(int v)
-{
+void S_volumemusic (int v) {
     if (musdisabled) return;
     mus_vol = v;
     if (mus_vol>128) mus_vol=128;
@@ -104,7 +99,7 @@ void S_volumemusic(int v)
     }
 }
 
-struct {
+static struct {
     Uint8 ascii;
     Uint8 asciilc;
     char *ch;
@@ -144,7 +139,7 @@ struct {
     {0}
 };
 
-char *get_trans_char (Uint8 c)
+static char *get_trans_char (Uint8 c)
 {
     int i = 0;
     while (atrans[i].ascii) {
@@ -157,7 +152,7 @@ char *get_trans_char (Uint8 c)
     return NULL;
 }
 
-void trans_ascii_str (char *dest, char *src)
+static void trans_ascii_str (char *dest, char *src)
 {
     char *p = dest;
     int i;
@@ -175,7 +170,7 @@ void trans_ascii_str (char *dest, char *src)
     *p='\0';
 }
 
-void F_loadmus(char n[8]) {
+void F_loadmus (char n[8]) {
     if (musdisabled) return;
     char f[50];
     char name[50];
@@ -204,7 +199,7 @@ void F_loadmus(char n[8]) {
 
 }
 
-void F_freemus(void) {
+void F_freemus (void) {
     if (musdisabled) return;
     if (muslo) {
         Mix_HaltMusic();
@@ -213,12 +208,7 @@ void F_freemus(void) {
     muslo = NULL;
 }
 
-extern char g_music[8];
-
-static int volsetcount = 0;
-
-void S_updatemusic()
-{
+void S_updatemusic (void) {
     if (musdisabled) return;
     
     //періодично встановлюю гучність музикі, так як вона сама підвищується до максимуму через певний час

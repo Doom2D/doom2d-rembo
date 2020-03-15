@@ -28,11 +28,12 @@
 #include "smoke.h"
 #include "weapons.h"
 #include "misc.h"
+#include "files.h"
+#include "game.h"
+#include "player.h"
+#include "monster.h"
+#include "switch.h"
 #include "my.h"
-
-extern int hit_xv,hit_yv;
-
-void bfg_fly(int x,int y,int own);
 
 enum{NONE=0,ROCKET,PLASMA,APLASMA,BALL1,BALL2,BALL7,BFGBALL,BFGHIT,
      MANF,REVF,FIRE};
@@ -40,7 +41,6 @@ enum{NONE=0,ROCKET,PLASMA,APLASMA,BALL1,BALL2,BALL7,BFGBALL,BFGHIT,
 weapon_t wp[MAXWPN];
 
 static void *snd[14];
-
 static void throw(int,int,int,int,int,int,int,int);
 
 void WP_savegame (FILE *h) {
@@ -85,7 +85,7 @@ void WP_loadgame (FILE *h) {
   }
 }
 
-void WP_alloc(void) {
+void WP_alloc (void) {
   int i;
   static char nm[14][6]={
 	"PISTOL",
@@ -106,13 +106,13 @@ void WP_alloc(void) {
   for(i=0;i<14;++i) snd[i]=Z_getsnd(nm[i]);
 }
 
-void WP_init(void) {
+void WP_init (void) {
   int i;
 
   for(i=0;i<MAXWPN;++i) wp[i].t=NONE;
 }
 
-void WP_act(void) {
+void WP_act (void) {
   int i,st;
   static obj_t o;
 
@@ -192,7 +192,7 @@ void WP_act(void) {
   }
 }
 
-void WP_gun(int x,int y,int xd,int yd,int o,int v) {
+void WP_gun (int x, int y, int xd, int yd, int o, int v) {
   register dword d,m;
   int sx,sy,lx,ly;
   dword xe,ye,s;
@@ -246,7 +246,7 @@ void WP_gun(int x,int y,int xd,int yd,int o,int v) {
   }
 }
 
-void WP_punch(int x,int y,int d,int own) {
+void WP_punch (int x, int y, int d, int own) {
   obj_t o;
 
   o.x=x;o.y=y;o.r=12;o.h=26;
@@ -254,7 +254,7 @@ void WP_punch(int x,int y,int d,int own) {
   if(Z_hit(&o,d,own,HIT_SOME)) Z_sound(snd[9],128);
 }
 
-int WP_chainsaw(int x,int y,int d,int own) {
+int WP_chainsaw (int x, int y, int d, int own) {
   obj_t o;
 
   o.x=x;o.y=y;o.r=12;o.h=26;
@@ -274,7 +274,7 @@ static void throw(int i,int x,int y,int xd,int yd,int r,int h,int s) {
   wp[i].o.vx=wp[i].o.vy=0;
 }
 
-void WP_rocket(int x,int y,int xd,int yd,int o) {
+void WP_rocket (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -286,7 +286,7 @@ void WP_rocket(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_revf(int x,int y,int xd,int yd,int o,int t) {
+void WP_revf (int x, int y, int xd, int yd, int o, int t) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -298,7 +298,7 @@ void WP_revf(int x,int y,int xd,int yd,int o,int t) {
   }
 }
 
-void WP_plasma(int x,int y,int xd,int yd,int o) {
+void WP_plasma (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -310,7 +310,7 @@ void WP_plasma(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_ball1(int x,int y,int xd,int yd,int o) {
+void WP_ball1 (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -321,7 +321,7 @@ void WP_ball1(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_ball2(int x,int y,int xd,int yd,int o) {
+void WP_ball2 (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -332,7 +332,7 @@ void WP_ball2(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_ball7(int x,int y,int xd,int yd,int o) {
+void WP_ball7 (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -343,7 +343,7 @@ void WP_ball7(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_aplasma(int x,int y,int xd,int yd,int o) {
+void WP_aplasma (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -355,7 +355,7 @@ void WP_aplasma(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_manfire(int x,int y,int xd,int yd,int o) {
+void WP_manfire (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -367,7 +367,7 @@ void WP_manfire(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_bfgshot(int x,int y,int xd,int yd,int o) {
+void WP_bfgshot (int x, int y, int xd, int yd, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -378,7 +378,7 @@ void WP_bfgshot(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_bfghit(int x,int y,int o) {
+void WP_bfghit (int x, int y, int o) {
   int i;
 
   for(i=0;i<MAXWPN;++i) if(!wp[i].t) {
@@ -392,7 +392,7 @@ void WP_bfghit(int x,int y,int o) {
   }
 }
 
-void WP_pistol(int x,int y,int xd,int yd,int o) {
+void WP_pistol (int x,int y,int xd,int yd,int o) {
   Z_sound(snd[0],96);
   WP_gun(x,y,xd,yd,o,1);
   if(g_dm) {
@@ -401,12 +401,12 @@ void WP_pistol(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_mgun(int x,int y,int xd,int yd,int o) {
+void WP_mgun (int x, int y, int xd, int yd, int o) {
   Z_sound(snd[11],128);
   WP_gun(x,y,xd,yd,o,1);
 }
 
-void WP_shotgun(int x,int y,int xd,int yd,int o) {
+void WP_shotgun (int x, int y, int xd, int yd, int o) {
   int i,j;
 
   Z_sound(snd[1],128);
@@ -416,7 +416,7 @@ void WP_shotgun(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_dshotgun(int x,int y,int xd,int yd,int o) {
+void WP_dshotgun (int x, int y, int xd, int yd, int o) {
   int i,j;
 
   Z_sound(snd[2],128);
@@ -426,7 +426,7 @@ void WP_dshotgun(int x,int y,int xd,int yd,int o) {
   }
 }
 
-void WP_ognemet(int x,int y,int xd,int yd,int xv,int yv,int o) {
+void WP_ognemet (int x, int y, int xd, int yd, int xv, int yv, int o) {
   int m;
 
   m=abs(xd-x);if(!m) m=abs(yd-y);

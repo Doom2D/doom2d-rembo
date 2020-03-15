@@ -42,6 +42,11 @@
 #include "misc.h"
 #include "map.h"
 #include "my.h"
+#include "game.h"
+#include "config.h"
+#include "music.h"
+#include "a8.h"
+#include "error.h"
 
 #include <SDL_keysym.h>
 
@@ -50,49 +55,30 @@
 
 #define GETIME 1092
 
-
-int A8_start(char*);
-int A8_nextframe(void);
-void A8_close(void);
-
-
-byte transdraw=0;
-
-
-void FX_trans1(int t);
-extern unsigned char fx_scr1[64000],fx_scr2[64000];
-
-extern short lastkey;
-
-
-extern int hit_xv,hit_yv;
-
-//void setgamma(int);
-
-extern int PL_JUMP;
-
-extern map_block_t blk;
-
-extern byte cheat;
-
-byte _2pl=0,g_dm=0,g_st=GS_TITLE,g_exit=0,g_map=1,_warp=0;
-char g_music[8]="MENU";
-byte _net=0;
-int g_sttm=1092;
+byte transdraw;
+byte _2pl;
+byte g_dm;
+byte g_st = GS_TITLE;
+byte g_exit;
+byte g_map = 1;
+char g_music[8] = "MENU";
 dword g_time;
-int dm_pnum,dm_pl1p,dm_pl2p;
+int dm_pnum;
+int dm_pl1p;
+int dm_pl2p;
 pos_t dm_pos[100];
 
 static void *telepsnd;
-void *scrnh[3];
-void *cd_scr;
 
-extern int sky_type;
-void *ltn[2][2];
-int lt_time,lt_type,lt_side,lt_ypos,lt_force;
-void *ltnsnd[2];
+int lt_time;
+int lt_type;
+int lt_side;
+int lt_ypos;
+static int lt_force;
+static void *ltnsnd[2];
 
-int g_trans=0,g_transt;
+int g_trans;
+static int g_transt;
 
 static void set_trans(int st) {
   switch(g_st) {
@@ -108,7 +94,7 @@ static void set_trans(int st) {
   g_trans=1;g_transt=0;
 }
 
-void G_savegame(FILE* h) {
+void G_savegame (FILE* h) {
   myfwrite8(_2pl, h);
   myfwrite8(g_dm, h);
   myfwrite8(g_exit, h);
@@ -128,7 +114,7 @@ void G_savegame(FILE* h) {
   myfwrite(g_music, 8, 1, h);
 }
 
-void G_loadgame(FILE* h) {
+void G_loadgame (FILE* h) {
   _2pl = myfread8(h);
   g_dm = myfread8(h);
   g_exit = myfread8(h);
@@ -151,18 +137,18 @@ void G_loadgame(FILE* h) {
 
 int G_load (FILE *h) {
   switch (blk.t) {
-	case MB_MUSIC:
-	  myfread(g_music, 8, 1, h);
-	  if (music_random) {
-      F_randmus(g_music);
-    }
-    F_loadmus(g_music);
-	  return 1;
+    case MB_MUSIC:
+      myfread(g_music, 8, 1, h);
+      if (music_random) {
+        F_randmus(g_music);
+      }
+      F_loadmus(g_music);
+      return 1;
   }
   return 0;
 }
 
-void load_game(int n) {
+void load_game (int n) {
   F_freemus();
   W_init();
   F_loadgame(n);
@@ -177,7 +163,7 @@ void load_game(int n) {
   S_startmusic(music_time);
 }
 
-void G_start(void) {
+void G_start (void) {
   char s[8];
 
   F_freemus();
@@ -203,7 +189,7 @@ void G_start(void) {
 
 #define GGAS_TOTAL (MN__LAST-MN_DEMON+16+10)
 
-void G_init(void) {
+void G_init (void) {
   int i,j;
   char s[9];
 
@@ -229,7 +215,7 @@ void G_init(void) {
   g_trans=0;
 }
 
-int G_beg_video(void) {
+static int G_beg_video (void) {
 /*
   switch(g_map) {
     case 3: return A8_start("FALL");
@@ -255,7 +241,7 @@ int G_beg_video(void) {
 }
 
 
-int G_end_video(void) {
+static int G_end_video (void) {
 /*
   switch(g_map) {
     case 1: return A8_start("TRUBA");
@@ -265,8 +251,7 @@ int G_end_video(void) {
   return 0;
 }
 
-
-void G_act(void) {
+void G_act (void) {
   static byte pcnt=0;
 /*
   if(g_trans) {
@@ -302,7 +287,8 @@ void G_act(void) {
         case GS_ENDANIM: g_st=GS_DARKEN;break;
         case GS_END2ANIM: g_st=GS_END3ANIM;A8_start("KONEC");break;
         case GS_END3ANIM: g_st=GS_ENDSCR;lastkey=0;break;
-      }g_sttm=0;return;
+      }
+      return;
     }
 //    V_copytoscr(0,SCRW,0,SCRH);//V_copytoscr(0,320,0,200);
     return;
@@ -414,7 +400,7 @@ inter:
 #endif
 }
 
-void G_respawn_player(player_t *p) {
+void G_respawn_player (player_t *p) {
   int i;
 
   if(dm_pnum==2) {

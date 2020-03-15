@@ -35,31 +35,28 @@
 #include "menu.h"
 #include "misc.h"
 #include "render.h"
+#include "config.h"
+#include "game.h"
+#include "player.h"
+#include "sound.h"
+#include "music.h"
 
 #include <SDL.h>
 #include <sys/stat.h>
-extern SDL_Surface *screen;
 
 #define QSND_NUM 14
 
 enum{HIT100,ARMOR,JUMP,WPNS,IMMORTAL,SPEED,OPEN,EXIT};
 
-extern int PL_JUMP,PL_RUN;
-extern byte _warp,cheat,p_fly;
+static byte panim[] = "BBDDAACCDDAABBDDAACCDDAABBDDAACCDDAAEEEEEFEFEFEFEFEFEFEFEFEFEEEEE";
+byte *panimp = panim;
+byte _warp;
 
-extern char g_music[8];
-
-extern byte savname[7][24],savok[7];
-void load_game(int);
-
-static byte panim[]=
-  "BBDDAACCDDAABBDDAACCDDAABBDDAACCDDAAEEEEEFEFEFEFEFEFEFEFEFEFEEEEE";
-byte *panimp=panim;
-
-byte pcolortab[PCOLORN]={
-  0x18,0x20,0x40,0x58,0x60,0x70,0x80,0xB0,0xC0,0xD0
+byte pcolortab[PCOLORN] = {
+  0x18, 0x20, 0x40, 0x58, 0x60, 0x70, 0x80, 0xB0, 0xC0, 0xD0
 };
-int p1color=5,p2color=4;
+int p1color = 5;
+int p2color = 4;
 
 char ibuf[24];
 byte input=0;
@@ -155,16 +152,14 @@ static byte cbuf[32];
 static snd_t *voc=NULL;
 static int voc_ch=0;
 
-extern byte shot_vga; // config.c
-
-void GMV_stop(void) {
+static void GMV_stop (void) {
   if(voc) {
     if(voc_ch) {S_stop(voc_ch);voc_ch=0;}
     free(voc);voc=NULL;
   }
 }
 
-void GMV_say(char *nm) {
+void GMV_say (char *nm) {
   int r,len;
   snd_t *p;
   byte *d;
@@ -180,7 +175,17 @@ void GMV_say(char *nm) {
   voc_ch=S_play(voc,-1,1024,255);
 }
 
-void G_code(void) {
+static void GM_set (menu_t *m) {
+  mnu=m;gm_redraw=1;
+  if(g_st==GS_GAME) {
+	//V_setrect(0,SCRW,0,SCRH);V_clr(0,SCRW,0,SCRH,0);//V_setrect(0,320,0,200);V_clr(0,320,0,200,0);
+	//if(_2pl) {V_setrect(SCRW-120,120,0,SCRH);w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {V_setrect(200,120,0,200);w_o=0;Z_clrst();w_o=100;Z_clrst();}
+	//else {V_setrect(SCRW-120,120,0,SCRH);w_o=0;Z_clrst();}//else {V_setrect(200,120,50,100);w_o=50;Z_clrst();}
+	//pl1.drawst=pl2.drawst=0xFF;V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
+  }
+}
+
+void G_code (void) {
   void *s;
   s=csnd2;
   if(memcmp(cbuf+32-5,"IDDQD",5)==0) {
@@ -222,19 +227,7 @@ void G_code(void) {
   Z_sound(s,128);
 }
 
-void GM_set(menu_t *m) {
-  mnu=m;gm_redraw=1;
-  if(g_st==GS_GAME) {
-	//V_setrect(0,SCRW,0,SCRH);V_clr(0,SCRW,0,SCRH,0);//V_setrect(0,320,0,200);V_clr(0,320,0,200,0);
-	//if(_2pl) {V_setrect(SCRW-120,120,0,SCRH);w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {V_setrect(200,120,0,200);w_o=0;Z_clrst();w_o=100;Z_clrst();}
-	//else {V_setrect(SCRW-120,120,0,SCRH);w_o=0;Z_clrst();}//else {V_setrect(200,120,50,100);w_o=50;Z_clrst();}
-	//pl1.drawst=pl2.drawst=0xFF;V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
-  }
-}
-
-void setgamma(int);
-
-void GM_command(int c) {
+static void GM_command (int c) {
   switch(c) {
     case CANCEL:
       GM_set(NULL);break;
@@ -339,28 +332,6 @@ void GM_command(int c) {
   }
 }
 
-/*
-byte keychar[2][128]={{
-  0,0,'1','2','3','4','5','6','7','8','9','0','-','=',0,0,
-  'Q','W','E','R','T','Y','U','I','O','P','[',']','\r',0,'A','S',
-  'D','F','G','H','J','K','L',';','\'',0,0,'\\','Z','X','C','V',
-  'B','N','M',',','.','/',0,'*',0,' ',0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,'-',0,0,0,'+',0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-},{
-  0,0,'!','\"','#','$','%',':','&','*','(',')','_','+',0,0,
-  'x','x','x','x','x','x','x','x','x','x','x','x','\r',0,'x','x',
-  'x','x','x','x','x','x','x','x','x',0,0,0,'x','x','x','x',
-  'x','x','x','x','x','?',0,'*',0,' ',0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,'-',0,0,0,'+',0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-}};
-*/
-
 struct {
     int keysym;
     byte ch;
@@ -407,8 +378,7 @@ struct {
     {0}
 };
 
-byte get_keychar(int keysym)
-{
+static byte get_keychar (int keysym) {
     int i = 0;
     while (keychar[i].keysym) {
         if (keychar[i].keysym == keysym) return keychar[i].ch;
@@ -417,7 +387,8 @@ byte get_keychar(int keysym)
     return 0;
 }
 
-static void shot(void) {
+static void shot (void) {
+/*
   static int num=1;
   char fn[100];//...
 #ifndef WIN32
@@ -431,9 +402,10 @@ static void shot(void) {
 #endif
   SDL_SaveBMP(screen, fn);
   ++num;
+*/
 }
 
-int GM_act(void) {
+int GM_act (void) {
   byte c;
 
   if(mnu==&plcolor_mnu) {
@@ -540,7 +512,7 @@ int GM_act(void) {
   return((mnu)?1:0);
 }
 
-void G_keyf(int k, int press) {
+static void G_keyf (int k, int press) {
   int i;
 
   lastkey=k;
@@ -550,7 +522,7 @@ void G_keyf(int k, int press) {
   }
 }
 
-void GM_init(void) {
+void GM_init (void) {
 #ifndef DEMO
   int i;
   static char nm[QSND_NUM][6]={

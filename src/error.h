@@ -19,8 +19,13 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Error handling
+#ifndef ERROR_H_INCLUDED
+#define ERROR_H_INCLUDED
 
-void ERR_failinit(char *,...);
-void ERR_fatal(char *,...);
-void ERR_quit(void);
+void logo (const char *s, ...);
+void logo_gas (int cur, int all);
+void ERR_failinit (char *s, ...);
+void ERR_fatal (char *s, ...);
+void ERR_quit (void);
+
+#endif /* ERROR_H_INCLUDED */

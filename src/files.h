@@ -19,11 +19,12 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// File operations
+#ifndef FILES_H_INCLUDED
+#define FILES_H_INCLUDED
 
-///#include <io.h>
-//#include <fcntl.h>
-#include <stdio.h>
+#include "glob.h"
+#include <stdio.h> // FILE
+#include "map.h" // map_block_t
 
 #define MAX_WADS 20
 #define MAX_WAD 2000
@@ -31,42 +32,38 @@
 typedef char wadname[8];
 
 typedef struct {
-  int o,l;
+  int o, l;
   char n[8];
-}wad_t;
+} wad_t;
 
 typedef struct {
-  int o,l;
+  int o, l;
   char n[8];
   int f;
-}mwad_t;
+} mwad_t;
 
-void F_startup(void);
-void F_addwad(char *);
-void F_initwads(void);
-void F_allocres(void);
-//void F_preload(void);
-void F_readstr(FILE*,char *,int);
-void F_readstrz(FILE*,char *,int);
-void F_loadres(int,void *,dword,dword);
-int F_getresid(char *);
-void F_getresname(char *,int);
-int F_findres(char *);
-int F_getsprid(char[4],int,int);
-int F_getreslen(int);
-void F_loadmap(char[8]);
-void F_loadmus(char[8]);
-void F_freemus(void);
-void F_nextmus(char*);
+extern int d_start, d_end;
+extern byte savname[7][24];
+extern byte savok[7];
+extern mwad_t wad[MAX_WAD];
+extern map_block_t blk;
 
-void F_getsavnames(void);
-void F_loadgame(int);
-void F_savegame(int,char*);
+void F_startup (void);
+void F_getsavnames (void);
+void F_savegame (int n, char *s);
+void F_loadgame (int n);
+void F_addwad (char *fn);
+void F_initwads (void);
+void F_allocres (void);
+void F_loadres (int r, void *p, dword o, dword l);
+int F_findres (char *n);
+int F_getresid (char *n);
+void F_getresname (char *n, int r);
+int F_getsprid (char n[4], int s, int d);
+int F_getreslen (int r);
+void F_nextmus (char *s);
+void F_randmus (char *s);
+void F_readstr (FILE* h, char *s, int m);
+void F_loadmap (char n[8]);
 
-void F_randmus(char*);//
-
-extern char wads[MAX_WADS][__MAX_PATH];
-extern int wad_num;
-
-int F_getsprid(char n[4],int s,int d);
-int F_getresid(char *n);
+#endif /* FILES_H_INCLUDED */

@@ -19,11 +19,18 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Configuration
+#ifndef CONFIG_H_INCLUDED
+#define CONFIG_H_INCLUDED
 
-void CFG_args(int argc, char *argv[]);
-void CFG_load(void);
-void CFG_save(void);
+#include "glob.h"
 
-extern char cfg_file[];
+extern byte cheat;
+extern byte shot_vga;
+extern char cd_path[128];
+extern char cfg_file[128];
 
+void CFG_args (int argc, char *argv[]);
+void CFG_load (void);
+void CFG_save (void);
+
+#endif /* CONFIG_H_INCLUDED */

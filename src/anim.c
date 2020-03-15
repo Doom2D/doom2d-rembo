@@ -26,6 +26,7 @@
 #include <vga.h>
 //#include <keyb.h>
 #include "error.h"
+#include "anim.h"
 
 enum{AB_END,AB_SCREEN,AB_UPDATE};
 

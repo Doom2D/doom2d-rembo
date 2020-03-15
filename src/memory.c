@@ -27,18 +27,11 @@
 #include "files.h"
 #include "memory.h"
 
-dword dpmi_memavl(void);
-
-extern int d_start,d_end;
-
-extern mwad_t wad[];
-
-static byte m_active=FALSE;
-
+static byte m_active;
 static void *resp[MAX_WAD];
 static short resl[MAX_WAD];
 
-void M_startup(void) {
+void M_startup (void) {
   if(m_active) return;
   logo("M_startup: настройка памяти\n");
   memset(resp,0,sizeof(resp));
@@ -47,13 +40,12 @@ void M_startup(void) {
   m_active=TRUE;
 }
 
-void M_shutdown(void) {
-
+void M_shutdown (void) {
   if(!m_active) return;
   m_active=FALSE;
 }
 
-static void allocres(int h) {
+static void allocres (int h) {
   int *p,s;
 
   if(h>d_start && h<d_end) s=1; else s=0;
@@ -72,7 +64,7 @@ static void allocres(int h) {
   }else F_loadres(h,p,0,wad[h].l);
 }
 
-void *M_lock(int h) {
+void *M_lock (int h) {
   if(h==-1 || h==0xFFFF) return NULL;
   h&=-1-0x8000;
   if(h>=MAX_WAD) ERR_fatal("M_lock: странный номер ресурса");
@@ -81,7 +73,7 @@ void *M_lock(int h) {
   return resp[h];
 }
 
-void M_unlock(void *p) {
+void M_unlock (void *p) {
   int h;
 
   if(!p) return;

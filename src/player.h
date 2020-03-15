@@ -20,7 +20,12 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Player data and functions
+#ifndef PLAYER_H_INCLUDED
+#define PLAYER_H_INCLUDED
+
+#include "glob.h"
+#include "view.h" // obj_t
+#include <stdio.h> // FILE
 
 #define PL_DRAWLIFE  1
 #define PL_DRAWARMOR 2
@@ -50,17 +55,16 @@
 #define PL_POWERUP_TIME 546
 
 #pragma pack(1)
-typedef struct{
+typedef struct {
   obj_t o;
   int looky;
-  int st,s;
-  int life,armor,hit,hito;
-  int pain,air;
-  int invl,suit;
+  int st, s;
+  int life, armor, hit, hito;
+  int pain, air;
+  int invl, suit;
   char d;
-  //byte ku,kd,kl,kr,kf,kj,kwl,kwr,kp;
-  int frag,ammo,shel,rock,cell,fuel,kills,secrets;
-  byte fire,cwpn,csnd;
+  int frag, ammo, shel, rock, cell, fuel, kills, secrets;
+  byte fire, cwpn, csnd;
   byte amul;
   word wpns;
   char wpn;
@@ -70,24 +74,34 @@ typedef struct{
   int id;
   byte keys;
   char lives;
-  int ku,kd,kl,kr,kf,kj,kwl,kwr,kp;
-}player_t;
+  int ku, kd, kl, kr, kf, kj, kwl, kwr, kp;
+} player_t;
 #pragma pack()
 
-extern byte plr_goanim[], plr_dieanim[], plr_slopanim[];
-
 extern byte p_immortal;
-extern player_t pl1, pl2;
+extern byte p_fly;
+extern int PL_JUMP;
+extern int PL_RUN;
 
-void PL_init(void);
-void PL_alloc(void);
-void PL_spawn(player_t *,int,int,char);
-int PL_hit(player_t *,int,int,int);
-int PL_isdead(player_t *);
-void PL_act(player_t *);
-void PL_cry(player_t *);
-void PL_damage(player_t *);
-int PL_give(player_t *,int);
-void G_respawn_player(player_t *);
+extern player_t pl1;
+extern player_t pl2;
 
-void PL_reset(void);
+extern byte plr_goanim[];
+extern byte plr_dieanim[];
+extern byte plr_slopanim[];
+
+void PL_savegame (FILE *h);
+void PL_loadgame (FILE *h);
+int PL_isdead (player_t *p);
+void PL_init (void);
+void PL_alloc (void);
+void PL_reset (void);
+void PL_spawn (player_t *p, int x, int y, char d);
+int PL_hit (player_t *p, int d, int o, int t);
+void PL_damage (player_t *p);
+void PL_cry (player_t *p);
+int PL_give (player_t *p, int t);
+void PL_act (player_t *p);
+void bfg_fly (int x, int y, int o);
+
+#endif /* PLAYER_H_INCLUDED */

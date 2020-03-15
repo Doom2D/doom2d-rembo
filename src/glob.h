@@ -22,8 +22,10 @@
 
 // Globals
 
-#ifndef MYGLOB
-#define MYGLOB
+#include <stdlib.h>
+
+#ifndef GLOB_H_INCLUDED
+#define GLOB_H_INCLUDED
 
 #ifndef NULL
 #define NULL 0
@@ -38,33 +40,17 @@ typedef unsigned char byte;
 typedef unsigned short word;
 typedef unsigned int dword;
 
-void logo(const char *,...);
-void logo_gas(int,int);
-
-extern int snd_card;
-extern int _cpu;
-
-
 #define __MAX_PATH 255
 #define __MAX_DRIVE 50
 #define __MAX_DIR 100
 #define __MAX_FNAME 50
 #define __MAX_EXT 50
 
-
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
 
 #define myrand(a) (rand()%(a))
 
-#include <stdio.h>
-void myfread(void *ptr, size_t n, size_t size, FILE *f);
-size_t myfreadc(void *ptr, size_t n, size_t size, FILE *f);
-void myfwrite(void *ptr, size_t n, size_t size, FILE *f);
-
-extern int SCRW;
-extern int SCRH;
-
 #define DELAY 50
 
-#endif
+#endif /* GLOB_H_INCLUDED */

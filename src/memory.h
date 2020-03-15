@@ -19,11 +19,14 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// High-level memory allocation
+#ifndef MEMORY_H_INCLULDED
+#define MEMORY_H_INCLULDED
 
-void M_startup(void);
-void M_shutdown(void);
-void *M_lock(int);
-void M_unlock(void *);
-int M_locked(int);
-int M_was_locked(int);
+void M_startup (void);
+void M_shutdown (void);
+void *M_lock (int h);
+void M_unlock (void *p);
+int M_locked (int h);
+int M_was_locked (int h);
+
+#endif /* MEMORY_H_INCLULDED */

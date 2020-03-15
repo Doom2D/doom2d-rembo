@@ -19,7 +19,11 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Smoke
+#ifndef SMOKE_H_INLUDED
+#define SMOKE_H_INLUDED
+
+#include "glob.h"
+#include <stdio.h> // FILE
 
 #define MAXSMOK 500
 
@@ -27,18 +31,21 @@
 #define FLSN 8
 
 #pragma pack(1)
-typedef struct{
-  int x,y,xv,yv;
-  byte t,s;
+typedef struct {
+  int x, y, xv, yv;
+  byte t, s;
   short o;
-}smoke_t;
+} smoke_t;
 #pragma pack()
 
 extern smoke_t sm[MAXSMOK];
 
-void SMK_init(void);
-void SMK_alloc(void);
-void SMK_act(void);
-void SMK_add(int x,int y,int xv,int yv,byte t,byte s,short o);
-void SMK_gas(int x,int y,int rx,int ry,int xv,int yv,int k);
-void SMK_flame(int x,int y,int ox,int oy,int rx,int ry,int xv,int yv,int k,int o);
+void SMK_savegame (FILE *h);
+void SMK_loadgame (FILE *h);
+void SMK_init (void);
+void SMK_alloc (void);
+void SMK_act (void);
+void SMK_gas (int x0, int y0, int xr, int yr, int xv, int yv, int k);
+void SMK_flame (int x0, int y0, int ox, int oy, int xr, int yr, int xv, int yv, int k, int o);
+
+#endif /* SMOKE_H_INLUDED */

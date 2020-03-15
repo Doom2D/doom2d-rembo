@@ -20,53 +20,49 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Miscellaneous functions
+#ifndef MISC_H_INCLUDED
+#define MISC_H_INCLUDED
 
-#include <stdint.h>
-#include "view.h"
+#include "glob.h"
+#include "view.h" // obj_t
+#include <stdint.h> // int16_t int32_t
 
 #define MAXDIST 2000000L
 
-enum{
-  Z_HITWALL=1,Z_HITCEIL=2,Z_HITLAND=4,Z_FALLOUT=8,
-  Z_INWATER=16,Z_HITWATER=32,Z_HITAIR=64,Z_BLOCK=128
+enum {
+  Z_HITWALL = 1,
+  Z_HITCEIL = 2,
+  Z_HITLAND = 4,
+  Z_FALLOUT = 8,
+  Z_INWATER = 16,
+  Z_HITWATER = 32,
+  Z_HITAIR = 64,
+  Z_BLOCK = 128
 };
 
-void *Z_getsnd(char[6]);
-int Z_sound(void *,int);
-void Z_initst(void);
-int Z_sign(int);
-int Z_dec(int,int);
-int Z_canstand(int,int,int);
-int Z_canfit(int x,int y,int r,int h);
-void Z_teleobj(int o,int x,int y);
-int Z_moveobj(obj_t *);
-int Z_what_cpu(void);
-int Z_gunhit(int,int,int,int,int);
-int Z_overlap(obj_t *,obj_t *);
-int Z_look(obj_t *,obj_t *,int);
-int Z_hit(obj_t *,int,int,int);
-int Z_hitobj(int id,int d,int o,int t);
-void Z_kickobj(obj_t *,int,int,int);
-void Z_explode(int,int,int,int);
-void Z_bfg9000(int,int,int);
-int Z_cansee(int,int,int,int);
-int Z_chktrap(int,int d,int o,int t);
-int Z_istrapped(int,int,int,int);
-int Z_inwater(int x,int y,int r,int h);
-int Z_canbreathe(int x,int y,int r,int h);
-int Z_getobjpos(int,obj_t *o);
+extern byte z_dot;
+extern byte z_mon;
 
-void Z_water_trap(obj_t *);
-void Z_untrap(byte);
-
-void Z_splash(obj_t *,int n);
-
-void Z_set_speed(obj_t *,int);
-
-void Z_calc_time(dword t,word *h,word *m,word *s);
-
-int Z_getacid(int x,int y,int r,int h);
+int Z_sign (int a);
+int Z_dec (int a, int b);
+void *Z_getsnd (char n[6]);
+int Z_sound (void *s, int v);
+void Z_initst (void);
+int Z_canstand (int x, int y, int r);
+int Z_canfit (int x, int y, int r, int h);
+int Z_istrapped (int x, int y, int r, int h);
+void Z_set_speed (obj_t *o, int s);
+int Z_inwater (int x, int y, int r, int h);
+int Z_getacid (int x, int y, int r, int h);
+int Z_canbreathe (int x, int y, int r, int h);
+int Z_overlap (obj_t *a, obj_t *b);
+int Z_cansee (int x, int y, int xd, int yd);
+int Z_look (obj_t *a, obj_t *b, int d);
+int Z_moveobj (obj_t *p);
+void Z_splash (obj_t *p, int n);
+void Z_calc_time(dword t, word *h, word *m, word *s);
 
 int16_t short2host (int16_t x);
 int32_t int2host (int32_t x);
+
+#endif /* MISC_H_INCLUDED */

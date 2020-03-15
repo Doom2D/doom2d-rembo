@@ -25,69 +25,56 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include "error.h"
-#include "view.h"
-#include "items.h"
-#include "switch.h"
 #include "files.h"
 #include "map.h"
 #include "my.h"
+#include "game.h"
+#include "view.h"
+#include "dots.h"
+#include "smoke.h"
+#include "fx.h"
+#include "items.h"
+#include "monster.h"
+#include "player.h"
+#include "switch.h"
+#include "weapons.h"
+#include "error.h"
 
-char *S_getinfo(void);
+typedef struct {
+  byte n, i, v, d;
+} dmv;
 
-extern void *snd_drv;
-
-typedef struct{
-  byte n,i,v,d;
-}dmv;
-
-byte seq[255],seqn;
-dmv *pat=NULL;
-unsigned *patp;
-void **dmi;
-
-static int inum=0;
-
-void G_savegame(FILE*);
-void W_savegame(FILE*);
-void DOT_savegame(FILE*);
-void SMK_savegame(FILE*);
-void FX_savegame(FILE*);
-void IT_savegame(FILE*);
-void MN_savegame(FILE*);
-void PL_savegame(FILE*);
-void SW_savegame(FILE*);
-void WP_savegame(FILE*);
-
-void G_loadgame(FILE*);
-void W_loadgame(FILE*);
-void DOT_loadgame(FILE*);
-void SMK_loadgame(FILE*);
-void FX_loadgame(FILE*);
-void IT_loadgame(FILE*);
-void MN_loadgame(FILE*);
-void PL_loadgame(FILE*);
-void SW_loadgame(FILE*);
-void WP_loadgame(FILE*);
-
-byte savname[7][24],savok[7];
-
-int d_start,d_end,m_start,m_end,s_start,s_end,wad_num;
+int d_start, d_end;
+byte savname[7][24];
+byte savok[7];
 mwad_t wad[MAX_WAD];
+map_block_t blk;
 
-char wads[MAX_WADS][__MAX_PATH];
+static byte seq[255];
+static byte seqn;
+static int inum=0;
+static dmv *pat=NULL;
+static unsigned *patp;
+static void **dmi;
+
+static int m_start, m_end;
+static int s_start, s_end;
+static int wad_num;
+
+static char wads[MAX_WADS][__MAX_PATH];
 static FILE* wadh[MAX_WADS];
 
-char f_drive[__MAX_DRIVE],f_dir[__MAX_DIR],f_name[__MAX_FNAME],f_ext[__MAX_EXT],
-  f_path[__MAX_PATH];
+static char f_drive[__MAX_DRIVE];
+static char f_dir[__MAX_DIR];
+static char f_name[__MAX_FNAME];
+static char f_ext[__MAX_EXT];
 
-void F_startup(void) {
+void F_startup (void) {
   logo("F_startup: настройка файловой системы\n");
   memset(wads,0,sizeof(wads));
 }
 
-char *getsavfpname(int n, int ro)
-{
+static char *getsavfpname (int n, int ro) {
   static char fn[]="savgame0.dat";
   fn[7]=n+'0';
 #ifndef WIN32
@@ -168,7 +155,7 @@ void F_loadgame (int n) {
   }
 }
 
-void F_addwad(char *fn) {
+void F_addwad (char *fn) {
   int i;
 
   for(i=0;i<MAX_WADS;++i) if(wads[i][0]==0) {
@@ -177,17 +164,13 @@ void F_addwad(char *fn) {
   ERR_failinit("Не могу добавить WAD %s",fn);
 }
 
-
-int myfilelength(FILE *h)
-{
+static int myfilelength (FILE *h) {
     int pos = ftell(h);
     fseek (h, 0, SEEK_END);
     int len = ftell(h);
     fseek (h, pos, SEEK_SET);
     return len;
 }
-
-extern void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext);
 
 // build wad directory
 void F_initwads (void) {
@@ -301,7 +284,7 @@ void F_initwads (void) {
 
 // allocate resources
 // (called from M_startup)
-void F_allocres(void) {
+void F_allocres (void) {
   d_start=F_getresid("D_START");
   d_end=F_getresid("D_END");
   m_start=F_getresid("M_START");
@@ -311,7 +294,7 @@ void F_allocres(void) {
 }
 
 // load resource
-void F_loadres(int r,void *p,dword o,dword l) {
+void F_loadres (int r, void *p, dword o, dword l) {
 
   int oo;
   FILE *fh;
@@ -329,42 +312,45 @@ void F_loadres(int r,void *p,dword o,dword l) {
   
 }
 
-
-void F_saveres(int r,void *p,dword o,dword l) {
-
-  int oo;
- FILE* fh;
-  oo=ftell(fh=wadh[wad[r].f]);
-  if(fseek(fh,wad[r].o+o,SEEK_SET)!=0)
+/*
+// unused
+void F_saveres(int r, void *p, dword o, dword l) {
+  FILE* fh = wadh[wad[r].f];
+  int oo = ftell(fh);
+  if (fseek(fh, wad[r].o + o, SEEK_SET) != 0) {
     ERR_fatal("Ошибка при чтении файла");
-  myfwrite(p,l,1,fh);
-  fseek(fh,oo,SEEK_SET);
-
+  }
+  myfwrite(p, l, 1, fh);
+  fseek(fh, oo, SEEK_SET);
 }
+*/
 
 // get resource id
-int F_getresid(char *n) {
+int F_findres (char *n) {
   int i;
-
-  for(i=0;i<wad_num;++i) if(strncasecmp(wad[i].n,n,8)==0) return i;
-    ERR_fatal("F_getresid: ресурс %.8s не найден",n);
+  for (i = 0; i < wad_num; i++) {
+    if (strncasecmp(wad[i].n, n, 8) == 0) {
+      return i;
+    }
+  }
   return -1;
 }
 
 // get resource id
-int F_findres(char *n) {
-  int i;
-
-  for(i=0;i<wad_num;++i) if(strncasecmp(wad[i].n,n,8)==0) return i;
-  return -1;
+int F_getresid (char *n) {
+  int i = F_findres(n);
+  if (i == -1) {
+    ERR_fatal("F_getresid: ресурс %.8s не найден", n);
+  }
+  return i;
 }
 
-void F_getresname(char *n,int r) {
-  memcpy(n,wad[r].n,8);
+void F_getresname (char *n, int r) {
+  memcpy(n, wad[r].n, 8);
 }
 
 // get sprite id
-int F_getsprid(char n[4],int s,int d) {
+int F_getsprid (char n[4], int s, int d) {
   int i;
   byte a,b;
 
@@ -382,11 +368,11 @@ int F_getsprid(char n[4],int s,int d) {
   return -1;
 }
 
-int F_getreslen(int r) {
+int F_getreslen (int r) {
   return wad[r].l;
 }
 
-void F_nextmus(char *s) {
+void F_nextmus (char *s) {
   int i;
   i=F_findres(s);
   if(i<=m_start || i>=m_end) i=m_start;
@@ -403,16 +389,16 @@ void F_nextmus(char *s) {
   memcpy(s,wad[i].n,8);
 }
 
-void F_randmus(char *s) {
-   int n = myrand(10);
-   int i;
-   for (i=0; i<n; i++) {
-       F_nextmus(s);
-   }
+void F_randmus (char *s) {
+  int i;
+  int n = myrand(10);
+  for (i = 0; i < n; i++) {
+    F_nextmus(s);
+  }
 }
 
 // reads bytes from file until CR
-void F_readstr(FILE* h, char *s, int m) {
+void F_readstr (FILE* h, char *s, int m) {
   int i = 0;
   size_t len = 0;
   static char c = 0;
@@ -428,8 +414,10 @@ void F_readstr(FILE* h, char *s, int m) {
   s[i] = 0;
 }
 
+/*
+// unused
 // reads bytes from file until NUL
-void F_readstrz(FILE* h,char *s,int m) {
+void F_readstrz (FILE* h,char *s,int m) {
   int i = 0;
   size_t len = 0;
   static char c = 0;
@@ -444,10 +432,9 @@ void F_readstrz(FILE* h,char *s,int m) {
   }
   s[i] = 0;
 }
+*/
 
-map_block_t blk;
-
-void F_loadmap(char n[8]) {
+void F_loadmap (char n[8]) {
   int r, o;
   FILE *h;
   map_header_t hdr;

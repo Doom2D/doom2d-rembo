@@ -31,15 +31,13 @@
 
 short snd_vol = 50;
 
-int snddisabled = 1;
-
-struct {
+static int snddisabled = 1;
+static struct {
     snd_t *s;
     Mix_Chunk *c;
 } chunks[NUM_CHUNKS];
 
-void S_init(void)
-{
+void S_init (void) {
     if (!SDL_WasInit(SDL_INIT_AUDIO)) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
             fprintf(stderr, "\nUnable to initialize audio:  %s\n", SDL_GetError());
@@ -71,8 +69,7 @@ void S_init(void)
    S_volume(snd_vol);
 }
 
-void S_done(void)
-{
+void S_done (void) {
     free_chunks();
     if (SDL_WasInit(SDL_INIT_AUDIO)) {
         Mix_CloseAudio();
@@ -80,8 +77,7 @@ void S_done(void)
     }
 }
 
-Mix_Chunk * get_chunk(snd_t *s, int r, int v)
-{
+static Mix_Chunk *get_chunk (snd_t *s, int r, int v) {
     int i, fi = -1;
     for(i=0; i<NUM_CHUNKS; i++) {
         if (chunks[i].s == s) return chunks[i].c;
@@ -112,8 +108,7 @@ Mix_Chunk * get_chunk(snd_t *s, int r, int v)
     return chunk;
 }
 
-void free_chunks()
-{
+void free_chunks (void) {
     if (snddisabled) return;
     Mix_HaltChannel(-1);
     int i;
@@ -127,21 +122,18 @@ void free_chunks()
     }
 }
 
-short S_play(snd_t *s,short c,unsigned r,short v)
-{
+short S_play(snd_t *s, short c, unsigned r, short v) {
     if (snddisabled) return 0;
     Mix_Chunk *chunk = get_chunk(s,r,v);
     if (chunk==NULL) return 0;
     return Mix_PlayChannel(c, chunk, 0);
 }
 
-void S_stop(short c)
-{
+void S_stop (short c) {
     Mix_HaltChannel(c);
 }
 
-void S_volume(int v)
-{
+void S_volume (int v) {
     if (snddisabled) return;
     snd_vol=v;
     if (snd_vol>128) snd_vol=128;
@@ -149,8 +141,7 @@ void S_volume(int v)
     Mix_Volume(-1, snd_vol);
 }
 
-void S_wait()
-{
+void S_wait (void) {
     if (snddisabled) return;
     while (Mix_Playing(-1)) {
         SDL_Delay(10);

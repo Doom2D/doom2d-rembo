@@ -40,13 +40,10 @@
 
 #define MAX_YV 30
 
-extern dword walf[256];
-
-byte z_dot=0;
-
-extern void *walp[256];
-
+byte z_dot;
+byte z_mon;
 static void *bulsnd[2];
+static byte wfront;
 
 int Z_sign(int a) {
   if(a>0) return 1;
@@ -111,7 +108,7 @@ int Z_canstand(int x,int y,int r) {
   return 0;
 }
 
-int Z_hitceil(int x,int y,int r,int h) {
+static int Z_hitceil(int x,int y,int r,int h) {
   int i;
 
   i=(x-r)/CELW;
@@ -146,7 +143,7 @@ int Z_canfit(int x,int y,int r,int h) {
   return 1;
 }
 
-int Z_inlift(int x,int y,int r,int h) {
+static int Z_inlift(int x,int y,int r,int h) {
   int i,j,sx,sy;
 
   sx=(x-r)/CELW;
@@ -163,7 +160,7 @@ int Z_inlift(int x,int y,int r,int h) {
   return 0;
 }
 
-int Z_isblocked(int x,int y,int r,int h,int xv) {
+static int Z_isblocked(int x,int y,int r,int h,int xv) {
   int i,j,sx,sy;
 
   sx=(x-r)/CELW;
@@ -205,8 +202,6 @@ void Z_set_speed(obj_t *o,int s) {
   if(!(m=max(abs(o->xv),abs(o->yv)))) m=1;
   o->xv=o->xv*s/m;o->yv=o->yv*s/m;
 }
-
-static byte wfront;
 
 int Z_inwater(int x,int y,int r,int h) {
   int i,j,sx,sy;
@@ -271,7 +266,7 @@ int Z_overlap(obj_t *a,obj_t *b) {
   return 1;
 }
 
-void Z_kickobj(obj_t *o,int x,int y,int pwr) {
+static void Z_kickobj(obj_t *o,int x,int y,int pwr) {
   int dx,dy,m;
 
   dx=o->x-x;dy=o->y-o->h/2-y;
@@ -325,8 +320,6 @@ int Z_look(obj_t *a,obj_t *b,int d) {
 }
 
 #define wvel(v) if((xv=abs(v)+1)>5) v=Z_dec(v,xv/2-2)
-
-byte z_mon=0;
 
 int Z_moveobj(obj_t *p) {
   static int x,y,xv,yv,r,h,lx,ly,st;
@@ -410,7 +403,7 @@ void Z_calc_time(dword t,word *h,word *m,word *s)
 
 #define SWAP_VAR(a, b) do { unsigned char t = a; a = b; b = t; } while(0)
 
-int16_t short2swap (int16_t x) {
+static int16_t short2swap (int16_t x) {
   union {
     uint8_t a[2];
     int16_t x;
@@ -420,7 +413,7 @@ int16_t short2swap (int16_t x) {
   return y.x;
 }
 
-int32_t int2swap (int32_t x) {
+static int32_t int2swap (int32_t x) {
   union {
     uint8_t a[4];
     int32_t x;

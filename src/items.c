@@ -32,15 +32,14 @@
 #include "misc.h"
 #include "map.h"
 #include "my.h"
-
-extern map_block_t blk;
-
+#include "files.h"
+#include "game.h"
 item_t it[MAXITEM];
 
 static void *snd[4];
-static int tsndtm,rsndtm;
+static int tsndtm, rsndtm;
 
-int itm_rtime=1092;
+int itm_rtime = 1092;
 
 void IT_savegame (FILE *h) {
   int i, n;
@@ -96,14 +95,17 @@ void IT_alloc (void) {
   }
 }
 
-void IT_init(void) {
+void IT_init (void) {
   int i;
-
-  for(i=0;i<MAXITEM;++i) {
-	it[i].t=I_NONE;
-	it[i].o.xv=it[i].o.yv=it[i].o.vx=it[i].o.vy=0;
+  for (i = 0; i < MAXITEM; ++i) {
+    it[i].t = I_NONE;
+    it[i].o.xv = 0;
+    it[i].o.yv = 0;
+    it[i].o.vx = 0;
+    it[i].o.vy = 0;
   }
-  tsndtm=rsndtm=0;
+  tsndtm = 0;
+  rsndtm = 0;
 }
 
 int IT_load (FILE *h) {
@@ -199,7 +201,7 @@ int IT_load (FILE *h) {
   return 0;
 }
 
-static void takesnd(int t) {
+static void takesnd (int t) {
   if(tsndtm) return;
   t&=0x7FFF;
   if(t<=I_CELP || (t>=I_BPACK && t<=I_BFG) || t==I_GUN2)
@@ -209,7 +211,7 @@ static void takesnd(int t) {
   tsndtm=Z_sound(snd[0],256);
 }
 
-void IT_act(void) {
+void IT_act (void) {
   int i,j;
 
   if(tsndtm) --tsndtm;
@@ -251,7 +253,7 @@ void IT_act(void) {
 	}
 }
 
-void IT_spawn(int x,int y,int t) {
+void IT_spawn (int x,int y,int t) {
   int i;
 
   for(i=0;i<MAXITEM;++i) if(!it[i].t) {
@@ -263,7 +265,7 @@ void IT_spawn(int x,int y,int t) {
   }
 }
 
-void IT_drop_ammo(int t,int n,int x,int y) {
+void IT_drop_ammo (int t, int n, int x, int y) {
   static int an[8]={10,4,1,40,50,25,5,100};
   int a;
 
