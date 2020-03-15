@@ -19,6 +19,9 @@
 #include "memory.h"
 #include "files.h"
 #include "error.h"
+#include "game.h"
+#include "sound.h"
+#include "music.h"
 
 // game
 static vgaimg *scrnh[3]; // TITLEPIC INTERPIC ENDPIC
@@ -61,6 +64,8 @@ static byte gamcor[5][64]={
 };
 // walls
 #define ANIT 5
+static int WD, HT;
+static int w_o, w_x, w_y;
 static vgaimg *walp[256];
 static int walh[256];
 static byte walani[256];
@@ -68,20 +73,6 @@ static int anih[ANIT][5];
 static byte anic[ANIT];
 static int max_textures;
 static vgaimg *horiz;
-
-extern byte bright[256]; // vga.c
-extern byte mixmap[256][256]; // vga.c
-extern byte clrmap[256*12]; // vga.c
-
-extern int g_trans; // game.c
-extern byte transdraw; // game.c
-extern int sky_type; // view.c
-extern int lt_time, lt_type, lt_side, lt_ypos, lt_force; // game.c
-
-extern byte savname[7][24]; // files.c
-extern char g_music[8]; // game.c
-extern short snd_vol; // sound.c
-extern short mus_vol; // music.c
 
 /* --- misc --- */
 
@@ -1376,7 +1367,7 @@ void R_init () {
   }
   R_setgamma(gammaa);
   V_setrect(0, SCRW, 0, SCRH);
-  V_setscr(scrbuf);
+//  V_setscr(scrbuf);
   V_clr(0, SCRW, 0, SCRH, 0);
   R_alloc();
 }

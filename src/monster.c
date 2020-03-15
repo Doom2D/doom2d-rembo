@@ -36,20 +36,21 @@
 #include "fx.h"
 #include "smoke.h"
 #include "my.h"
+#include "player.h"
+#include "error.h"
+#include "game.h"
 
 #define MAX_ATM 90
-
-extern byte z_mon;
 
 enum{
   SLEEP,GO,RUN,CLIMB,DIE,DEAD,ATTACK,SHOOT,PAIN,WAIT,REVIVE,RUNOUT
 };
 
-typedef struct{
-  int r,h,l,mp,rv,jv,sp,minp;
-}mnsz_t;
+typedef struct {
+  int r, h, l, mp, rv, jv, sp, minp;
+} mnsz_t;
 
-byte nomon=1;
+byte nomon = 1;
 
 static char *sleepanim[MN_TN]={
   "AAABBB","AAABBB","AAABBB","AAABBB","AAABBB","AAABBB","AAABBB","AAABBB",
@@ -87,7 +88,7 @@ static char *sleepanim[MN_TN]={
   "","U","U","U","","T","","","","","","","","","","","","","","W"
 };
 
-int hit_xv,hit_yv;
+int hit_xv, hit_yv;
 mn_t mn[MAXMN];
 
 static void *fsnd,*pauksnd,*trupsnd;
@@ -119,6 +120,48 @@ static mnsz_t mnsz[MN_TN+1]={
    17, 38,   20,   40, 3, 6,    0,   20,	// robot
     8, 26,  400,   70, 8,10,   30,   50		// man
 };
+
+static void setst(int i,int st) {
+  char *a;
+  int t;
+
+  switch(mn[i].st) {
+    case DIE: case DEAD:
+      if(st!=DEAD && st!=REVIVE) return;
+  }
+  mn[i].ac=0;
+  t=mn[i].t-1;
+  switch(mn[i].st=st) {
+	case SLEEP: a=sleepanim[t];break;
+	case PAIN: a=painanim[t];break;
+	case WAIT: a=waitanim[t];break;
+	case CLIMB:
+	case RUN: case RUNOUT:
+	case GO: a=goanim[t];break;
+	case SHOOT:
+	  if(t==MN_SKEL-1) {a="KKKKJJ";break;}
+	  if(t==MN_ROBO-1) {a="MN";break;}
+	case ATTACK: a=attackanim[t];
+	  if(st==ATTACK && t==MN_VILE-1) a="[[\\\\]]";
+	  break;
+	case DIE:
+	  if(g_map==9 && t==MN_BSP-1) Z_sound(pauksnd,128);
+	  a=dieanim[t];break;
+	case DEAD:
+	  a=deadanim[t];
+	  if(mn[i].ap==slopanim[t]) a=messanim[t];
+	  if(t==MN_BARREL-1) {mn[i].t=0;}
+	  break;
+	case REVIVE:
+	  a=(mn[i].ap==messanim[t])?slopanim[t]:dieanim[t];
+	  mn[i].ac=strlen(a)-1;
+	  mn[i].o.r=mnsz[t+1].r;mn[i].o.h=mnsz[t+1].h;
+	  mn[i].life=mnsz[t+1].l;mn[i].ammo=mn[i].pain=0;
+	  ++mnum;
+	  break;
+  }
+  mn[i].ap=a;
+}
 
 void MN_savegame (FILE *h) {
   int i, n;
@@ -155,10 +198,6 @@ void MN_savegame (FILE *h) {
   myfwrite32(mnum, h);
   myfwrite32(gsndt, h);
 }
-
-static void setst(int,int);
-
-static int MN_hit(int n,int d,int o,int t);
 
 void MN_loadgame (FILE *h) {
   int i, n, c;
@@ -201,7 +240,7 @@ void MN_loadgame (FILE *h) {
 
 #define GGAS_TOTAL (MN__LAST-MN_DEMON+16+10)
 
-void MN_alloc(void) {
+void MN_alloc (void) {
   int i,j;
   static char sn[MN_TN][5][6]={
 	{"DMACT","DMPAIN","SGTATK","SGTSIT","SGTDTH"},
@@ -255,56 +294,13 @@ void MN_alloc(void) {
   for(i=0;i<4;++i) {gsn[4]=i+'1';gsnd[i]=Z_getsnd(gsn);}
 }
 
-void MN_init(void) {
+void MN_init (void) {
   int i;
-
   for(i=0;i<MAXMN;++i) {mn[i].t=0;mn[i].st=SLEEP;}
   gsndt=mnum=0;
 }
 
-static void setst(int i,int st) {
-  char *a;
-  int t;
-
-  switch(mn[i].st) {
-    case DIE: case DEAD:
-      if(st!=DEAD && st!=REVIVE) return;
-  }
-  mn[i].ac=0;
-  t=mn[i].t-1;
-  switch(mn[i].st=st) {
-	case SLEEP: a=sleepanim[t];break;
-	case PAIN: a=painanim[t];break;
-	case WAIT: a=waitanim[t];break;
-	case CLIMB:
-	case RUN: case RUNOUT:
-	case GO: a=goanim[t];break;
-	case SHOOT:
-	  if(t==MN_SKEL-1) {a="KKKKJJ";break;}
-	  if(t==MN_ROBO-1) {a="MN";break;}
-	case ATTACK: a=attackanim[t];
-	  if(st==ATTACK && t==MN_VILE-1) a="[[\\\\]]";
-	  break;
-	case DIE:
-	  if(g_map==9 && t==MN_BSP-1) Z_sound(pauksnd,128);
-	  a=dieanim[t];break;
-	case DEAD:
-	  a=deadanim[t];
-	  if(mn[i].ap==slopanim[t]) a=messanim[t];
-	  if(t==MN_BARREL-1) {mn[i].t=0;}
-	  break;
-	case REVIVE:
-	  a=(mn[i].ap==messanim[t])?slopanim[t]:dieanim[t];
-	  mn[i].ac=strlen(a)-1;
-	  mn[i].o.r=mnsz[t+1].r;mn[i].o.h=mnsz[t+1].h;
-	  mn[i].life=mnsz[t+1].l;mn[i].ammo=mn[i].pain=0;
-	  ++mnum;
-	  break;
-  }
-  mn[i].ap=a;
-}
-
-int MN_spawn(int x,int y,byte d,int t) {
+int MN_spawn (int x, int y, byte d, int t) {
   int i;
 
   if(g_dm && nomon && t<MN_PL_DEAD) return -1;
@@ -329,7 +325,7 @@ ok:
   return i;
 }
 
-int MN_spawn_deadpl(obj_t *o,byte c,int t) {
+int MN_spawn_deadpl (obj_t *o, byte c, int t) {
   int i;
 
   if((i=MN_spawn(o->x,o->y,c,t+MN_PL_DEAD))==-1) return -1;
@@ -373,7 +369,7 @@ static int MN_findnewprey(int i) {
   return 1;
 }
 
-int Z_getobjpos(int i,obj_t *o) {
+int Z_getobjpos (int i, obj_t *o) {
   if(i==-1) {*o=pl1.o;return !PL_isdead(&pl1);}
   if(_2pl) if(i==-2) {*o=pl2.o;return !PL_isdead(&pl2);}
   if(i>=0 && i<MAXMN) if(mn[i].t && mn[i].st!=DEAD)
@@ -511,7 +507,16 @@ static int iscorpse(obj_t *o,int n) {
   return -3;
 }
 
-void MN_act(void) {
+static int Z_hitobj (int obj, int d, int own, int t) {
+  hit_xv=hit_yv=0;
+  if(obj==-1) return PL_hit(&pl1,d,own,t);
+  else if(obj==-2 && _2pl) return PL_hit(&pl2,d,own,t);
+  else if(obj<0 || obj>=MAXMN) return 0;
+  if(mn[obj].t) return MN_hit(obj,d,own,t);
+  return 0;
+}
+
+void MN_act (void) {
   int i,st,sx,sy,t;
   static obj_t o;
   static int pt_x=0,pt_xs=1,pt_y=0,pt_ys=1;
@@ -784,7 +789,7 @@ void MN_act(void) {
   }
 }
 
-void MN_mark(void) {
+void MN_mark (void) {
   int i;
   for(i=0;i<MAXMN;++i) if(mn[i].t!=0) BM_mark(&mn[i].o,BM_MONSTER);
 }
@@ -855,7 +860,7 @@ int MN_hit(int n,int d,int o,int t) {
 
 #define hit(o,x,y) (y<=o.y && y>o.y-o.h && x>=o.x-o.r && x<=o.x+o.r)
 
-int Z_gunhit(int x,int y,int o,int xv,int yv) {
+int Z_gunhit (int x, int y, int o, int xv, int yv) {
   int i;
 
   if(o!=-1) if(hit(pl1.o,x,y)) if(PL_hit(&pl1,3,o,HIT_SOME))
@@ -874,7 +879,7 @@ static void goodsnd(void) {
   gsndt=18;
 }
 
-int Z_hit(obj_t *o,int d,int own,int t) {
+int Z_hit (obj_t *o, int d, int own, int t) {
   int i;
 
   hit_xv=o->xv+o->vx;
@@ -901,24 +906,14 @@ int Z_hit(obj_t *o,int d,int own,int t) {
   return 0;
 }
 
-void MN_killedp(void) {
+void MN_killedp (void) {
   int i;
-
   for(i=0;i<MAXMN;++i) if(mn[i].t==MN_MAN)
     if(mn[i].st!=DEAD && mn[i].st!=DIE && mn[i].st!=SLEEP)
       Z_sound(trupsnd,128);
 }
 
-int Z_hitobj(int obj,int d,int own,int t) {
-  hit_xv=hit_yv=0;
-  if(obj==-1) return PL_hit(&pl1,d,own,t);
-  else if(obj==-2 && _2pl) return PL_hit(&pl2,d,own,t);
-  else if(obj<0 || obj>=MAXMN) return 0;
-  if(mn[obj].t) return MN_hit(obj,d,own,t);
-  return 0;
-}
-
-void Z_explode(int x,int y,int rad,int own) {
+void Z_explode (int x,int y,int rad,int own) {
   long r;
   int dx,dy,m,i;
 
@@ -952,7 +947,7 @@ void Z_explode(int x,int y,int rad,int own) {
   }
 }
 
-void Z_bfg9000(int x,int y,int own) {
+void Z_bfg9000 (int x,int y,int own) {
   int dx,dy,i;
 
   hit_xv=hit_yv=0;
@@ -982,7 +977,7 @@ void Z_bfg9000(int x,int y,int own) {
   }
 }
 
-int Z_chktrap(int t,int d,int o,int ht) {
+int Z_chktrap (int t, int d, int o, int ht) {
   int i,s;
 
   hit_xv=hit_yv=0;
@@ -1003,7 +998,7 @@ int Z_chktrap(int t,int d,int o,int ht) {
   return s;
 }
 
-void Z_teleobj(int o,int x,int y) {
+void Z_teleobj (int o, int x, int y) {
   obj_t *p;
 
   if(o==-1) p=&pl1.o;
@@ -1014,7 +1009,7 @@ void Z_teleobj(int o,int x,int y) {
   Z_sound(telesnd,128);
 }
 
-void MN_warning(int l,int t,int r,int b) {
+void MN_warning (int l,int t,int r,int b) {
   int i;
 
   for(i=0;i<MAXMN;++i) if(mn[i].t && mn[i].t!=MN_CACO && mn[i].t!=MN_SOUL

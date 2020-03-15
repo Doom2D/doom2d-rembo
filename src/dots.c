@@ -21,6 +21,7 @@
 */
 
 #include "glob.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include "view.h"
 #include "dots.h"
@@ -38,8 +39,6 @@
 #define SP_V 2
 #define SP_MINT 5
 #define SP_MAXT 7
-
-extern byte z_dot;
 
 typedef struct{
   int xv,yv;

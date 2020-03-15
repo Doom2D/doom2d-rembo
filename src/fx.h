@@ -19,22 +19,29 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Effects
+#ifndef FX_H_INLUDED
+#define FX_H_INLUDED
+
+#include <stdio.h> // FILE
 
 #define MAXFX 300
 
 #pragma pack(1)
-typedef struct{
-  int x,y,xv,yv;
-  char t,s;
-}fx_t;
+typedef struct {
+  int x, y, xv, yv;
+  char t, s;
+} fx_t;
 #pragma pack()
 
 extern fx_t fx[MAXFX];
 
-void FX_init(void);
-void FX_alloc(void);
-void FX_act(void);
-void FX_tfog(int,int);
-void FX_ifog(int,int);
-void FX_bubble(int x,int y,int xv,int yv,int n);
+void FX_savegame (FILE *h);
+void FX_loadgame (FILE *h);
+void FX_alloc (void);
+void FX_init (void);
+void FX_act (void);
+void FX_tfog (int x, int y);
+void FX_ifog (int x, int y);
+void FX_bubble (int x, int y, int xv, int yv, int n);
+
+#endif /* FX_H_INLUDED */

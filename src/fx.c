@@ -36,7 +36,7 @@ static void *bsnd[2];
 static char bubsn;
 static int last;
 
-unsigned char fx_scr1[64000],fx_scr2[64000];
+//unsigned char fx_scr1[64000],fx_scr2[64000];
 
 #define SINP 256
 #define SINPM (SINP-1)
@@ -59,8 +59,8 @@ static void setamp(int a) {
   for(i=0;i<SINP;++i) sintab[i]=stdsin[i]*a;
 }
 
-void FX_trans1(int t) {
 /*
+void FX_trans1 (int t) {
   int x,y,u,v;
   static unsigned char k;
   unsigned p;
@@ -77,8 +77,8 @@ void FX_trans1(int t) {
         else scra[p]=fx_scr1[v*320+u];
       }else scra[p]=fx_scr2[p];
     }
-*/
 }
+*/
 
 static void init_fx1sin(void) {
   int j,r,l,rr;
@@ -130,13 +130,13 @@ void FX_loadgame (FILE *h) {
   }
 }
 
-void FX_alloc(void) {
+void FX_alloc (void) {
   bsnd[0]=Z_getsnd("BUBL1");
   bsnd[1]=Z_getsnd("BUBL2");
   init_fx1sin();
 }
 
-void FX_init(void) {
+void FX_init (void) {
   int i;
 
   for(i=0;i<MAXFX;++i) fx[i].t=0;
@@ -144,7 +144,7 @@ void FX_init(void) {
   last=0;
 }
 
-void FX_act(void) {
+void FX_act (void) {
   int i;
   byte b;
 
@@ -166,7 +166,7 @@ void FX_act(void) {
   }
 }
 
-static int findfree(void) {
+static int findfree (void) {
   int i;
 
   for(i=0;i<MAXFX;++i) if(!fx[i].t) return i;
@@ -175,7 +175,7 @@ static int findfree(void) {
   return last;
 }
 
-void FX_tfog(int x,int y) {
+void FX_tfog (int x, int y) {
   int i;
 
   i=findfree();
@@ -183,7 +183,7 @@ void FX_tfog(int x,int y) {
 	fx[i].x=x;fx[i].y=y;
 }
 
-void FX_ifog(int x,int y) {
+void FX_ifog (int x, int y) {
   int i;
 
   i=findfree();
@@ -191,7 +191,7 @@ void FX_ifog(int x,int y) {
     fx[i].x=x;fx[i].y=y;
 }
 
-void FX_bubble(int x,int y,int xv,int yv,int n) {
+void FX_bubble (int x, int y, int xv, int yv, int n) {
   int i;
 
   if(!bubsn) {Z_sound(bsnd[rand()&1],128);bubsn=1;}
@@ -202,4 +202,3 @@ void FX_bubble(int x,int y,int xv,int yv,int n) {
 	fx[i].xv=xv;fx[i].yv=yv-myrand(256)-768;
   }
 }
-

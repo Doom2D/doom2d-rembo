@@ -23,7 +23,6 @@
 #include "glob.h"
 #include <string.h>
 #include <stdlib.h>
-#include "vga.h"
 #include "memory.h"
 #include "files.h"
 #include "error.h"
@@ -42,21 +41,13 @@
 #include "my.h"
 #include "render.h"
 
-int WD;
-int HT;
-
-extern map_block_t blk;
-
 byte w_horiz=ON;
-int w_o,w_x,w_y,sky_type=1;
+int sky_type=1;
 dword walf[256];
 byte walswp[256];
 byte fldb[FLDH][FLDW];
 byte fldf[FLDH][FLDW];
 byte fld[FLDH][FLDW];
-
-extern int lt_time,lt_type,lt_side,lt_ypos;
-extern void *ltn[2][2];
 
 void W_savegame (FILE* h) {
   char s[8];
@@ -101,7 +92,7 @@ void W_loadgame (FILE* h) {
   R_end_load();
 }
 
-void W_init(void) {
+void W_init (void) {
   DOT_init();
   SMK_init();
   FX_init();
@@ -114,7 +105,7 @@ void W_init(void) {
   free_chunks();
 }
 
-static void unpack(void *buf, int len, void *obuf) {
+static void unpack (void *buf, int len, void *obuf) {
   int i = 0;
   int j = 0;
   unsigned char *p = buf;

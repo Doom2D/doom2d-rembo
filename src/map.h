@@ -35,6 +35,9 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
+#ifndef MAP_H_INCLUDED
+#define MAP_H_INCLUDED
+
 #pragma pack(1)
 
 /* Старый формат - версия 1.04 alpha (и раньше)
@@ -173,4 +176,4 @@ typedef struct{
 
 #pragma pack()
 
-/*  КОНЕЦ  */
+#endif /* MAP_H_INCLUDED */

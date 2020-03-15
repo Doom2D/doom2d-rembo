@@ -19,22 +19,29 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-// Switches
+#ifndef SWITCH_H_INCLUDED
+#define SWITCH_H_INCLUDED
 
-#include <stdio.h>
+#include <stdio.h> // FILE
+#include "view.h" // obj_t
 
-enum{
-  SW_NONE,SW_EXIT,SW_EXITS,SW_OPENDOOR,SW_SHUTDOOR,SW_SHUTTRAP,
-  SW_DOOR,SW_DOOR5,SW_PRESS,SW_TELE,SW_SECRET,SW_LIFTUP,SW_LIFTDOWN,SW_TRAP,
-  SW_LIFT
+enum {
+  SW_NONE, SW_EXIT, SW_EXITS, SW_OPENDOOR, SW_SHUTDOOR, SW_SHUTTRAP,
+  SW_DOOR, SW_DOOR5, SW_PRESS, SW_TELE, SW_SECRET, SW_LIFTUP, SW_LIFTDOWN,
+  SW_TRAP, SW_LIFT
 };
 
 extern int sw_secrets;
 
-void SW_init(void);
-void SW_alloc(void);
-int SW_load(FILE*);
-void SW_act(void);
-int SW_press(int x,int y,int r,int h,byte t,int o);
+void SW_savegame (FILE *h);
+void SW_loadgame (FILE *h);
+int SW_load (FILE *h);
+void SW_alloc (void);
+void SW_init (void);
+void Z_water_trap (obj_t *o);
+void Z_untrap (byte t);
+void SW_act (void);
+void SW_cheat_open (void);
+int SW_press (int x, int y, int r, int h, byte t, int o);
 
-void SW_cheat_open(void);
+#endif /* SWITCH_H_INCLUDED */

@@ -31,6 +31,7 @@
 #include "error.h"
 #include "files.h"
 #include "sound.h"
+#include "a8.h"
 */
 
 /*

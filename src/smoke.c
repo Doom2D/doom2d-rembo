@@ -24,9 +24,11 @@
 #include <stdlib.h>
 #include "view.h"
 #include "smoke.h"
+#include "game.h"
 #include "fx.h"
 #include "misc.h"
 #include "my.h"
+#include "monster.h"
 
 #define MAXSR 20
 
@@ -73,7 +75,7 @@ void SMK_loadgame (FILE *h) {
   }
 }
 
-void SMK_init(void) {
+void SMK_init (void) {
   int i;
 
   for(i=0;i<MAXSMOK;++i) {sm[i].t=0;}
@@ -81,7 +83,7 @@ void SMK_init(void) {
   burntm=0;
 }
 
-void SMK_alloc(void) {
+void SMK_alloc (void) {
   int i;
   burnsnd=Z_getsnd("BURN");
   for(i=0;i<MAXSR;++i) {
@@ -95,7 +97,7 @@ static void inclast(void) {
   if(++lsm>=MAXSMOK) lsm=0;
 }
 
-void SMK_act(void) {
+void SMK_act (void) {
   int i,ox,oy;
   static obj_t o;
 
@@ -139,7 +141,7 @@ void SMK_act(void) {
   }
 }
 
-void SMK_add(int x,int y,int xv,int yv,byte t,byte s,short o) {
+static void SMK_add (int x, int y, int xv, int yv, byte t, byte s, short o) {
   int i;
 
   if(!Z_canfit(x>>8,(y>>8)+3,3,7)) return;
@@ -152,7 +154,7 @@ void SMK_add(int x,int y,int xv,int yv,byte t,byte s,short o) {
   inclast();
 }
 
-void SMK_gas(int x0,int y0,int xr,int yr,int xv,int yv,int k) {
+void SMK_gas (int x0, int y0, int xr, int yr, int xv, int yv, int k) {
   int i,x,y;
   static int sxv,syv;
 
@@ -168,7 +170,7 @@ void SMK_gas(int x0,int y0,int xr,int yr,int xv,int yv,int k) {
   }
 }
 
-void SMK_flame(int x0,int y0,int ox,int oy,int xr,int yr,int xv,int yv,int k,int o) {
+void SMK_flame (int x0, int y0, int ox, int oy, int xr, int yr, int xv, int yv, int k, int o) {
   int i,x,y;
   static int sxv,syv;
 

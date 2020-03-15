@@ -23,29 +23,16 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-#ifndef MYKEYB
-#define MYKEYB
+#ifndef KEYB_H_INCLUDED
+#define KEYB_H_INCLUDED
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef void key_f (int k, int pressed);
 
-void K_init();
-void K_done();
-
-// тип функции обработки клавиш
-typedef void key_f(int k,int pressed);
-
-// установить функцию обработки клавиш
-void K_setkeyproc(key_f *);
-
-// массив клавиш: 0 - отпущена, иначе - нажата
 extern unsigned char *keys;
 
-void updatee_keys();
+void K_init (void);
+void K_done (void);
+void K_setkeyproc (key_f *k);
+void updatee_keys (void);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif /* KEYB_H_INCLUDED */

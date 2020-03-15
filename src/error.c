@@ -31,6 +31,20 @@
 #include "memory.h"
 #include "error.h"
 #include "config.h"
+#include "music.h"
+
+void logo (const char *s, ...) {
+  va_list ap;
+  int x, y;
+  va_start(ap, s);
+  vprintf(s, ap);
+  va_end(ap);
+  fflush(stdout);
+}
+
+void logo_gas (int cur, int all) {
+  // stub
+}
 
 static void close_all (void) {
   S_done();

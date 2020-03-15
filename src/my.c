@@ -28,8 +28,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext)
-{
+void mysplitpath(const char* path, char* drv, char* dir, char* name, char* ext) {
      const char* end; /* end of processed string */
      const char* p;   /* search pointer */
      const char* s;   /* copy pointer */
@@ -127,13 +126,11 @@ void myfwrite32 (int32_t x, FILE *f) {
   myfwrite(&x, 4, 1, f);
 }
 
-void myrandomize(void)
-{
+void myrandomize (void) {
     srand(SDL_GetTicks());
 }
 
-int fexists(char * filename)
-{
+int fexists (char *filename) {
     FILE *f;
     if ((f = fopen(filename, "r")))
     {

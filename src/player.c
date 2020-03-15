@@ -35,8 +35,7 @@
 #include "player.h"
 #include "misc.h"
 #include "my.h"
-
-extern int hit_xv,hit_yv;
+#include "game.h"
 
 #define PL_RAD 8
 #define PL_HT 26
@@ -46,25 +45,28 @@ extern int hit_xv,hit_yv;
 
 #define PL_AQUA_AIR 1091
 
-byte p_immortal=0,p_fly=0;
+byte p_immortal;
+byte p_fly;
 
-int PL_JUMP=10,PL_RUN=8;
+int PL_JUMP=10;
+int PL_RUN=8;
 
-int wp_it[11]={0,I_CSAW,0,I_SGUN,I_SGUN2,I_MGUN,I_LAUN,I_PLAS,I_BFG,I_GUN2,0};
+static int wp_it[11]={0,I_CSAW,0,I_SGUN,I_SGUN2,I_MGUN,I_LAUN,I_PLAS,I_BFG,I_GUN2,0};
 
 enum{STAND,GO,DIE,SLOP,DEAD,MESS,OUT,FALL};
 
 typedef void fire_f(int,int,int,int,int);
 
-player_t pl1,pl2;
+player_t pl1;
+player_t pl2;
 static int aitime;
 static void *aisnd[3];
 static void *pdsnd[5];
 
 static void *snd[11];
-byte plr_goanim[]="BDACDA",
-  plr_dieanim[]="HHHHIIIIJJJJKKKKLLLLMMMM",
-  plr_slopanim[]="OOPPQQRRSSTTUUVVWW";
+byte plr_goanim[]="BDACDA";
+byte plr_dieanim[]="HHHHIIIIJJJJKKKKLLLLMMMM";
+byte plr_slopanim[]="OOPPQQRRSSTTUUVVWW";
 
 
 #pragma pack(1)
@@ -73,7 +75,7 @@ struct {
 } _keys;
 #pragma pack()
 
-void PL_save_player (player_t *p, FILE *h) {
+static void PL_save_player (player_t *p, FILE *h) {
   myfwrite32(p->o.x, h);
   myfwrite32(p->o.y, h);
   myfwrite32(p->o.xv, h);
@@ -127,7 +129,7 @@ void PL_savegame (FILE *h) {
   myfwrite8(p_immortal, h);
 }
 
-void PL_load_player (player_t *p, FILE *h) {
+static void PL_load_player (player_t *p, FILE *h) {
   p->o.x = myfread32(h);
   p->o.y = myfread32(h);
   p->o.xv = myfread32(h);
@@ -181,7 +183,9 @@ void PL_loadgame (FILE *h) {
   p_immortal = myfread8(h);
 }
 
-static int nonz(int a) {return (a)?a:1;}
+static int nonz (int a) {
+  return a ? a : 1;
+}
 
 static int firediry(player_t *p) {
   if(p->f&PLF_UP) return -42;
@@ -283,7 +287,7 @@ static void jump(player_t *p,int st) {
   }
 }
 
-int PL_isdead(player_t *p) {
+int PL_isdead (player_t *p) {
   switch(p->st) {
 	case DEAD: case MESS:
 	case OUT:
@@ -292,7 +296,7 @@ int PL_isdead(player_t *p) {
   return 0;
 }
 
-void PL_init(void) {
+void PL_init (void) {
   p_immortal=0;
   PL_JUMP=10;PL_RUN=8;
   aitime=0;
@@ -327,7 +331,7 @@ void PL_alloc(void) {
   }
 }
 
-void PL_restore(player_t *p) {
+static void PL_restore(player_t *p) {
   p->o.xv=p->o.yv=p->o.vx=p->o.vy=0;
   p->o.r=PL_RAD;p->o.h=PL_HT;
   p->pain=0;
@@ -349,18 +353,18 @@ void PL_restore(player_t *p) {
   p->keys=(g_dm)?0x70:0;
 }
 
-void PL_reset(void) {
+void PL_reset (void) {
   pl1.st=pl2.st=DEAD;
   pl1.frag=pl2.frag=0;
 }
 
-void PL_spawn(player_t *p,int x,int y,char d) {
+void PL_spawn (player_t *p,int x,int y,char d) {
   PL_restore(p);
   p->o.x=x;p->o.y=y;p->d=d;
   p->kills=p->secrets=0;
 }
 
-int PL_hit(player_t *p,int d,int o,int t) {
+int PL_hit (player_t *p,int d,int o,int t) {
   if(!d) return 0;
   switch(p->st) {
     case DIE: case SLOP:
@@ -382,7 +386,7 @@ int PL_hit(player_t *p,int d,int o,int t) {
   return 1;
 }
 
-void PL_damage(player_t *p) {
+void PL_damage (player_t *p) {
   int i;
 
   if(!p->hit && p->life>0) return;
@@ -426,12 +430,12 @@ void PL_damage(player_t *p) {
   return;
 }
 
-void PL_cry(player_t *p) {
+void PL_cry (player_t *p) {
   Z_sound(snd[(p->pain>20)?1:0],128);
   p->f|=PLF_PNSND;
 }
 
-int PL_give(player_t *p,int t) {
+int PL_give (player_t *p, int t) {
   int i;
 
   switch(p->st) {
@@ -553,7 +557,7 @@ int PL_give(player_t *p,int t) {
   }
 }
 
-void PL_act(player_t *p) {
+void PL_act (player_t *p) {
   int st;
 
   if(--aitime<0) aitime=0;
@@ -660,7 +664,7 @@ static void chk_bfg(player_t *p,int x,int y) {
   }
 }
 
-void bfg_fly(int x,int y,int o) {
+void bfg_fly (int x,int y,int o) {
 //  if(!g_dm) return;
   if(o!=-1) chk_bfg(&pl1,x,y);
   if(_2pl) if(o!=-2) chk_bfg(&pl2,x,y);
