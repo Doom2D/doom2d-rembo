@@ -21,7 +21,11 @@
 #include "view.h"
 #include "switch.h" // sw_secrets
 
-#include <OpenGL/GL.h>
+#ifdef __APPLE__
+#  include <OpenGL/gl.h>
+#else
+#  include <GL/gl.h>
+#endif
 #include <stdlib.h> // malloc free abs
 #include <assert.h> // assert
 #include <SDL.h>
