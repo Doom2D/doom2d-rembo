@@ -50,8 +50,21 @@ typedef struct rgba {
 } rgba;
 #pragma pack()
 
-typedef struct image {
+typedef struct node {
+  struct cache *base;
+  struct node *left, *right;
+  int l, t, r, b;
+  int leaf;
+} node;
+
+typedef struct cache {
+  struct cache *next;
+  struct node root;
   GLuint id;
+} cache;
+
+typedef struct image {
+  node *n;
   GLint x, y;
   GLuint w, h;
   int res;
@@ -65,6 +78,7 @@ static int fullscreen;
 static SDL_Surface *surf;
 static rgb playpal[256];
 static byte bright[256];
+static cache *root;
 
 /* Game */
 static image scrnh[3]; // TITLEPIC INTERPIC ENDPIC
@@ -137,6 +151,135 @@ static byte walani[256];
 static image anip[ANIT][5];
 static byte anic[ANIT];
 static image horiz;
+
+/* Texture cache */
+
+// https://blackpawn.com/texts/lightmaps/
+static node *R_node_alloc (node *p, int w, int h) {
+  assert(p);
+  assert(w > 0);
+  assert(h > 0);
+  if (p->left) {
+    assert(p->right);
+    node *n = R_node_alloc(p->left, w, h);
+    return n ? n : R_node_alloc(p->right, w, h);
+  } else {
+    int pw = p->r - p->l + 1;
+    int ph = p->b - p->t + 1;
+    if (p->leaf || pw < w || ph < h) {
+      return NULL;
+    } else if (pw == w && ph == h) {
+      p->leaf = 1;
+      return p;
+    } else {
+      p->left = malloc(sizeof(node));
+      p->right = malloc(sizeof(node));
+      if (pw - w > ph - h) {
+        *p->left = (node) {
+          .l = p->l,
+          .t = p->t,
+          .r = p->l + w - 1,
+          .b = p->b
+        };
+        *p->right = (node) {
+          .l = p->l + w,
+          .t = p->t,
+          .r = p->r,
+          .b = p->b
+        };
+      } else {
+        *p->left = (node) {
+          .l = p->l,
+          .t = p->t,
+          .r = p->r,
+          .b = p->t + h - 1
+        };
+        *p->right = (node) {
+          .l = p->l,
+          .t = p->t + h,
+          .r = p->r,
+          .b = p->b
+        };
+      }
+      return R_node_alloc(p->left, w, h);
+    }
+  }
+}
+
+static cache *R_cache_new (void) {
+  GLuint id = 0;
+  GLint size = 0;
+  cache *c = NULL;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+  size /= 2; // TODO remove hack or detect ibook bug
+  if (size) {
+    glGenTextures(1, &id);
+    if (id) {
+      glBindTexture(GL_TEXTURE_2D, id);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      int ok = glGetError() == GL_NO_ERROR;
+      glBindTexture(GL_TEXTURE_2D, 0);
+      if (ok) {
+        c = malloc(sizeof(cache));
+        if (c != NULL) {
+          *c = (cache) {
+            .id = id,
+            .root.r = size - 1,
+            .root.b = size - 1
+          };
+        }
+      }
+      if (c == NULL) {
+        glDeleteTextures(1, &id);
+      }
+    }
+  }
+  logo("new cache %p\n", c);
+  return c;
+}
+
+static node *R_cache_alloc (cache *root, int w, int h) {
+  assert(root);
+  assert(w > 0 && h > 0);
+  node *n = NULL;
+  cache *p = NULL;
+  cache *c = root;
+  while (c && !n) {
+    n = R_node_alloc(&c->root, w, h);
+    if (n) {
+      n->base = c;
+    }
+    p = c;
+    c = c->next;
+  }
+  if (!n) {
+    c = R_cache_new();
+    if (c) {
+      p->next = c;
+      n = R_node_alloc(&c->root, w, h);
+      if (n) {
+        n->base = c;
+      }
+    }
+  }
+  return n;
+}
+
+static void R_cache_update (node *n, const void *data, int w, int h) {
+  assert(n);
+  assert(n->base);
+  assert(data);
+  int nw = n->r - n->l + 1;
+  int nh = n->b - n->t + 1;
+  assert(w == nw);
+  assert(h == nh);
+  glBindTexture(GL_TEXTURE_2D, n->base->id);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, n->l, n->t, nw, nh, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  assert(glGetError() == GL_NO_ERROR);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
 
 /* Generic helpers */
 
@@ -265,19 +408,15 @@ static rgba *R_extract_rgba_spr (vgaimg *v) {
 /* OpenGL helpers */
 
 static image R_gl_create_image (const rgba *buf, int w, int h) {
-  GLuint tex = 0;
-  glGenTextures(1, &tex);
-  if (tex != 0) {
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-    glBindTexture(GL_TEXTURE_2D, 0);
+  node *n = R_cache_alloc(root, w, h);
+  if (n) {
+    R_cache_update(n, buf, w, h);
   }
   return (image) {
-    .id = tex,
+    .n = n,
     .w = w,
     .h = h,
+    .res = -1
   };
 }
 
@@ -309,10 +448,10 @@ static image R_gl_get_special_spr (const char n[4], int s, int d, rgba *(*fn)(vg
 }
 
 static void R_gl_free_image (image *img) {
-  if (img->id != 0 && img->res >= 0) {
-    glDeleteTextures(1, &img->id);
+  if (img->n != NULL && img->res >= 0) {
+    // TODO delete node
   }
-  img->id = 0;
+  img->n = NULL;
 }
 
 static void R_gl_draw_quad (int x, int y, int w, int h) {
@@ -325,18 +464,29 @@ static void R_gl_draw_quad (int x, int y, int w, int h) {
 }
 
 static void R_gl_draw_textured (image *img, int x, int y, int w, int h, int flip) {
-  int ax = flip == 0;
-  int bx = !ax;
-  glBindTexture(GL_TEXTURE_2D, img->id);
-  glEnable(GL_TEXTURE_2D);
-  glBegin(GL_QUADS);
-  glTexCoord2f(ax, 0); glVertex2i(x + w, y);
-  glTexCoord2f(bx, 0); glVertex2i(x,     y);
-  glTexCoord2f(bx, 1); glVertex2i(x,     y + h);
-  glTexCoord2f(ax, 1); glVertex2i(x + w, y + h);
-  glEnd();
-  glDisable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  if (img->n) {
+    GLfloat nw = img->n->base->root.r + 1;
+    GLfloat nh = img->n->base->root.b + 1;
+    GLfloat ax = (flip ? img->n->l : img->n->r + 1) / nw;
+    GLfloat bx = (flip ? img->n->r + 1 : img->n->l) / nh;
+    GLfloat ay = (img->n->t) / nw;
+    GLfloat by = (img->n->b + 1) / nh;
+    glBindTexture(GL_TEXTURE_2D, img->n->base->id);
+    glEnable(GL_TEXTURE_2D);
+    glBegin(GL_QUADS);
+    glTexCoord2f(ax, ay); glVertex2i(x + w, y);
+    glTexCoord2f(bx, ay); glVertex2i(x,     y);
+    glTexCoord2f(bx, by); glVertex2i(x,     y + h);
+    glTexCoord2f(ax, by); glVertex2i(x + w, y + h);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  } else {
+    glColor3ub(255, 0, 0);
+    glDisable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    R_gl_draw_quad(x, y, w, h);
+  }
 }
 
 /* fit image into rectangle without applying offset and transparency */
@@ -599,7 +749,7 @@ static void R_draw_fld (byte *fld, int minx, int miny, int maxx, int maxy, int f
       if (id != 0) {
         if (walp[id].res < 0) {
           if (fg) {
-            switch (walp[id].id) {
+            switch (R_get_special_id(id)) {
               case 1:
                 glColor4ub(0, 0, 255, 127);
                 break;
@@ -955,7 +1105,7 @@ static void R_draw_view (int x, int y, int w, int h, int camx, int camy) {
   glPushMatrix();
   R_gl_setclip(x, y, w, h);
   glTranslatef(x, y, 0);
-  if (w_horiz && horiz.id != 0) {
+  if (w_horiz && horiz.n != NULL) {
     R_gl_draw_image_ext(&horiz, 0, 0, w, h);
     if (sky_type == 2 && lt_time < 0) {
       image *tanderbolt = &ltn[lt_type][lt_time < -5 ? 0 : 1];
@@ -1203,6 +1353,7 @@ void R_alloc (void) {
   logo("R_alloc: load graphics\n");
   /* Game */
   scrnh[0] = R_gl_loadimage("TITLEPIC");
+  assert(scrnh[0].n);
   scrnh[1] = R_gl_loadimage("INTERPIC");
   scrnh[2] = R_gl_loadimage("ENDPIC");
   for (i = 0; i < 2; i++) {
@@ -1413,6 +1564,7 @@ void R_alloc (void) {
     }
     for(; j < 5; j++) {
       anip[i][j] = (image) {
+        .n = NULL,
         .w = 8,
         .h = 8,
         .res = -1,
@@ -1436,6 +1588,8 @@ void R_init (void) {
   if (surf == NULL) {
     ERR_failinit("Unable to set video mode: %s\n", SDL_GetError());
   }
+  root = R_cache_new();
+  assert(root);
   R_alloc();
 }
 
@@ -1464,7 +1618,7 @@ void R_get_name (int n, char s[8]) {
     memset(s, 0, 8);
   } else if (walp[n].res == -2) {
     memcpy(s, "_WATER_", 8);
-    s[7] = '0' + walp[n].id - 1;
+    s[7] = '0' + (intptr_t)walp[n].n - 1;
   } else if (walani[n] > 0) {
     memcpy(s, anm[walani[n] - 1][0], 8);
   } else {
@@ -1482,13 +1636,13 @@ static short getani (char n[8]) {
 
 int R_get_special_id (int n) {
   assert(n >= 0 && n <= 256);
-  return walp[n].res == -2 ? walp[n].id : -1;
+  return walp[n].res == -2 ? (intptr_t)walp[n].n : -1;
 }
 
 void R_begin_load (void) {
   int i;
   for (i = 0; i < 256; i++) {
-    if (walp[i].id != 0 && walp[i].res >= 0 && walani[i] == 0) {
+    if (walp[i].n != NULL && walp[i].res >= 0 && walani[i] == 0) {
       R_gl_free_image(&walp[i]);
     }
     memset(&walp[i], 0, sizeof(image));
@@ -1506,7 +1660,7 @@ void R_load (char s[8], int f) {
   assert(max_textures < 256);
   if (!s[0]) {
     walp[max_textures] = (image) {
-      .id = 0,
+      .n = NULL,
       .x = 0,
       .y = 0,
       .w = 0,
@@ -1515,7 +1669,7 @@ void R_load (char s[8], int f) {
     };
   } else if (strncasecmp(s, "_WATER_", 7) == 0) {
     walp[max_textures] = (image) {
-      .id = s[7] - '0' + 1,
+      .n = (void*)(s[7] - '0' + 1),
       .x = 0,
       .y = 0,
       .w = 8,
