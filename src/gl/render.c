@@ -1632,10 +1632,10 @@ void R_get_name (int n, char s[8]) {
 
 static short getani (char n[8]) {
   short i = 0;
-  while (i < ANIT && strncasecmp(n, anm[i][0], 8) != 0) {
+  while (i < ANIT - 1 && strncasecmp(n, anm[i][0], 8) != 0) {
     i++;
   }
-  return i < ANIT ? i + 1 : 0;
+  return i < ANIT - 1 ? i + 1 : 0;
 }
 
 int R_get_special_id (int n) {
@@ -1673,7 +1673,7 @@ void R_load (char s[8], int f) {
     };
   } else if (strncasecmp(s, "_WATER_", 7) == 0) {
     walp[max_textures] = (image) {
-      .n = (void*)(s[7] - '0' + 1),
+      .n = (void*)((intptr_t)s[7] - '0' + 1),
       .x = 0,
       .y = 0,
       .w = 8,
