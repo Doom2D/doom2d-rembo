@@ -215,7 +215,7 @@ static cache *R_cache_new (void) {
   GLint size = 0;
   cache *c = NULL;
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
-  size /= 2; // TODO remove hack or detect ibook bug
+  size = size < 512 ? size : 512; // more can be buggy on older hardware
   if (size) {
     glGenTextures(1, &id);
     if (id) {
