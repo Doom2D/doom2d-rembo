@@ -99,7 +99,7 @@ static void Z_putbfch (int c) {
   }
 }
 
-static void Z_putsfch(int c) {
+static void Z_putsfch (int c) {
   vgaimg *p;
   if (c > 32 && c < 160) {
     p = sfh[c - '!'];
@@ -119,7 +119,7 @@ static void Z_gotoxy (int x, int y) {
   pry = y;
 }
 
-static void Z_printbf(char *s, ...) {
+static void Z_printbf (char *s, ...) {
   int i;
   va_list ap;
   char buf[80];
@@ -347,8 +347,8 @@ static int GM_draw (void) {
         for (k = 8; k < 184; k += 8) {
           V_spr(mnu->x + k, j, mslotm);
         }
-        V_spr(mnu->x+184,j,mslotr);
-        Z_gotoxy(mnu->x+4,j-8);
+        V_spr(mnu->x + 184, j, mslotr);
+        Z_gotoxy(mnu->x + 4, j - 8);
         if (input && i == save_mnu.cur) {
           Z_printsf("%s_", ibuf);
         } else {
@@ -359,7 +359,7 @@ static int GM_draw (void) {
         Z_printbf(mnu->m[i]);
       }
       if (mnu->t[i] == MUSIC) {
-        Z_printbf(" '%.8s'",g_music);
+        Z_printbf(" '%.8s'", g_music);
       } else if(mnu->t[i] == INTERP) {
         Z_printbf("%s", fullscreen ? "ON" : "OFF");
       } else if(mnu->t[i] >= PL1CM) {
@@ -391,7 +391,7 @@ static int GM_draw (void) {
 
 static void DOT_draw (void) {
   int i;
-  for (i = 0; i < MAXDOT; ++i) {
+  for (i = 0; i < MAXDOT; i++) {
     if (dot[i].t) {
       V_dot(dot[i].o.x - w_x + WD / 2, dot[i].o.y - w_y + HT / 2 + 1 + w_o, dot[i].c);
     }
@@ -594,7 +594,7 @@ static void PL_drawst (player_t *p) {
 static void MN_draw (void) {
   enum {SLEEP, GO, RUN, CLIMB, DIE, DEAD, ATTACK, SHOOT, PAIN, WAIT, REVIVE, RUNOUT}; // copypasted from monster.c!
   int i;
-  for (i = 0; i < MAXMN; ++i) {
+  for (i = 0; i < MAXMN; i++) {
     if (mn[i].t) {
       if (mn[i].t >= MN_PL_DEAD) {
         Z_drawmanspr(mn[i].o.x, mn[i].o.y, pl_spr[mn[i].t - MN_PL_DEAD], 0, mn[i].d);
@@ -685,7 +685,8 @@ static void WP_draw (void) {
             break;
           case MANF:
             s += 47;
-            d=(wp[i].o.xv>=0)?1:0;break;
+            d= wp[i].o.xv>=0 ? 1 : 0;
+            break;
         }
         break;
       case BFGBALL:
@@ -857,7 +858,7 @@ static void pl_info (player_t *p, int y) {
 static void W_act (void) {
   int i, a;
   if (g_time % 3 == 0) {
-    for (i = 1; i < 256; ++i) {
+    for (i = 1; i < 256; i++) {
       a = walani[i];
       if (a != 0) {
         anic[a]++;

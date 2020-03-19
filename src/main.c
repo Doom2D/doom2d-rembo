@@ -93,22 +93,16 @@ int main(int argc, char *argv[]) {
   F_loadmus("MENU");
   S_startmusic(0);
   
-  Uint32 ticks = 0;
-  for(;;) {
-
+  Uint32 ticks = SDL_GetTicks();
+  for (;;) {
     updatee_keys();
-
     S_updatemusic();
-
-    G_act();
-
-    R_draw();
-    
-    Uint32 t;
-    while ((t = SDL_GetTicks())-ticks < DELAY) {
-        SDL_Delay(1);
+    Uint32 t = SDL_GetTicks();
+    if (t - ticks > DELAY) {
+      ticks = t;
+      G_act();
     }
-    ticks = t - t % DELAY;
-
+    R_draw();
+    //SDL_Delay(1);
   }
 }

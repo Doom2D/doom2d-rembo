@@ -1,25 +1,49 @@
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required(VERSION 3.6)
+project(doom2d C)
 
-set( BIN doom2d )
-project( ${BIN} )
+option(WITH_OPENGL "Build with OpenGL render" OFF)
+option(WITH_SOFTWARE "Build with Software render" ON)
 
-set( SOURCE_ROOT ../src )
+set(D2D_GAME_ROOT .)
+set(D2D_OPENGL_ROOT ${D2D_GAME_ROOT}/gl)
+set(D2D_SOFTWARE_ROOT ${D2D_GAME_ROOT}/soft)
 
 find_package(SDL REQUIRED)
 find_package(SDL_mixer REQUIRED)
+if (WITH_OPENGL)
+  find_package(OpenGL REQUIRED)
+endif (WITH_OPENGL)
 
-aux_source_directory( ${SOURCE_ROOT} SOURCES )
+aux_source_directory(${D2D_GAME_ROOT} D2D_GAME_SRC)
+aux_source_directory(${D2D_OPENGL_ROOT} D2D_OPENGL_SRC)
+aux_source_directory(${D2D_SOFTWARE_ROOT} D2D_SOFTWARE_SRC)
 
-include_directories( "${SOURCE_ROOT}"
-        "${SDL_INCLUDE_DIR}"
-        "${SDLMIXER_INCLUDE_DIR}" )
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif (NOT CMAKE_BUILD_TYPE)
+set(CMAKE_C_FLAGS "")
+set(CMAKE_C_FLAGS_DEBUG "-g -O2 -Wall")
+set(CMAKE_C_FLAGS_RELEASE "-O3") # -DNDEBUG
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
-set( INSTALL_PATH /usr/local/bin/ )
+message(STATUS "=== BUILD OPTIONS ===")
+message(STATUS "BUILD:    " ${CMAKE_BUILD_TYPE})
+message(STATUS "CFLAGS:   " ${CMAKE_C_FLAGS})
 
-set( CMAKE_CXX_FLAGS "-O2 -Wall -MMD -MP -MF" ) 
+message(STATUS "=== RENDERS ===")
+message(STATUS "SOFTWARE: " ${WITH_SOFTWARE})
+message(STATUS "OPENGL:   " ${WITH_OPENGL})
 
-add_executable( ${BIN} ${SOURCES} )
+if (WITH_OPENGL)
+  add_executable(doom2d-gl ${D2D_GAME_SRC} ${D2D_OPENGL_SRC})
+  target_include_directories(doom2d-gl PRIVATE "${D2D_GAME_ROOT}" "${SDL_INCLUDE_DIR}" "${SDLMIXER_INCLUDE_DIR}" "${OPENGL_INCLUDE_DIR}")
+  target_link_libraries(doom2d-gl "${SDL_LIBRARY}" "${SDLMIXER_LIBRARY}" "${OPENGL_LIBRARY}")
+endif (WITH_OPENGL)
 
-target_link_libraries( ${BIN} "${SDL_LIBRARY}" "${SDLMIXER_LIBRARY}" )
-
-install( TARGETS ${BIN} DESTINATION ${INSTALL_PATH} )
+if (WITH_SOFTWARE)
+  add_executable(doom2d-soft ${D2D_GAME_SRC} ${D2D_SOFTWARE_SRC})
+  target_include_directories(doom2d-soft PRIVATE "${D2D_GAME_ROOT}" "${SDL_INCLUDE_DIR}" "${SDLMIXER_INCLUDE_DIR}")
+  target_link_libraries(doom2d-soft "${SDL_LIBRARY}" "${SDLMIXER_LIBRARY}")
+endif (WITH_SOFTWARE)

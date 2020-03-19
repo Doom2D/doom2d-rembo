@@ -326,7 +326,7 @@ void F_saveres(int r, void *p, dword o, dword l) {
 */
 
 // get resource id
-int F_findres (char *n) {
+int F_findres (const char n[8]) {
   int i;
   for (i = 0; i < wad_num; i++) {
     if (strncasecmp(wad[i].n, n, 8) == 0) {
@@ -337,7 +337,7 @@ int F_findres (char *n) {
 }
 
 // get resource id
-int F_getresid (char *n) {
+int F_getresid (const char n[8]) {
   int i = F_findres(n);
   if (i == -1) {
     ERR_fatal("F_getresid: ресурс %.8s не найден", n);
@@ -345,12 +345,12 @@ int F_getresid (char *n) {
   return i;
 }
 
-void F_getresname (char *n, int r) {
+void F_getresname (char n[8], int r) {
   memcpy(n, wad[r].n, 8);
 }
 
 // get sprite id
-int F_getsprid (char n[4], int s, int d) {
+int F_getsprid (const char n[4], int s, int d) {
   int i;
   byte a,b;
 
