@@ -82,6 +82,7 @@ static int fullscreen;
 static SDL_Surface *surf;
 static rgb playpal[256];
 static byte bright[256];
+static GLuint lastTexture;
 static cache *root;
 
 /* Game */
@@ -210,6 +211,12 @@ static node *R_node_alloc (node *p, int w, int h) {
   }
 }
 
+static void R_gl_bind_texture (GLuint id) {
+  if (id != lastTexture) {
+    glBindTexture(GL_TEXTURE_2D, id);
+  }
+}
+
 static cache *R_cache_new (void) {
   GLuint id = 0;
   GLint size = 0;
@@ -219,28 +226,23 @@ static cache *R_cache_new (void) {
   if (size) {
     glGenTextures(1, &id);
     if (id) {
-      glBindTexture(GL_TEXTURE_2D, id);
+      R_gl_bind_texture(id);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-      int ok = glGetError() == GL_NO_ERROR;
-      glBindTexture(GL_TEXTURE_2D, 0);
-      if (ok) {
-        c = malloc(sizeof(cache));
-        if (c != NULL) {
-          *c = (cache) {
-            .id = id,
-            .root.r = size - 1,
-            .root.b = size - 1
-          };
-        }
-      }
-      if (c == NULL) {
+      c = malloc(sizeof(cache));
+      if (c != NULL) {
+        *c = (cache) {
+          .id = id,
+          .root.r = size - 1,
+          .root.b = size - 1
+        };
+      } else {
         glDeleteTextures(1, &id);
       }
     }
   }
-  logo("new cache %p\n", c);
+  //logo("new cache %p\n", c);
   return c;
 }
 
@@ -279,10 +281,8 @@ static void R_cache_update (node *n, const void *data, int w, int h) {
   int nh = n->b - n->t + 1;
   assert(w == nw);
   assert(h == nh);
-  glBindTexture(GL_TEXTURE_2D, n->base->id);
+  R_gl_bind_texture(n->base->id);
   glTexSubImage2D(GL_TEXTURE_2D, 0, n->l, n->t, nw, nh, GL_RGBA, GL_UNSIGNED_BYTE, data);
-  assert(glGetError() == GL_NO_ERROR);
-  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /* Generic helpers */
@@ -425,7 +425,7 @@ static image R_gl_create_image (const rgba *buf, int w, int h) {
 }
 
 static image R_gl_get_special_image (int id, rgba *(*fn)(vgaimg*)) {
-  image img = (image) { .res = -1 };
+  image img;
   vgaimg *v = R_getvga(id);
   if (v != NULL) {
     rgba *buf = (*fn)(v);
@@ -435,6 +435,10 @@ static image R_gl_get_special_image (int id, rgba *(*fn)(vgaimg*)) {
     img.res = id;
     M_unlock(v);
     free(buf);
+  } else {
+    img = (image) {
+      .res = id
+    };
   }
   return img;
 }
@@ -475,7 +479,7 @@ static void R_gl_draw_textured (image *img, int x, int y, int w, int h, int flip
     GLfloat bx = (flip ? img->n->r + 1 : img->n->l) / nh;
     GLfloat ay = (img->n->t) / nw;
     GLfloat by = (img->n->b + 1) / nh;
-    glBindTexture(GL_TEXTURE_2D, img->n->base->id);
+    R_gl_bind_texture(img->n->base->id);
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
     glTexCoord2f(ax, ay); glVertex2i(x + w, y);
@@ -483,12 +487,11 @@ static void R_gl_draw_textured (image *img, int x, int y, int w, int h, int flip
     glTexCoord2f(bx, by); glVertex2i(x,     y + h);
     glTexCoord2f(ax, by); glVertex2i(x + w, y + h);
     glEnd();
-    glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
   } else {
     glColor3ub(255, 0, 0);
     glDisable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_TEXTURE_2D);
     R_gl_draw_quad(x, y, w, h);
   }
 }
@@ -507,16 +510,12 @@ static void R_gl_draw_image_color (image *img, int x, int y, int flip) {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   R_gl_draw_textured(img, xx, y - img->y, img->w, img->h, flip);
-  glDisable(GL_BLEND);
 }
 
 /* draw sprite with offset */
 static void R_gl_draw_image (image *img, int x, int y, int flip) {
-  int xx = flip ? x - img->w + img->x : x - img->x;
-  glEnable(GL_BLEND);
   glColor3ub(255, 255, 255);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  R_gl_draw_textured(img, xx, y - img->y, img->w, img->h, flip);
+  R_gl_draw_image_color(img, x, y, flip);
 }
 
 static void R_gl_set_color (byte c) {
@@ -769,6 +768,7 @@ static void R_draw_fld (byte *fld, int minx, int miny, int maxx, int maxy, int f
             }
             glEnable(GL_BLEND);
             glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+            glDisable(GL_TEXTURE_2D);
             R_gl_draw_quad(i * CELW, j * CELW, CELW, CELH);
           }
         } else {
@@ -781,6 +781,9 @@ static void R_draw_fld (byte *fld, int minx, int miny, int maxx, int maxy, int f
 
 static void R_draw_dots (void) {
   int i;
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_TEXTURE_2D);
   glBegin(GL_POINTS);
   for (i = 0; i < MAXDOT; i++) {
     if (dot[i].t != 0) {
@@ -1086,6 +1089,9 @@ static void R_draw_effects (void) {
         R_gl_draw_image(&fx_spr[s], fx[i].x, fx[i].y, fx_sprd[s]);
         break;
       case BUBL:
+        glDisable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_TEXTURE_2D);
         glBegin(GL_POINTS);
         R_gl_set_color(0xC0 + fx[i].s);
         glVertex2i(fx[i].x >> 8, (fx[i].y >> 8) + 1);
@@ -1121,6 +1127,8 @@ static void R_draw_view (int x, int y, int w, int h, int camx, int camy) {
     }
   } else {
     glDisable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_TEXTURE_2D);
     R_gl_set_color(DEFAULT_SKY_COLOR);
     R_gl_draw_quad(0, 0, w, h);
   }
@@ -1146,6 +1154,7 @@ static void R_draw_view (int x, int y, int w, int h, int camx, int camy) {
     glColor4ub(255, 255, 255, 255);
     glEnable(GL_BLEND);
     glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+    glDisable(GL_TEXTURE_2D);
     R_gl_draw_quad(0, 0, w, h);
   }
   glPopMatrix();
@@ -1165,22 +1174,25 @@ static void R_draw_player_view (player_t *p, int x, int y, int w, int h) {
   if (p->invl) {
     if (get_pu_st(p->invl)) {
       glEnable(GL_BLEND);
-      glColor4ub(191, 191, 191, 255);
       glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+      glDisable(GL_TEXTURE_2D);
+      glColor4ub(191, 191, 191, 255);
       R_gl_draw_quad(0, 0, cw, h);
     }
   } else {
     if (p->suit && get_pu_st(p->suit)) {
       glEnable(GL_BLEND);
-      glColor4ub(0, 255, 0, 192);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glDisable(GL_TEXTURE_2D);
+      glColor4ub(0, 255, 0, 192);
       R_gl_draw_quad(0, 0, cw, h);
     }
     int f = min(max(p->pain * 3, 0), 255);
     if (f > 0) {
       glEnable(GL_BLEND);
-      glColor4ub(255, 0, 0, f);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glDisable(GL_TEXTURE_2D);
+      glColor4ub(255, 0, 0, f);
       R_gl_draw_quad(0, 0, cw, h);
     }
   }
@@ -1196,6 +1208,8 @@ static void R_draw_player_view (player_t *p, int x, int y, int w, int h) {
     if (p->air < PL_AIR) {
       int a = min(max(p->air, 0), MAXAIR) * 100 / MAXAIR;
       glDisable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glDisable(GL_TEXTURE_2D);
       R_gl_set_color(0xC8);
       R_gl_draw_quad(10, 49, a, 2);
     }
@@ -1316,7 +1330,7 @@ static void W_act (void) {
 void R_draw (void) {
   W_act();
   glClearColor(0, 0, 0, 1);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
   glEnable(GL_SCISSOR_TEST);
   R_gl_setmatrix();
   switch (g_st) {
@@ -1722,7 +1736,6 @@ void R_end_load (void) {
 
 void R_loadsky (int sky) {
   char s[6];
-  logo("R_loadsky(%i)\n", sky);
   strcpy(s, "RSKYx");
   s[4] = '0' + sky;
   R_gl_free_image(&horiz);
