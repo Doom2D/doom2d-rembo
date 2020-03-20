@@ -57,6 +57,7 @@ typedef struct rgba {
 typedef struct node {
   struct cache *base;
   struct node *left, *right;
+  struct node *up;
   int l, t, r, b;
   int leaf;
 } node;
@@ -181,12 +182,14 @@ static node *R_node_alloc (node *p, int w, int h) {
       p->right = malloc(sizeof(node));
       if (pw - w > ph - h) {
         *p->left = (node) {
+          .up = p,
           .l = p->l,
           .t = p->t,
           .r = p->l + w - 1,
           .b = p->b
         };
         *p->right = (node) {
+          .up = p,
           .l = p->l + w,
           .t = p->t,
           .r = p->r,
@@ -194,12 +197,14 @@ static node *R_node_alloc (node *p, int w, int h) {
         };
       } else {
         *p->left = (node) {
+          .up = p,
           .l = p->l,
           .t = p->t,
           .r = p->r,
           .b = p->t + h - 1
         };
         *p->right = (node) {
+          .up = p,
           .l = p->l,
           .t = p->t + h,
           .r = p->r,
@@ -207,6 +212,44 @@ static node *R_node_alloc (node *p, int w, int h) {
         };
       }
       return R_node_alloc(p->left, w, h);
+    }
+  }
+}
+
+static int R_node_have_leaf (node *n) {
+  return n && (n->leaf || R_node_have_leaf(n->left) || R_node_have_leaf(n->right));
+}
+
+static void R_node_free_recursive (node *n) {
+  if (n) {
+    R_node_free_recursive(n->left);
+    R_node_free_recursive(n->right);
+    free(n);
+  }
+}
+
+static void R_node_free (node *n) {
+  if (n) {
+    //logo("free node %p {%i:%i:%i:%i}\n", n, n->l, n->t, n->r, n->b);
+    assert(n->leaf);
+    assert(n->left == NULL);
+    assert(n->right == NULL);
+    n->leaf = 0;
+    n->base = NULL;
+    node *p = n->up;
+    while (p != NULL) {
+      assert(p->leaf == 0);
+      assert(p->left);
+      assert(p->right);
+      if (R_node_have_leaf(p) == 0) {
+        R_node_free_recursive(p->left);
+        p->left = NULL;
+        R_node_free_recursive(p->right);
+        p->right = NULL;
+        p = p->up;
+      } else {
+        p = NULL;
+      }
     }
   }
 }
@@ -246,15 +289,32 @@ static cache *R_cache_new (void) {
   return c;
 }
 
+static void R_cache_free (cache *root, int freetexture) {
+  cache *next;
+  cache *c = root;
+  while (c != NULL) {
+    next = c->next;
+    R_node_free_recursive(c->root.left);
+    R_node_free_recursive(c->root.right);
+    if (freetexture && c->id != 0) {
+      glDeleteTextures(1, &c->id);
+    }
+    free(c);
+    c = next;
+  }
+}
+
 static node *R_cache_alloc (cache *root, int w, int h) {
   assert(root);
   assert(w > 0 && h > 0);
   node *n = NULL;
   cache *p = NULL;
   cache *c = root;
+  // TODO return null if required size greater than maximum
   while (c && !n) {
     n = R_node_alloc(&c->root, w, h);
     if (n) {
+      assert(n->leaf);
       n->base = c;
     }
     p = c;
@@ -266,15 +326,22 @@ static node *R_cache_alloc (cache *root, int w, int h) {
       p->next = c;
       n = R_node_alloc(&c->root, w, h);
       if (n) {
+        assert(n->leaf);
         n->base = c;
       }
     }
+  }
+  if (n) {
+    //logo("new node %p {%i:%i:%i:%i}\n", n, n->l, n->t, n->r, n->b);
+  } else {
+    logo("new node failed\n");
   }
   return n;
 }
 
 static void R_cache_update (node *n, const void *data, int w, int h) {
   assert(n);
+  assert(n->leaf);
   assert(n->base);
   assert(data);
   int nw = n->r - n->l + 1;
@@ -457,9 +524,10 @@ static image R_gl_get_special_spr (const char n[4], int s, int d, rgba *(*fn)(vg
 
 static void R_gl_free_image (image *img) {
   if (img->n != NULL && img->res >= 0) {
-    // TODO delete node
+    R_node_free(img->n);
   }
   img->n = NULL;
+  img->res = -1;
 }
 
 static void R_gl_draw_quad (int x, int y, int w, int h) {
@@ -1612,7 +1680,7 @@ void R_init (void) {
 }
 
 void R_done (void) {
-  // do nothing
+  R_cache_free(root, 1);
 }
 
 void R_setgamma (int g) {
