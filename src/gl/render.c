@@ -254,6 +254,14 @@ static void R_node_free (node *n) {
   }
 }
 
+static void R_cache_get_max_texture_size (int *w, int *h) {
+  GLint size = 0;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+  size = min(max(size, 0), 512); // more can be buggy on older hardware
+  *w = size;
+  *h = size;
+}
+
 static void R_gl_bind_texture (GLuint id) {
   if (id != lastTexture) {
     glBindTexture(GL_TEXTURE_2D, id);
@@ -261,24 +269,23 @@ static void R_gl_bind_texture (GLuint id) {
 }
 
 static cache *R_cache_new (void) {
-  GLuint id = 0;
-  GLint size = 0;
+  int w, h;
+  GLuint id;
   cache *c = NULL;
-  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
-  size = size < 512 ? size : 512; // more can be buggy on older hardware
-  if (size) {
+  R_cache_get_max_texture_size(&w, &h);
+  if (w && h) {
     glGenTextures(1, &id);
     if (id) {
       R_gl_bind_texture(id);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
       c = malloc(sizeof(cache));
       if (c != NULL) {
         *c = (cache) {
           .id = id,
-          .root.r = size - 1,
-          .root.b = size - 1
+          .root.r = w - 1,
+          .root.b = h - 1
         };
       } else {
         glDeleteTextures(1, &id);
@@ -310,24 +317,27 @@ static node *R_cache_alloc (cache *root, int w, int h) {
   node *n = NULL;
   cache *p = NULL;
   cache *c = root;
-  // TODO return null if required size greater than maximum
-  while (c && !n) {
-    n = R_node_alloc(&c->root, w, h);
-    if (n) {
-      assert(n->leaf);
-      n->base = c;
-    }
-    p = c;
-    c = c->next;
-  }
-  if (!n) {
-    c = R_cache_new();
-    if (c) {
-      p->next = c;
+  int maxw, maxh;
+  R_cache_get_max_texture_size(&maxw, &maxh);
+  if (w <= maxw && h <= maxh) {
+    while (c && !n) {
       n = R_node_alloc(&c->root, w, h);
       if (n) {
         assert(n->leaf);
         n->base = c;
+      }
+      p = c;
+      c = c->next;
+    }
+    if (!n) {
+      c = R_cache_new();
+      if (c) {
+        p->next = c;
+        n = R_node_alloc(&c->root, w, h);
+        if (n) {
+          assert(n->leaf);
+          n->base = c;
+        }
       }
     }
   }
@@ -339,17 +349,17 @@ static node *R_cache_alloc (cache *root, int w, int h) {
   return n;
 }
 
-static void R_cache_update (node *n, const void *data, int w, int h) {
+static void R_cache_update (node *n, const void *data, int x, int y, int w, int h) {
   assert(n);
   assert(n->leaf);
   assert(n->base);
   assert(data);
-  int nw = n->r - n->l + 1;
-  int nh = n->b - n->t + 1;
-  assert(w == nw);
-  assert(h == nh);
+  assert(x >= 0);
+  assert(y >= 0);
+  assert(n->l + x + w - 1 <= n->r);
+  assert(n->t + y + h - 1 <= n->b);
   R_gl_bind_texture(n->base->id);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, n->l, n->t, nw, nh, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, n->l + x, n->t + y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
 /* Generic helpers */
@@ -481,7 +491,7 @@ static rgba *R_extract_rgba_spr (vgaimg *v) {
 static image R_gl_create_image (const rgba *buf, int w, int h) {
   node *n = R_cache_alloc(root, w, h);
   if (n) {
-    R_cache_update(n, buf, w, h);
+    R_cache_update(n, buf, 0, 0, w, h);
   }
   return (image) {
     .n = n,
