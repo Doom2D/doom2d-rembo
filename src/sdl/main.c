@@ -21,24 +21,68 @@
 */
 
 #include <SDL.h>
-#include <stdlib.h> // srand
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h> // srand exit
 #include <string.h> // strcasecmp
 #include "input.h"
 
 #include "my.h" // fexists
 #include "player.h" // pl1 pl2
-#include "menu.h" // GM_init G_keyf
+#include "menu.h" // G_keyf
 #include "error.h" // logo
 
 #include "files.h" // F_startup F_addwad F_initwads F_allocres
-#include "config.h" // CFG_args CFG_load
+#include "config.h" // CFG_args CFG_load CFG_save
 #include "memory.h" // M_startup
-#include "game.h" // G_Init G_act
+#include "game.h" // G_init G_act
 #include "sound.h" // S_init S_done
 #include "music.h" // S_initmusic S_updatemusic S_donemusic
 #include "render.h" // R_init R_draw R_done
 
 static int quit = 0;
+
+void logo (const char *s, ...) {
+  va_list ap;
+  va_start(ap, s);
+  vprintf(s, ap);
+  va_end(ap);
+  fflush(stdout);
+}
+
+void logo_gas (int cur, int all) {
+  // stub
+}
+
+void ERR_failinit (char *s, ...) {
+  va_list ap;
+  va_start(ap, s);
+  vprintf(s, ap);
+  va_end(ap);
+  puts("");
+  exit(1);
+}
+
+void ERR_fatal (char *s, ...) {
+  va_list ap;
+  R_done();
+  S_done();
+  S_donemusic();
+  M_shutdown();
+  SDL_Quit();
+  puts("\nКРИТИЧЕСКАЯ ОШИБКА:");
+  va_start(ap, s);
+  vprintf(s, ap);
+  va_end(ap);
+  puts("");
+  exit(1);
+}
+
+void ERR_quit (void) {
+  puts("Спасибо за то, что вы играли в Операцию \"Смятка\"!");
+  //F_loadres(F_getresid("ENDOOM"),p,0,4000);
+  quit = 1;
+}
 
 static int sdl_to_key (int code) {
   switch (code) {
@@ -179,8 +223,6 @@ int SDL_main (int argc, char *argv[]) {
     return 1;
   }
   SDL_WM_SetCaption("Doom 2D v1.351", "Doom 2D");
-  pl1.id = -1; // TODO move to generic code
-  pl2.id = -2; // TODO move to generic code
   // Player 1 defaults
   pl1.ku = KEY_KP_8;
   pl1.kd = KEY_KP_5;
@@ -218,13 +260,10 @@ int SDL_main (int argc, char *argv[]) {
   F_initwads();
   M_startup();
   F_allocres();
-  G_init();
   S_init();
   S_initmusic();
   R_init();
-  GM_init(); // TODO move to game
-  F_loadmus("MENU"); // TODO move to menu
-  S_startmusic(0); // TODO move to menu
+  G_init();
   ticks = SDL_GetTicks();
   while (!quit) {
     poll_events(&G_keyf);
@@ -236,9 +275,10 @@ int SDL_main (int argc, char *argv[]) {
     }
     R_draw();
   }
+  CFG_save();
   R_done();
-  S_donemusic();
   S_done();
+  S_donemusic();
   M_shutdown();
   SDL_Quit();
   return 0;
