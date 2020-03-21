@@ -26,7 +26,6 @@
 #include <string.h>
 #include "files.h"
 #include "memory.h"
-#include "keyb.h"
 #include "sound.h"
 #include "view.h"
 #include "bmap.h"
@@ -47,8 +46,8 @@
 #include "music.h"
 #include "a8.h"
 #include "error.h"
+#include "input.h"
 
-#include <SDL_keysym.h>
 
 #define LT_DELAY 8
 #define LT_HITTIME 6
@@ -273,8 +272,8 @@ void G_act (void) {
 
   
   if(g_st==GS_BVIDEO || g_st==GS_EVIDEO) {
-    if(!A8_nextframe() || lastkey==SDLK_ESCAPE) {
-      if(lastkey==SDLK_ESCAPE) lastkey=0;
+    if (!A8_nextframe() || lastkey == KEY_ESCAPE) {
+      if (lastkey == KEY_ESCAPE) lastkey = KEY_UNKNOWN;
       A8_close();
       if(g_st==GS_BVIDEO) G_start();
       else goto inter;
@@ -311,10 +310,14 @@ void G_act (void) {
 	    set_trans(GS_TITLE);
 	  }
 #else
-          if(keys[SDLK_SPACE] || keys[SDLK_RETURN] || keys[SDLK_KP_ENTER])//if(keys[0x39] || keys[0x1C] || keys[0x9C])
-	    if(!G_beg_video()) G_start(); else {
-	      g_st=GS_BVIDEO;F_freemus();
+    if (I_pressed(KEY_SPACE) || I_pressed(KEY_RETURN) || I_pressed(KEY_KP_ENTER)) {
+	    if (!G_beg_video()) {
+        G_start();
+      } else {
+	      g_st = GS_BVIDEO;
+        F_freemus();
 	    }
+    }
 #endif
 	  return;
   }

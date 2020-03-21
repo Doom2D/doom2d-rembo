@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include "keyb.h"
 #include "sound.h"
 #include "render.h"
 #include "memory.h"
@@ -35,7 +34,6 @@
 
 void logo (const char *s, ...) {
   va_list ap;
-  int x, y;
   va_start(ap, s);
   vprintf(s, ap);
   va_end(ap);
@@ -49,14 +47,13 @@ void logo_gas (int cur, int all) {
 static void close_all (void) {
   S_done();
   S_donemusic();
-  K_done();
-  R_done();
   M_shutdown();
+  R_done();
 }
 
 void ERR_failinit (char *s, ...) {
   va_list ap;
-  close_all();
+  //close_all();
   va_start(ap, s);
   vprintf(s, ap);
   va_end(ap);
@@ -64,7 +61,7 @@ void ERR_failinit (char *s, ...) {
   exit(1);
 }
 
-void ERR_fatal(char *s,...) {
+void ERR_fatal (char *s,...) {
   va_list ap;
   close_all();
   puts("\nКРИТИЧЕСКАЯ ОШИБКА:");
@@ -76,14 +73,8 @@ void ERR_fatal(char *s,...) {
 }
 
 void ERR_quit (void) {
-  void *p;
-  //V_done();
-  //if(!(p=malloc(4000)))
-    puts("Спасибо за то, что вы играли в Операцию \"Смятка\"!");
-  //else {
-//    F_loadres(F_getresid("ENDOOM"),p,0,4000);
-  //  memcpy((void*)0xB8000,p,4000);free(p);gotoxy(1,24);
-  //}
+  puts("Спасибо за то, что вы играли в Операцию \"Смятка\"!");
+  //F_loadres(F_getresid("ENDOOM"),p,0,4000);
   close_all();
   CFG_save();
   exit(0);

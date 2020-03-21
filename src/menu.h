@@ -49,6 +49,7 @@ extern byte gm_redraw;
 extern short lastkey;
 
 void GMV_say (char *nm);
+void G_keyf (int key, int down);
 void G_code (void);
 int GM_act (void);
 void GM_init (void);

@@ -38,6 +38,7 @@ static struct {
 } chunks[NUM_CHUNKS];
 
 void S_init (void) {
+  logo("S_init: настройка звука\n");
     if (!SDL_WasInit(SDL_INIT_AUDIO)) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
             fprintf(stderr, "\nUnable to initialize audio:  %s\n", SDL_GetError());

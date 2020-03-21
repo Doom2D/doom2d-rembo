@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL_keyboard.h>
 #include "map.h"
 #include "sound.h"
 #include "music.h"
@@ -35,6 +34,7 @@
 #include "files.h"
 #include "render.h"
 #include "error.h"
+#include "input.h"
 #include "my.h"
 
 enum{NONE,BYTE,WORD,DWORD,STRING,SW_ON,SW_OFF,FILES,KEY};
@@ -154,18 +154,6 @@ next:
   }
 }
 
-static int get_key (char *name) {
-    int i;
-    for(i=1; i<SDLK_LAST; i++) {
-        char* s = SDL_GetKeyName(i);
-        if (s && strcasecmp(name,s) == 0) {
-
-            return i;
-        }
-    }
-    return 0;
-}
-
 void CFG_load(void) {
   int j;
   FILE *h;
@@ -235,19 +223,15 @@ void CFG_load(void) {
             break;
           case KEY:
           {
-              int k = get_key(p2);
-              if (k) {
-                  *((int *)cfg[j].p)=k;
+              int k = I_string_to_key(p2);
+              if (k != KEY_UNKNOWN) {
+                *((int *)cfg[j].p)=k;
               } else {
+                int i;
                 logo("Unknown key in cfg: %s=%s\n",p1,p2);
                 logo("List available key names:\n");
-                int i;
-                for(i=1; i<SDLK_LAST; i++) {
-                    char* s = SDL_GetKeyName(i);
-
-                    if (!strcasecmp(s,"unknown key") == 0) {
-                        logo("%s\n", s);
-                    }
+                for(i = 1; i <= KEY__LAST; i++) {
+                  logo("  %s\n", I_key_to_string(i));
                 }
               }
           }
