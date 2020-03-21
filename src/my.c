@@ -20,7 +20,6 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-#include <SDL.h>
 #include "glob.h"
 #include "error.h"
 #include "misc.h"
@@ -124,10 +123,6 @@ void myfwrite16 (int16_t x, FILE *f) {
 void myfwrite32 (int32_t x, FILE *f) {
   x = int2host(x);
   myfwrite(&x, 4, 1, f);
-}
-
-void myrandomize (void) {
-    srand(SDL_GetTicks());
 }
 
 int fexists (char *filename) {

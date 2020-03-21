@@ -27,7 +27,6 @@
 #include "files.h"
 #include "memory.h"
 #include "error.h"
-#include "keyb.h"
 #include "sound.h"
 #include "view.h"
 #include "player.h"
@@ -40,8 +39,8 @@
 #include "player.h"
 #include "sound.h"
 #include "music.h"
+#include "input.h"
 
-#include <SDL.h>
 #include <sys/stat.h>
 
 #define QSND_NUM 14
@@ -336,45 +335,45 @@ struct {
     int keysym;
     byte ch;
 } keychar[] = {
-    {SDLK_SPACE, ' '},
-    {SDLK_0, '0'},
-    {SDLK_1, '1'},
-    {SDLK_2, '2'},
-    {SDLK_3, '3'},
-    {SDLK_4, '4'},
-    {SDLK_5, '5'},
-    {SDLK_6, '6'},
-    {SDLK_7, '7'},
-    {SDLK_8, '8'},
-    {SDLK_9, '9'},
-    {SDLK_UNDERSCORE, '_'},
-    {SDLK_a, 'A'},
-    {SDLK_b, 'B'},
-    {SDLK_c, 'C'},
-    {SDLK_d, 'D'},
-    {SDLK_e, 'E'},
-    {SDLK_f, 'F'},
-    {SDLK_g, 'G'},
-    {SDLK_h, 'H'},
-    {SDLK_i, 'I'},
-    {SDLK_j, 'J'},
-    {SDLK_k, 'K'},
-    {SDLK_l, 'L'},
-    {SDLK_m, 'M'},
-    {SDLK_n, 'N'},
-    {SDLK_o, 'O'},
-    {SDLK_p, 'P'},
-    {SDLK_q, 'Q'},
-    {SDLK_r, 'R'},
-    {SDLK_s, 'S'},
-    {SDLK_t, 'T'},
-    {SDLK_u, 'U'},
-    {SDLK_v, 'V'},
-    {SDLK_w, 'W'},
-    {SDLK_x, 'X'},
-    {SDLK_y, 'Y'},
-    {SDLK_z, 'Z'},
-    {SDLK_COMMA,','},
+    {KEY_SPACE, ' '},
+    {KEY_0, '0'},
+    {KEY_1, '1'},
+    {KEY_2, '2'},
+    {KEY_3, '3'},
+    {KEY_4, '4'},
+    {KEY_5, '5'},
+    {KEY_6, '6'},
+    {KEY_7, '7'},
+    {KEY_8, '8'},
+    {KEY_9, '9'},
+    //{KEY_UNDERSCORE, '_'},
+    {KEY_A, 'A'},
+    {KEY_B, 'B'},
+    {KEY_C, 'C'},
+    {KEY_D, 'D'},
+    {KEY_E, 'E'},
+    {KEY_F, 'F'},
+    {KEY_G, 'G'},
+    {KEY_H, 'H'},
+    {KEY_I, 'I'},
+    {KEY_J, 'J'},
+    {KEY_K, 'K'},
+    {KEY_L, 'L'},
+    {KEY_M, 'M'},
+    {KEY_N, 'N'},
+    {KEY_O, 'O'},
+    {KEY_P, 'P'},
+    {KEY_Q, 'Q'},
+    {KEY_R, 'R'},
+    {KEY_S, 'S'},
+    {KEY_T, 'T'},
+    {KEY_U, 'U'},
+    {KEY_V, 'V'},
+    {KEY_W, 'W'},
+    {KEY_X, 'X'},
+    {KEY_Y, 'Y'},
+    {KEY_Z, 'Z'},
+    {KEY_COMMA,','},
     {0}
 };
 
@@ -418,107 +417,165 @@ int GM_act (void) {
     lastkey=0;
     return 1;
   }
-  if(input) switch(lastkey) {
-    case SDLK_RETURN: case SDLK_KP_ENTER://case 0x1C: case 0x9C:
-      F_savegame(save_mnu.cur,ibuf);
-      input=0;GM_set(NULL);break;
-    case 1: input=0;GM_set(mnu);break;
-    case SDLK_BACKSPACE://case 0x0E:
-        if(icur) {ibuf[--icur]=0;GM_set(mnu);} break;
-    default:
-      if(icur>=23) break;
-      c=get_keychar(lastkey);//c=keychar[(keys[0x2A] || keys[0x36])?1:0][lastkey];
-      if(!c) break;
-      ibuf[icur]=c;ibuf[++icur]=0;GM_set(mnu);
-  }else {
-      switch(lastkey) {
-    case SDLK_ESCAPE://case 1:
-      if(!mnu) {GM_set(&main_mnu);Z_sound(msnd3,128);}
-      else {GM_set(NULL);Z_sound(msnd4,128);}
-      break;
-    case SDLK_F5:
-      if(mnu) break;
-      Z_sound(msnd3,128);
-      GMV_say("_GAMMA");
-      GM_set(&gamma_mnu);break;
-    case SDLK_F4://case 0x3E:
-      if(mnu) break;
-      Z_sound(msnd3,128);
-      GMV_say("_VOLUME");
-      GM_set(&vol_mnu);break;
-    case SDLK_F2://case 0x3C:
-      if(mnu) break;
-      if(g_st!=GS_GAME) break;
-      Z_sound(msnd3,128);
-      F_getsavnames();GM_set(&save_mnu);break;
-    case SDLK_F3://case 0x3D:
-      if(mnu) break;
-      Z_sound(msnd3,128);
-      F_getsavnames();GM_set(&load_mnu);break;
-    case SDLK_F10://case 0x44:
-      if(mnu) break;
-      Z_sound(msnd3,128);
-      GM_command(QUITGAME);break;
-    case SDLK_UP: case SDLK_KP8://case 0x48: case 0xC8:
-      if(!mnu) break;
-      if(mnu->type!=MENU) break;
-      if(--mnu->cur<0) mnu->cur=mnu->n-1;
-      GM_set(mnu);
-      Z_sound(msnd1,128);break;
-    case SDLK_DOWN: case SDLK_KP5: case SDLK_KP2://case 0x50: case 0xD0: case 0x4C:
-      if(!mnu) break;
-      if(mnu->type!=MENU) break;
-      if(++mnu->cur>=mnu->n) mnu->cur=0;
-      GM_set(mnu);
-      Z_sound(msnd1,128);break;
-    case SDLK_LEFT: case SDLK_RIGHT: case SDLK_KP4: case SDLK_KP6://case 0x4B: case 0x4D: case 0xCB: case 0xCD:
-	  if(!mnu) break;
-	  if(mnu->type!=MENU) break;
-	  if(mnu->t[mnu->cur]<SVOLM) break;
-	  GM_command(mnu->t[mnu->cur]+((lastkey==SDLK_LEFT || lastkey==SDLK_KP4)?0:1));//GM_command(mnu->t[mnu->cur]+((lastkey==0x4B || lastkey==0xCB)?0:1));
-	  GM_set(mnu);
-	  if(!movsndt) movsndt=Z_sound((lastkey==SDLK_LEFT || lastkey==SDLK_KP4)?msnd5:msnd6,255);//if(!movsndt) movsndt=Z_sound((lastkey==0x4B || lastkey==0xCB)?msnd5:msnd6,255);
-	  break;
-    case SDLK_RETURN: case SDLK_SPACE: case SDLK_KP_ENTER://case 0x1C: case 0x39: case 0x9C:
-	  if(!mnu) break;
-	  if(mnu->type!=MENU) break;
-	  if(mnu->t[mnu->cur]>=PL1CM) {
-	    Z_sound(msnd2,128);
-	    GM_command(PLCEND);
-	    break;
-	  }
-	  if(mnu->t[mnu->cur]>=SVOLM) break;
-	  Z_sound(msnd2,128);
-	  GM_command(mnu->t[mnu->cur]);
-      break;
-    case SDLK_y://case 0x15:
-      if(!mnu) break;
-      if(mnu->type!=MSG) break;
-      Z_sound(msnd3,128);
-      GM_command(mnu->t[0]);
-      break;
-    case SDLK_n://case 0x31:
-      if(!mnu) break;
-      if(mnu->type!=MSG) break;
-      Z_sound(msnd4,128);
-      GM_command(mnu->t[1]);
-      break;
-    case SDLK_F1://case 0x3B:
-      if(shot_vga) {shot();Z_sound(msnd4,128);}
-      break;
+  if (input) {
+    switch (lastkey) {
+      case KEY_RETURN:
+      case KEY_KP_ENTER:
+        F_savegame(save_mnu.cur, ibuf);
+        input = 0;
+        GM_set(NULL);
+        break;
+      case KEY_ESCAPE:
+        input = 0;
+        GM_set(mnu);
+        break;
+      case KEY_BACKSPACE:
+        if (icur) {
+          icur -= 1;
+          ibuf[icur] = 0;
+          GM_set(mnu);
+        }
+        break;
+      default:
+        if (icur < 23) {
+          c = get_keychar(lastkey);
+          if (c != 0) {
+            ibuf[icur] = c;
+            icur += 1;
+            ibuf[icur] = 0;
+            GM_set(mnu);
+          }
+        }
+        break;
+    }
+  } else {
+    switch (lastkey) {
+      case KEY_ESCAPE:
+        if (mnu == NULL) {
+          GM_set(&main_mnu);
+          Z_sound(msnd3, 128);
+        } else {
+          GM_set(NULL);
+          Z_sound(msnd4, 128);
+        }
+        break;
+      case KEY_F5:
+        if (mnu == NULL) {
+          Z_sound(msnd3, 128);
+          GMV_say("_GAMMA");
+          GM_set(&gamma_mnu);
+        }
+        break;
+      case KEY_F4:
+        if (mnu == NULL) {
+          Z_sound(msnd3, 128);
+          GMV_say("_VOLUME");
+          GM_set(&vol_mnu);
+        }
+        break;
+      case KEY_F2:
+        if (mnu == NULL && g_st == GS_GAME) {
+          Z_sound(msnd3, 128);
+          F_getsavnames();
+          GM_set(&save_mnu);
+        }
+        break;
+      case KEY_F3:
+        if (mnu == NULL) {
+          Z_sound(msnd3, 128);
+          F_getsavnames();
+          GM_set(&load_mnu);
+        }
+        break;
+      case KEY_F10:
+        if (mnu == NULL) {
+          Z_sound(msnd3, 128);
+          GM_command(QUITGAME);
+        }
+        break;
+      case KEY_UP:
+      case KEY_KP_8:
+        if (mnu != NULL && mnu->type == MENU) {
+          mnu->cur -= 1;
+          if (mnu->cur < 0) {
+            mnu->cur = mnu->n - 1;
+          }
+          GM_set(mnu);
+          Z_sound(msnd1, 128);
+        }
+        break;
+      case KEY_DOWN:
+      case KEY_KP_5:
+      case KEY_KP_2:
+        if (mnu != NULL && mnu->type == MENU) {
+          mnu->cur += 1;
+          if (mnu->cur >= mnu->n) {
+            mnu->cur = 0;
+          }
+          GM_set(mnu);
+          Z_sound(msnd1, 128);
+        }
+        break;
+      case KEY_LEFT:
+      case KEY_RIGHT:
+      case KEY_KP_4:
+      case KEY_KP_6:
+        if (mnu != NULL && mnu->type == MENU && mnu->t[mnu->cur] >= SVOLM) {
+          GM_command(mnu->t[mnu->cur] + (lastkey == KEY_LEFT || lastkey == KEY_KP_4));
+          GM_set(mnu);
+          if (!movsndt) {
+            movsndt = Z_sound(lastkey == KEY_LEFT || lastkey == KEY_KP_4 ? msnd5 : msnd6, 255);
+          }
+        }
+        break;
+      case KEY_RETURN:
+      case KEY_SPACE:
+      case KEY_KP_ENTER:
+        if (mnu != NULL && mnu->type == MENU) {
+          if (mnu->t[mnu->cur] >= PL1CM) {
+            Z_sound(msnd2, 128);
+            GM_command(PLCEND);
+            break;
+          } else if (mnu->t[mnu->cur] < SVOLM) {
+            Z_sound(msnd2,128);
+            GM_command(mnu->t[mnu->cur]);
+          }
+        }
+        break;
+      case KEY_Y:
+        if (mnu != NULL && mnu->type == MSG) {
+          Z_sound(msnd3, 128);
+          GM_command(mnu->t[0]);
+        }
+        break;
+      case KEY_N:
+        if (mnu != NULL && mnu->type == MSG) {
+          Z_sound(msnd4, 128);
+          GM_command(mnu->t[1]);
+        }
+        break;
+      case KEY_F1:
+        if (shot_vga) {
+          shot();
+          Z_sound(msnd4, 128);
+        }
+        break;
+    }
   }
-  }
-  lastkey=0;
-  return((mnu)?1:0);
+  lastkey = KEY_UNKNOWN;
+  return mnu ? 1 : 0;
 }
 
-static void G_keyf (int k, int press) {
+void G_keyf (int key, int down) {
   int i;
-
-  lastkey=k;
-  if(!_2pl || cheat) {
-    for(i=0;i<31;++i) cbuf[i]=cbuf[i+1];
-    cbuf[31]=get_keychar(k);
+  if (down) {
+    lastkey = key;
+    if (!_2pl || cheat) {
+      for (i = 0; i < 31; ++i) {
+        cbuf[i] = cbuf[i + 1];
+      }
+      cbuf[31] = get_keychar(key);
+    }
   }
 }
 
@@ -545,5 +602,4 @@ void GM_init (void) {
   msnd4=Z_getsnd("SWTCHX");
   msnd5=Z_getsnd("SUDI");
   msnd6=Z_getsnd("TUDI");
-  K_setkeyproc(G_keyf);
 }

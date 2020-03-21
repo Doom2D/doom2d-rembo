@@ -39,8 +39,6 @@ void myfwrite8 (int8_t x, FILE *f);
 void myfwrite16 (int16_t x, FILE *f);
 void myfwrite32 (int32_t x, FILE *f);
 
-void myrandomize (void);
-
 int fexists (char *filename);
 
 #endif /* MY_H_INCLUDED */

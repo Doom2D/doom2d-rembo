@@ -23,7 +23,6 @@
 #include "glob.h"
 #include <stdlib.h>
 #include <string.h>
-#include "keyb.h"
 #include "view.h"
 #include "dots.h"
 #include "smoke.h"
@@ -36,6 +35,7 @@
 #include "misc.h"
 #include "my.h"
 #include "game.h"
+#include "input.h"
 
 #define PL_RAD 8
 #define PL_HT 26
@@ -202,22 +202,22 @@ static void fire(player_t *p) {
   if(p->cwpn) return;
   if(p->wpn==8) {
     if(!p->fire)
-      if(keys[p->kf] && p->cell>=40)
+      if(I_pressed(p->kf) && p->cell>=40)
 	{Z_sound(snd[5],128);p->fire=21;p->cell-=40;p->drawst|=PL_DRAWWPN;return;}
       else return;
     if(p->fire==1) p->cwpn=12;
     else return;
   }else if(p->wpn==1) {
     if(!p->csnd) {
-      if(!keys[p->kf]) {Z_sound(snd[7],128);p->csnd=13;return;}
+      if(!I_pressed(p->kf)) {Z_sound(snd[7],128);p->csnd=13;return;}
     }
-    if(keys[p->kf] && !p->fire) {
+    if(I_pressed(p->kf) && !p->fire) {
       p->fire=2;
 	  WP_chainsaw(p->o.x+((p->d)?4:-4),p->o.y,(g_dm)?9:3,p->id);
       if(!p->csnd) {Z_sound(snd[8],128);p->csnd=29;}
     }return;
   }else if(p->fire) return;
-  if(keys[p->kf] || p->wpn==8) {
+  if(I_pressed(p->kf) || p->wpn==8) {
     switch(p->wpn) {
       case 2: case 5:
 	if(!p->ammo) return;
@@ -252,10 +252,10 @@ static void fire(player_t *p) {
 static void chgwpn(player_t *p) {
   if(p->cwpn) return;
   if(p->fire && p->wpn!=1) return;
-  if(keys[p->kwl]) {
+  if(I_pressed(p->kwl)) {
 	do{ if(--p->wpn<0) p->wpn=10; }while(!(p->wpns&(1<<p->wpn)));
 	p->cwpn=3;
-  }else if(keys[p->kwr]) {
+  }else if(I_pressed(p->kwr)) {
 	do{ if(++p->wpn>10) p->wpn=0; }while(!(p->wpns&(1<<p->wpn)));
 	p->cwpn=3;
   }
@@ -277,7 +277,7 @@ static void jump(player_t *p,int st) {
 	}
 	p->drawst|=PL_DRAWAIR;
   }
-  if(keys[p->kj]) {
+  if(I_pressed(p->kj)) {
     if(p_fly) {
       p->o.yv=-PL_FLYUP;
     }else{
@@ -577,14 +577,14 @@ void PL_act (player_t *p) {
   }else st=0;
   if(st&Z_HITWATER) Z_splash(&p->o,PL_RAD+PL_HT);
   if(p->f&PLF_FIRE) if(p->fire!=2) p->f-=PLF_FIRE;
-  if(keys[p->ku]) {p->f|=PLF_UP;p->looky-=5;}
+  if(I_pressed(p->ku)) {p->f|=PLF_UP;p->looky-=5;}
   else{
     p->f&=0xFFFF-PLF_UP;
-	if(keys[p->kd])
+	if(I_pressed(p->kd))
 	  {p->f|=PLF_DOWN;p->looky+=5;}
 	else {p->f&=0xFFFF-PLF_DOWN;p->looky=Z_dec(p->looky,5);}
   }
-  if(keys[p->kp]) SW_press(p->o.x,p->o.y,p->o.r,p->o.h,1|p->keys,p->id);
+  if(I_pressed(p->kp)) SW_press(p->o.x,p->o.y,p->o.r,p->o.h,1|p->keys,p->id);
   if(p->fire) --p->fire;
   if(p->cwpn) --p->cwpn;
   if(p->csnd) --p->csnd;
@@ -606,15 +606,15 @@ void PL_act (player_t *p) {
 	  if(p_fly)
 	    SMK_gas(p->o.x,p->o.y-2,2,3,p->o.xv+p->o.vx,p->o.yv+p->o.vy,128);
 	  if((p->s+=abs(p->o.xv)/2) >= 24) p->s%=24;
-	  if(!keys[p->kl] && !keys[p->kr]) {
+	  if(!I_pressed(p->kl) && !I_pressed(p->kr)) {
 		if(p->o.xv) p->o.xv=Z_dec(p->o.xv,1);
 		else p->st=STAND;
 		break;
 	  }
-	  if(p->o.xv<PL_RUN && keys[p->kr]) {p->o.xv+=PL_RUN>>3;p->d=1;}
+	  if(p->o.xv<PL_RUN && I_pressed(p->kr)) {p->o.xv+=PL_RUN>>3;p->d=1;}
 	    else if(PL_RUN>8)
 	      SMK_gas(p->o.x,p->o.y-2,2,3,p->o.xv+p->o.vx,p->o.yv+p->o.vy,32);
-	  if(p->o.xv>-PL_RUN && keys[p->kl]) {p->o.xv-=PL_RUN>>3;p->d=0;}
+	  if(p->o.xv>-PL_RUN && I_pressed(p->kl)) {p->o.xv-=PL_RUN>>3;p->d=0;}
 	    else if(PL_RUN>8)
 	      SMK_gas(p->o.x,p->o.y-2,2,3,p->o.xv+p->o.vx,p->o.yv+p->o.vy,32);
 	  break;
@@ -622,15 +622,15 @@ void PL_act (player_t *p) {
 	  chgwpn(p);fire(p);jump(p,st);
 	  if(p_fly)
 	    SMK_gas(p->o.x,p->o.y-2,2,3,p->o.xv+p->o.vx,p->o.yv+p->o.vy,128);
-	  if(keys[p->kl]) {p->st=GO;p->s=0;p->d=0;}
-      else if(keys[p->kr]) {p->st=GO;p->s=0;p->d=1;}
+	  if(I_pressed(p->kl)) {p->st=GO;p->s=0;p->d=0;}
+      else if(I_pressed(p->kr)) {p->st=GO;p->s=0;p->d=1;}
       break;
     case DEAD:
     case MESS:
     case OUT:
 	  p->o.xv=Z_dec(p->o.xv,1);
-	  if(keys[p->ku] || keys[p->kd] || keys[p->kl] || keys[p->kr] ||
-	     keys[p->kf] || keys[p->kj] || keys[p->kp] || keys[p->kwl] || keys[p->kwr]) {
+	  if(I_pressed(p->ku) || I_pressed(p->kd) || I_pressed(p->kl) || I_pressed(p->kr) ||
+	     I_pressed(p->kf) || I_pressed(p->kj) || I_pressed(p->kp) || I_pressed(p->kwl) || I_pressed(p->kwr)) {
 		if(p->st!=OUT) MN_spawn_deadpl(&p->o,p->color,(p->st==MESS)?1:0);
 		PL_restore(p);
 		if(g_dm) {G_respawn_player(p);break;}
