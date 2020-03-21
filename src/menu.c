@@ -602,4 +602,6 @@ void GM_init (void) {
   msnd4=Z_getsnd("SWTCHX");
   msnd5=Z_getsnd("SUDI");
   msnd6=Z_getsnd("TUDI");
+  F_loadmus("MENU");
+  S_startmusic(0);
 }

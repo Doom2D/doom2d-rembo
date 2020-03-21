@@ -297,9 +297,12 @@ int PL_isdead (player_t *p) {
 }
 
 void PL_init (void) {
-  p_immortal=0;
-  PL_JUMP=10;PL_RUN=8;
-  aitime=0;
+  pl1.id = -1;
+  pl2.id = -2;
+  p_immortal = 0;
+  PL_JUMP = 10;
+  PL_RUN = 8;
+  aitime = 0;
 }
 
 void PL_alloc(void) {
