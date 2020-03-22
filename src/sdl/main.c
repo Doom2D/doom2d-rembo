@@ -214,7 +214,7 @@ static void poll_events (void (*h)(int key, int down)) {
   }
 }
 
-int SDL_main (int argc, char *argv[]) {
+int main (int argc, char *argv[]) {
   char *pw;
   Uint32 t, ticks;
   logo("main: initialize SDL\n");
