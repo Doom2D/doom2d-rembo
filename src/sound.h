@@ -27,33 +27,41 @@
 #ifndef SOUND_H_INCLUDED
 #define SOUND_H_INCLUDED
 
-// заголовок инструмента (DMI)
-#pragma pack(1)
 typedef struct {
-  unsigned int len;    // длина в байтах
-  unsigned int rate;   // частота в Гц.
-  unsigned int lstart; // начало повтора в байтах от начала данных
-  unsigned int llen;   // длина повтора в байтах
+  int tag;
 } snd_t;
-#pragma pack()
 
-// громкость звука и музыки (0-128)
+// Sound volume 0..128
 extern short snd_vol;
 
+// Get sound handle for resource <id>
+snd_t *S_get (int id);
+
+// Get sound handle for resource with name
+snd_t *S_load (const char name[8]);
+
+// Initialize sound subsystem
 void S_init (void);
+
+// Deinitialize sound subsystem
 void S_done (void);
 
-// проиграть звук s на канале c (1-8), частоте r и громкости v (0-255)
-// возвращает номер канала, на котором играется звук
-// если c==0, то звук попадет в любой свободный канал
-// r - это относительная частота (обычно 1024)
-short S_play (snd_t *s, short c, unsigned r, short v);
+// Play sound <s> on channel <c> with volume <v>.
+// <s> = sound handle (NULL is ignored)
+// <c> = 1..8 or 0 for any free
+// <v> = 0..255
+// return used channel or zero on error
+short S_play (snd_t *s, short c, short v);
 
-// остановить звук на канале c (1-8)
+// Stop sound on channel <c>
+// <c> = 0..8 (0 ignored)
 void S_stop (short c);
 
+// Set sound volume to <v>, also affects variable snd_vol
+// <v> = 0..128
 void S_volume (int v);
-void free_chunks (void);
+
+// Wait before all sounds end playing
 void S_wait (void);
 
 #endif /* SOUND_H_INCLUDED */

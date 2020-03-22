@@ -159,6 +159,8 @@ static void GMV_stop (void) {
 }
 
 void GMV_say (char *nm) {
+  // TODO fix this
+  /*
   int r,len;
   snd_t *p;
   byte *d;
@@ -172,6 +174,7 @@ void GMV_say (char *nm) {
   for(d=(byte*)(p+1);len;--len,++d) *d^=128;
   voc=p;
   voc_ch=S_play(voc,-1,1024,255);
+  */
 }
 
 static void GM_set (menu_t *m) {
@@ -299,8 +302,8 @@ static void GM_command (int c) {
 	  F_freemus();
 	  GMV_stop();
 #ifndef DEMO
-	  c=Z_sound(M_lock(qsnd[myrand(QSND_NUM)]),256);//for(c=(Z_sound(M_lock(qsnd[random2(QSND_NUM)]),256)+9)<<16,timer=0;timer<c;);
-          S_wait();
+	  c = Z_sound(S_get(qsnd[myrand(QSND_NUM)]), 255);
+    S_wait();
 #endif
 	  ERR_quit();break;
     case ENDGM:

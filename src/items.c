@@ -208,7 +208,7 @@ static void takesnd (int t) {
     {tsndtm=Z_sound(snd[1],128);return;}
   if(t==I_MEGA || t==I_INVL || t==I_SUPER)
     {tsndtm=Z_sound(snd[2],192);return;}
-  tsndtm=Z_sound(snd[0],256);
+  tsndtm=Z_sound(snd[0], 255);
 }
 
 void IT_act (void) {

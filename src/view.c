@@ -102,7 +102,6 @@ void W_init (void) {
   PL_init();
   MN_init();
   R_loadsky(1);
-  free_chunks();
 }
 
 static void unpack (void *buf, int len, void *obuf) {
