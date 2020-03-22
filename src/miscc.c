@@ -60,28 +60,22 @@ int Z_dec(int a,int b) {
 
 void *Z_getsnd(char n[6]) {
   char s[8];
-
-  //if(snd_type==-1) return NULL;
-  strncpy(s+2,n,6);s[0]='D';
-  s[1]='S';
-
-  int id = F_getresid(s);
-  int loaded = M_was_locked(id);
-  snd_t *snd = M_lock(id);
-  if (snd != NULL && !loaded) {
-    snd->len = int2host(snd->len);
-    snd->rate = int2host(snd->rate);
-    snd->lstart = int2host(snd->lstart);
-    snd->llen = int2host(snd->llen);
-  }
-  return snd;
+  s[0] = 'D';
+  s[1] = 'S';
+  strncpy(&s[2], n, 6);
+  return S_load(s);
 }
 
-int Z_sound(void *s,int v) {
-  //if(snd_type==-1) return 0;
-  if(!s) return 0;
-  S_play(s,-1,1024,v);
-  return F_getreslen(((int*)s)[-1])/605;
+int Z_sound (void *s, int v) {
+  if (s != NULL) {
+    S_play(s, 0, v);
+    // TODO ???
+    //S_play(s, -1, 1024, v);
+    //return F_getreslen(((int*)s)[-1])/605;
+    return 0;
+  } else {
+    return 0;
+  }
 }
 
 #define GAS_START (MN__LAST-MN_DEMON+5)
