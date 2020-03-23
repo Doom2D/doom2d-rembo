@@ -277,8 +277,8 @@ int main (int argc, char *argv[]) {
   }
   CFG_save();
   R_done();
-  S_done();
   S_donemusic();
+  S_done();
   M_shutdown();
   SDL_Quit();
   return 0;
