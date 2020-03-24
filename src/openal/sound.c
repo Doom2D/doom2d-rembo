@@ -103,7 +103,7 @@ static void convert_this_ext (Uint32 src_format, int src_chan, int src_rate, Uin
   }
 }
 
-static openal_snd *new_openal_snd (const void *data, dword len, dword rate, dword lstart, dword llen) {
+static openal_snd *new_openal_snd (const void *data, dword len, dword rate, dword lstart, dword llen, int sign) {
   assert(data);
   ALuint buffer = 0;
   openal_snd *snd = NULL;
@@ -111,7 +111,7 @@ static openal_snd *new_openal_snd (const void *data, dword len, dword rate, dwor
   int newlen = 0;
   // for some reason 8bit formats makes psshshshsh
   // TODO do this without SDL
-  convert_this_ext(AUDIO_S8, 1, rate, AUDIO_S16SYS, 1, rate, data, len, &newdata, &newlen);
+  convert_this_ext(sign ? AUDIO_S8 : AUDIO_U8, 1, rate, AUDIO_S16SYS, 1, rate, data, len, &newdata, &newlen);
   if (newdata != NULL) {
     alGenBuffers(1, &buffer);
     if (alGetError() == AL_NO_ERROR) {
@@ -135,36 +135,63 @@ static openal_snd *new_openal_snd (const void *data, dword len, dword rate, dwor
 }
 
 snd_t *S_get (int id) {
+  void *handle;
   openal_snd *snd = NULL;
-  void *handle = M_lock(id);
-  if (context != NULL && handle != NULL) {
-    byte *data = handle;
-    dword len = F_getreslen(id);
-    dword rate = 8000;
-    dword lstart = 0;
-    dword llen = 0;
-    if (len > 16) {
-      dmi *hdr = handle;
-      dword hdr_len = int2host(hdr->len);
-      dword hdr_rate = int2host(hdr->rate);
-      dword hdr_lstart = int2host(hdr->lstart);
-      dword hdr_llen = int2host(hdr->llen);
-      if (hdr_len <= len - 8 && hdr_lstart + hdr_llen <= len - 16) {
-        data = hdr->data;
-        len = hdr_len;
-        rate = hdr_rate;
-        lstart = hdr_lstart;
-        llen = hdr_llen;
+  if (context != NULL) {
+    handle = M_lock(id);
+    if (handle != NULL) {
+      void *data = handle;
+      dword len = F_getreslen(id);
+      dword rate = 11025;
+      dword lstart = 0;
+      dword llen = 0;
+      int sign = 0;
+      if (len > 16) {
+        dmi *hdr = handle;
+        dword hdr_len = int2host(hdr->len);
+        dword hdr_rate = int2host(hdr->rate);
+        dword hdr_lstart = int2host(hdr->lstart);
+        dword hdr_llen = int2host(hdr->llen);
+        if (hdr_len <= len - 8 && hdr_lstart + hdr_llen <= len - 16) {
+          data = hdr->data;
+          len = hdr_len;
+          rate = hdr_rate;
+          lstart = hdr_lstart;
+          llen = hdr_llen;
+          sign = 1;
+        }
       }
+      snd = new_openal_snd(data, len, rate, lstart, llen, sign);
+      M_unlock(handle);
     }
-    snd = new_openal_snd(data, len, rate, lstart, llen);
-    M_unlock(handle);
   }
   return (snd_t*)snd;
 }
 
 snd_t *S_load (const char name[8]) {
   return S_get(F_findres(name));
+}
+
+void S_free (snd_t *s) {
+  int i;
+  ALint h;
+  openal_snd *snd = (openal_snd*)s;
+  if (snd != NULL) {
+    assert(snd->base.tag = TAG_OAL1);
+    if (context != NULL) {
+      for (i = 0; i < MAX_CHANNELS; i++) {
+        alGetSourcei(sources[i], AL_BUFFER, &h);
+        if (h == snd->buffer) {
+          alSourceStop(sources[i]);
+          alSourcei(sources[i], AL_BUFFER, 0);
+        }
+      }
+      alDeleteBuffers(1, &snd->buffer);
+      assert(alGetError() == AL_NO_ERROR);
+    }
+    snd->base.tag = 0;
+    free(s);
+  }
 }
 
 void S_init (void) {

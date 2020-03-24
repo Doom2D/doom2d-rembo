@@ -48,7 +48,7 @@ extern menu_t *mnu;
 extern byte gm_redraw;
 extern short lastkey;
 
-void GMV_say (char *nm);
+void GMV_say (const char nm[8]);
 void G_keyf (int key, int down);
 void G_code (void);
 int GM_act (void);

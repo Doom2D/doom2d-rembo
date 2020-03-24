@@ -40,6 +40,9 @@ snd_t *S_get (int id);
 // Get sound handle for resource with name
 snd_t *S_load (const char name[8]);
 
+// Stop sound and free handle
+void S_free (snd_t *s);
+
 // Initialize sound subsystem
 void S_init (void);
 

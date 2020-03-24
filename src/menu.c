@@ -148,33 +148,27 @@ static void *csnd1,*csnd2,*msnd1,*msnd2,*msnd3,*msnd4,*msnd5,*msnd6;
 static int movsndt=0;
 static byte cbuf[32];
 
-static snd_t *voc=NULL;
-static int voc_ch=0;
+static snd_t *voc;
+static int voc_ch;
 
 static void GMV_stop (void) {
-  if(voc) {
-    if(voc_ch) {S_stop(voc_ch);voc_ch=0;}
-    free(voc);voc=NULL;
+  if (voc != NULL) {
+    if (voc_ch) {
+      S_stop(voc_ch);
+      voc_ch = 0;
+    }
+    S_free(voc);
+    voc = NULL;
   }
 }
 
-void GMV_say (char *nm) {
-  // TODO fix this
-  /*
-  int r,len;
-  snd_t *p;
-  byte *d;
-
-  if((r=F_findres(nm))==-1) return;
-  if(!(p=malloc((len=F_getreslen(r))+16))) return;
-  p->len=len;p->rate=11000;
-  p->lstart=p->llen=0;
-  GMV_stop();
-  F_loadres(r,p+1,0,len);
-  for(d=(byte*)(p+1);len;--len,++d) *d^=128;
-  voc=p;
-  voc_ch=S_play(voc,-1,1024,255);
-  */
+void GMV_say (const char nm[8]) {
+  snd_t *snd = S_load(nm);
+  if (snd) {
+    GMV_stop();
+    voc = S_load(nm);
+    voc_ch = S_play(voc, 0, 255);
+  }
 }
 
 static void GM_set (menu_t *m) {
