@@ -183,7 +183,7 @@ void S_free (snd_t *s) {
   ALint h;
   openal_snd *snd = (openal_snd*)s;
   if (snd != NULL) {
-    assert(snd->base.tag = TAG_OAL1);
+    assert(snd->base.tag == TAG_OAL1);
     if (context != NULL) {
       for (i = 0; i < MAX_CHANNELS; i++) {
         alGetSourcei(sources[i], AL_BUFFER, &h);
