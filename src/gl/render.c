@@ -1707,10 +1707,9 @@ int R_getgamma (void) {
 }
 
 void R_toggle_fullscreen (void) {
-  fullscreen = !fullscreen;
-//  if (surf) {
-//    R_init(); // recreate window
-//  }
+  Y_set_fullscreen(!Y_get_fullscreen());
+  fullscreen = Y_get_fullscreen();
+  R_alloc();
 }
 
 void R_get_name (int n, char s[8]) {
