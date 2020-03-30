@@ -1342,7 +1342,7 @@ void R_setgamma(int g) {
     std_pal[t][1]=gamcor[gammaa][main_pal[t][1]];
     std_pal[t][2]=gamcor[gammaa][main_pal[t][2]];
   }
-  VP_setall(std_pal);
+  Y_set_vga_palette(std_pal);
 }
 
 int R_getgamma (void) {

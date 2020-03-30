@@ -22,21 +22,15 @@
 
 #include "glob.h"
 #include "vga.h"
-#include <SDL.h>
 #include "error.h"
 #include "view.h"
 #include "memory.h"
 #include "misc.h"
 #include "files.h"
+#include "system.h"
 
+#include <string.h>
 #include <assert.h>
-
-
-// адрес экранного буфера
-//unsigned char *scra;
-
-// виртуальный экран
-//unsigned char scrbuf[64000];
 
 int SCRW = 800;
 int SCRH = 600;
@@ -46,15 +40,13 @@ byte bright[256];
 byte mixmap[256][256];
 byte clrmap[256*12];
 
-static SDL_Surface* screen = NULL;
-static int cx1,cx2,cy1,cy2;
+static byte *buffer;
+static int buf_w, buf_h, pitch;
+static int offx, offy;
+static int cx1, cx2, cy1, cy2;
 static byte flametab[16] = {
   0xBC,0xBA,0xB8,0xB6,0xB4,0xB2,0xB0,0xD5,0xD6,0xD7,0xA1,0xA0,0xE3,0xE2,0xE1,0xE0
 };
-static int offx = 0;
-static int offy = 0;
-
-#define HQ 2
 
 vgaimg *V_getvgaimg (int id) {
   int loaded = M_was_locked(id);
@@ -73,83 +65,68 @@ vgaimg *V_loadvgaimg (char *name) {
 }
 
 short V_init (void) {
-    Uint32 flags = SDL_SWSURFACE|SDL_DOUBLEBUF|SDL_HWPALETTE;
-    if (fullscreen) flags = flags | SDL_FULLSCREEN;
-    screen = SDL_SetVideoMode(SCRW, SCRH, 8, flags);
-    if (!screen) ERR_failinit("Unable to set video mode: %s\n", SDL_GetError());
-    SCRW /= HQ;
-    SCRH /= HQ;
-    return 0;
+  int flags = fullscreen ? SYSTEM_USE_FULLSCREEN : 0;
+  int res = Y_set_videomode(SCRW, SCRH, flags);
+  if (res == 0) {
+    ERR_failinit("Unable to set video mode");
+  }
+  Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
+  return 0;
 }
 
-// переключение в текстовый режим
 void V_done (void) {
-    SDL_Quit();
+  buffer = NULL;
+  buf_w = 0;
+  buf_h = 0;
+  pitch = 0;
+  Y_unset_videomode();
 }
 
 static void draw_rect (int x, int y, int w, int h, int c) {
-    SDL_Rect dstrect;
-    dstrect.x = x*HQ;
-    dstrect.y = y*HQ;
-    dstrect.w = w*HQ;
-    dstrect.h = h*HQ;
-    SDL_FillRect(screen, &dstrect, c);
+  int i;
+  int x0 = max(x, cx1);
+  int y0 = max(y, cy1);
+  int x1 = min(x + w - 1, cx2);
+  int y1 = min(y + h - 1, cy2);
+  int len = x1 - x0;
+  for (i = y0; i <= y1; i++) {
+    memset(&buffer[i * pitch + x0], c, len);
+  }
 }
 
-// установить область вывода
-void V_setrect (short x,short w,short y,short h) {
-    SDL_Rect r;
-    r.x=x*HQ;
-    r.y=y*HQ;
-    r.w=w*HQ;
-    r.h=h*HQ;
-    SDL_SetClipRect(screen, &r);
-    SDL_GetClipRect(screen, &r);
-    cx1 = x;
-    cx2 = x+w-1;
-    cy1 = y;
-    cy2 = y+h-1;
-    if (cx1<0) cx1=0;
-    if (cx2>=SCRW) cx2=SCRW-1;
-    if (cy1<0) cy1=0;
-    if (cy2>=SCRH) cy2=SCRH-1;
+void V_setrect (short x, short w, short y, short h) {
+  cx1 = max(x, 0);
+  cx2 = min(x + w - 1, SCRW - 1);
+  cy1 = max(y, 0);
+  cy2 = min(y + h - 1, SCRH - 1);
 }
 
-static void putpixel (int x, int y, Uint8 color) {
-    if(x>=cx1 && x<=cx2 && y>=cy1 && y<=cy2) {
-        x*=HQ;
-        y*=HQ;
-        Uint8 *p = (Uint8 *)screen->pixels + y*screen->pitch + x;
-        *p = color;
-        *(p+1) = color;
-        p += screen->pitch;
-        *p = color;
-        *(p+1) = color;
-    }
+static void putpixel (int x, int y, byte color) {
+  if (x >= cx1 && x <= cx2 && y >= cy1 && y <= cy2) {
+    buffer[y * pitch + x] = color;
+  }
 }
 
 static byte getpixel (int x, int y) {
-    if(x>=cx1 && x<=cx2 && y>=cy1 && y<=cy2) {
-        x*=HQ;
-        y*=HQ;
-        return *((Uint8 *)screen->pixels + y*screen->pitch + x);
-    }
-    return 0;
+  return x >= cx1 && x <= cx2 && y >= cy1 && y <= cy2 ? buffer[y * pitch + x] : 0;
 }
 
-static void mappixel (int x, int y, byte* cmap) {
-    byte c = getpixel(x,y);
-    putpixel(x,y,cmap[c]);
+static void mappixel (int x, int y, byte *cmap) {
+  byte c = getpixel(x, y);
+  putpixel(x, y, cmap[c]);
 }
 
 void V_center (int f) {
-    if (f) V_offset(SCRW/2-320/2, SCRH/2-200/2);
-    else V_offset(0, 0);
+  if (f) {
+    V_offset(SCRW / 2 - 320 / 2, SCRH / 2 - 200 / 2);
+  } else {
+    V_offset(0, 0);
+  }
 }
 
 void V_offset (int ox, int oy) {
-    offx=ox;
-    offy=oy;
+  offx = ox;
+  offy = oy;
 }
 
 static void draw_spr (short x, short y, vgaimg *i, int d, int c) {
@@ -164,8 +141,8 @@ static void draw_spr (short x, short y, vgaimg *i, int d, int c) {
         for (ly=0; ly<i->h; ly++) {
             for(lx=0; lx<i->w; lx++) {
                 int rx,ry;
-                rx = (d & 1) ? (i->w-lx-1) : (rx=lx);
-                ry = (d & 2) ? (i->h-ly-1) : (ry=ly);
+                rx = (d & 1) ? (i->w-lx-1) : (lx);
+                ry = (d & 2) ? (i->h-ly-1) : (ly);
                 if (*p) {
                     byte t = *p;
                     if (c) if (t>=0x70 && t<=0x7F) t=t-0x70+c;
@@ -195,9 +172,8 @@ void V_manspr2(int x,int y,void *p, unsigned char c) {
     draw_spr(x, y, p, 1, c);
 }
 
-// вывести точку цвета c в координатах (x,y)
-void V_dot (short x,short y, unsigned char c) {
-    putpixel(x,y,c);
+void V_dot (short x, short y, unsigned char c) {
+    putpixel(x, y, c);
 }
 
 void smoke_sprf (int x, int y, byte c) {
@@ -243,36 +219,12 @@ void V_clr (short x, short w, short y, short h, unsigned char c) {
     draw_rect(x, y, w, h, c);
 }
 
-// установить n цветов, начиная с f, из массива p
-static void VP_set (void *p, short f, short n) {
-    byte *ptr = (byte*)p;
-    SDL_Color colors[256];
-    int i;
-    for(i=f;i<f+n;i++)
-    {
-      colors[i].r=ptr[0]*4;
-      colors[i].g=ptr[1]*4;
-      colors[i].b=ptr[2]*4;
-      ptr+=3;
-    }
-    SDL_SetPalette(screen, SDL_LOGPAL|SDL_PHYSPAL, colors, f, n);
-}
-
-// установить палитру из массива p
-void VP_setall (void *p) {
-    VP_set(p, 0, 256);
-}
-
-// установить адрес экранного буфера
-// NULL - реальный экран
 void V_setscr (void *p) {
-    if (screen) SDL_Flip(screen);
+  Y_repaint();
 }
 
-// скопировать прямоугольник на экран
 void V_copytoscr (short x, short w, short y, short h) {
-    x*=HQ; y*=HQ; w*=HQ; h*=HQ;
-    SDL_UpdateRect(screen, x, y, w, h);
+  Y_repaint_rect(x, y, w, h);
 }
 
 void V_maptoscr (int x, int w, int y, int h, void *cmap) {
@@ -291,26 +243,5 @@ void V_remap_rect (int x, int y, int w, int h, byte *cmap) {
 }
 
 void V_toggle (void) {
-    if (!SDL_WM_ToggleFullScreen(screen)) {
-        int ncolors = screen->format->palette->ncolors;
-        SDL_Color colors[256];
-        int i;
-        for (i=0; i<ncolors; i++) {
-            colors[i].r = screen->format->palette->colors[i].r;
-            colors[i].g = screen->format->palette->colors[i].g;
-            colors[i].b = screen->format->palette->colors[i].b;
-        }
-
-        Uint32 flags = screen->flags;
-
-        SDL_FreeSurface(screen);
-
-        screen = SDL_SetVideoMode(0, 0, 0, flags ^ SDL_FULLSCREEN);
-        if(screen == NULL) {
-            ERR_fatal("Unable to set video mode\n");
-            exit(1);
-        }
-
-        SDL_SetPalette(screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, ncolors);
-    }
+  fullscreen = Y_set_fullscreen(!Y_get_fullscreen());
 }

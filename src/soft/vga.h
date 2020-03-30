@@ -90,9 +90,6 @@ void V_manspr2 (int x, int y, void *p, unsigned char c);
 // x-левая сторона,w-ширина,y-верх,h-высота
 void V_clr (short x, short w, short y, short h, unsigned char c);
 
-// установить палитру из массива p
-void VP_setall (void *p);
-
 // установить область вывода
 void V_setrect (short x, short w, short y, short h);
 

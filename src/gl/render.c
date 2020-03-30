@@ -1,5 +1,6 @@
 #include "glob.h"
 #include "render.h"
+#include "system.h"
 #include "files.h"
 #include "memory.h"
 #include "misc.h"
@@ -26,9 +27,10 @@
 #else
 #  include <GL/gl.h>
 #endif
-#include <stdlib.h> // malloc free abs
-#include <assert.h> // assert
-#include <SDL.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 
 #define VGA_TRANSPARENT_COLOR 0
 #define DEFAULT_SKY_COLOR 0x97
@@ -80,7 +82,6 @@ int SCRW = 320; // public
 int SCRH = 200; // public
 static int gamma;
 static int fullscreen;
-static SDL_Surface *surf;
 static rgb playpal[256];
 static byte bright[256];
 static GLuint lastTexture;
@@ -1440,7 +1441,7 @@ void R_draw (void) {
       break;
   }
   GM_draw();
-  SDL_GL_SwapBuffers();
+  Y_swap_buffers();
 }
 
 void R_alloc (void) {
@@ -1670,19 +1671,22 @@ void R_alloc (void) {
 }
 
 void R_init (void) {
-  Uint32 flags = SDL_OPENGL;
+  int res = 0;
+  int flags = SYSTEM_USE_OPENGL;
   if (fullscreen) {
-    flags = flags | SDL_FULLSCREEN;
+    flags |= SYSTEM_USE_FULLSCREEN;
   }
+  logo("R_init: intialize opengl render\n");
+  int was = Y_videomode_setted();
   if (SCRW <= 0 || SCRH <= 0) {
     ERR_failinit("Invalid screen size %ix%i\n", SCRW, SCRH);
   }
-  if (surf == NULL) {
+  if (was == 0) {
     R_init_playpal(); // only onece
   }
-  surf = SDL_SetVideoMode(SCRW, SCRH, 0, flags);
-  if (surf == NULL) {
-    ERR_failinit("Unable to set video mode: %s\n", SDL_GetError());
+  res = Y_set_videomode(SCRW, SCRH, flags);
+  if (res == 0) {
+    ERR_failinit("Unable to set video mode\n");
   }
   root = R_cache_new();
   assert(root);
@@ -1691,6 +1695,7 @@ void R_init (void) {
 
 void R_done (void) {
   R_cache_free(root, 1);
+  Y_unset_videomode();
 }
 
 void R_setgamma (int g) {
@@ -1703,9 +1708,9 @@ int R_getgamma (void) {
 
 void R_toggle_fullscreen (void) {
   fullscreen = !fullscreen;
-  if (surf) {
-    R_init(); // recreate window
-  }
+//  if (surf) {
+//    R_init(); // recreate window
+//  }
 }
 
 void R_get_name (int n, char s[8]) {

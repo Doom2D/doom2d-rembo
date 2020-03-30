@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #include <stdlib.h> // srand exit
 #include <string.h> // strcasecmp
+#include <assert.h>
+#include "system.h"
 #include "input.h"
 
 #include "my.h" // fexists
@@ -41,6 +43,9 @@
 #include "render.h" // R_init R_draw R_done
 
 static int quit = 0;
+static SDL_Surface *surf = NULL;
+
+/* --- error.h --- */
 
 void logo (const char *s, ...) {
   va_list ap;
@@ -83,6 +88,98 @@ void ERR_quit (void) {
   //F_loadres(F_getresid("ENDOOM"),p,0,4000);
   quit = 1;
 }
+
+/* --- system.h --- */
+
+int Y_set_videomode (int w, int h, int flags) {
+  SDL_Surface *s;
+  int colors;
+  Uint32 f;
+  assert(w > 0);
+  assert(h > 0);
+  f = SDL_DOUBLEBUF;
+  if (flags & SYSTEM_USE_FULLSCREEN) {
+    f = flags | SDL_FULLSCREEN;
+  }
+  if (flags & SYSTEM_USE_OPENGL) {
+    f = flags | SDL_OPENGL;
+    colors = 0;
+  } else {
+    f = flags | SDL_SWSURFACE | SDL_HWPALETTE;
+    colors = 8;
+  }
+  s = SDL_SetVideoMode(w, h, colors, f);
+  if (s != NULL) {
+    surf = s;
+  }
+  return s != NULL;
+}
+
+int Y_videomode_setted (void) {
+  return surf != NULL;
+}
+
+void Y_unset_videomode (void) {
+  surf = NULL;
+  SDL_QuitSubSystem(SDL_INIT_VIDEO);
+  SDL_InitSubSystem(SDL_INIT_VIDEO);
+}
+
+int Y_set_fullscreen (int yes) {
+  //SDL_WM_ToggleFullScreen();
+  return 0;
+}
+
+int Y_get_fullscreen (void) {
+  return (surf != NULL) && ((surf->flags & SDL_FULLSCREEN) != 0);
+}
+
+void Y_swap_buffers (void) {
+  assert(surf != NULL);
+  assert(surf->flags & SDL_OPENGL);
+  SDL_GL_SwapBuffers();
+}
+
+void Y_get_buffer (byte **buf, int *w, int *h, int *pitch) {
+  assert(surf != NULL);
+  assert((surf->flags & SDL_OPENGL) == 0);
+  *buf = surf->pixels;
+  *w = surf->w;
+  *h = surf->h;
+  *pitch = surf->pitch;
+}
+
+void Y_set_vga_palette (byte *vgapal) {
+  int i;
+  byte *p = vgapal;
+  assert(vgapal != NULL);
+  assert(surf != NULL);
+  assert((surf->flags & SDL_OPENGL) == 0);
+  SDL_Color colors[256];
+  for (i = 0; i < 256; i++) {
+    colors[i] = (SDL_Color) {
+      .r = p[0] * 255 / 63,
+      .g = p[1] * 255 / 63,
+      .b = p[2] * 255 / 63
+    };
+    p += 3;
+  }
+  SDL_SetColors(surf, colors, 0, 256);
+}
+
+void Y_repaint_rect (int x, int y, int w, int h) {
+  assert(surf != NULL);
+  assert((surf->flags & SDL_OPENGL) == 0);
+  SDL_UpdateRect(surf, x, y, w, h);
+}
+
+void Y_repaint (void) {
+  assert(surf != NULL);
+  assert((surf->flags & SDL_OPENGL) == 0);
+  SDL_Flip(surf);
+}
+
+/* --- main --- */
 
 static int sdl_to_key (int code) {
   switch (code) {
