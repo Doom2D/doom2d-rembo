@@ -20,9 +20,12 @@
 #include "music.h" // S_initmusic S_updatemusic S_donemusic
 #include "render.h" // R_init R_draw R_done
 
+#define TITLE_STR "DooM 2D (SDL2)"
+
 static int quit = 0;
 static SDL_Window *window;
 static SDL_GLContext context;
+static SDL_Surface *surf;
 
 /* --- error.h --- */
 
@@ -70,38 +73,66 @@ void ERR_quit (void) {
 
 /* --- system.h --- */
 
+static int Y_set_videomode_opengl (int w, int h, int fullscreen) {
+  assert(w > 0);
+  assert(h > 0);
+  Uint32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL;
+  flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+  // TODO set context version and type
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  int x = SDL_WINDOWPOS_CENTERED;
+  int y = SDL_WINDOWPOS_CENTERED;
+  SDL_Window *win = SDL_CreateWindow(TITLE_STR, x, y, w, h, flags);
+  if (win != NULL) {
+    SDL_GLContext ctx = SDL_GL_CreateContext(win);
+    if (ctx != NULL) {
+      Y_unset_videomode();
+      window = win;
+      context = ctx;
+      SDL_GL_MakeCurrent(window, context);
+      SDL_ShowWindow(window);
+    } else {
+      SDL_DestroyWindow(win);
+      win = NULL;
+    }
+  }
+  return win != NULL;
+}
+
+static int Y_set_videomode_software (int w, int h, int fullscreen) {
+  assert(w > 0);
+  assert(h > 0);
+  int x = SDL_WINDOWPOS_CENTERED;
+  int y = SDL_WINDOWPOS_CENTERED;
+  Uint32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL;
+  flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+  SDL_Window *win = SDL_CreateWindow(TITLE_STR, x, y, w, h, flags);
+  if (win != NULL) {
+    SDL_Surface *s = SDL_CreateRGBSurface(0, w, h, 8, 0, 0, 0, 0);
+    if (s != NULL) {
+      Y_unset_videomode();
+      window = win;
+      surf = s;
+      SDL_ShowWindow(window);
+    } else {
+      SDL_DestroyWindow(win);
+      win = NULL;
+    }
+  }
+  return win != NULL;
+}
+
 int Y_set_videomode (int w, int h, int flags) {
   assert(w > 0);
   assert(h > 0);
-  Uint32 f = SDL_WINDOW_HIDDEN;
-  if (flags & SYSTEM_USE_FULLSCREEN) {
-    f = f | SDL_WINDOW_FULLSCREEN;
-  }
-  int res = 0;
-  int x = SDL_WINDOWPOS_CENTERED;
-  int y = SDL_WINDOWPOS_CENTERED;
+  int fullscreen = (flags & SYSTEM_USE_FULLSCREEN) != 0;
   if (flags & SYSTEM_USE_OPENGL) {
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_Window *win = SDL_CreateWindow("Doom 2D (SDL2)", x, y, w, h, f | SDL_WINDOW_OPENGL);
-    if (win != NULL) {
-      SDL_GLContext ctx = SDL_GL_CreateContext(win);
-      if (ctx != NULL) {
-        Y_unset_videomode();
-        window = win;
-        context = ctx;
-        SDL_GL_MakeCurrent(window, context);
-        SDL_ShowWindow(window);
-        res = 1;
-      } else {
-        SDL_DestroyWindow(win);
-      }
-    }
+    return Y_set_videomode_opengl(w, h, fullscreen);
   } else {
-    // TODO software
+    return Y_set_videomode_software(w, h, fullscreen);
   }
-  return res;
 }
 
 int Y_videomode_setted (void) {
@@ -114,6 +145,10 @@ void Y_unset_videomode (void) {
       SDL_GL_MakeCurrent(window, NULL);
       SDL_GL_DeleteContext(context);
       context = NULL;
+    }
+    if (surf != NULL) {
+      SDL_FreeSurface(surf);
+      surf = NULL;
     }
     SDL_DestroyWindow(window);
     window = NULL;
@@ -132,24 +167,53 @@ int Y_get_fullscreen (void) {
 }
 
 void Y_swap_buffers (void) {
+  assert(window != NULL);
   assert(context != NULL);
   SDL_GL_SwapWindow(window);
 }
 
 void Y_get_buffer (byte **buf, int *w, int *h, int *pitch) {
-  // TODO
+  assert(window != NULL);
+  assert(surf != NULL);
+  *buf = surf->pixels;
+  *w = surf->w;
+  *h = surf->h;
+  *pitch = surf->pitch;
 }
 
 void Y_set_vga_palette (byte *vgapal) {
-  // TODO
+  assert(window != NULL);
+  assert(surf != NULL);
+  int i;
+  byte *p = vgapal;
+  SDL_Color colors[256];
+  for (i = 0; i < 256; i++) {
+    colors[i] = (SDL_Color) {
+      .r = p[0] * 255 / 63,
+      .g = p[1] * 255 / 63,
+      .b = p[2] * 255 / 63
+    };
+    p += 3;
+  }
+  SDL_SetPaletteColors(surf->format->palette, colors, 0, 256);
 }
 
 void Y_repaint_rect (int x, int y, int w, int h) {
-  // TODO
+  assert(window != NULL);
+  assert(surf != NULL);
+  SDL_Surface *s = SDL_GetWindowSurface(window);
+  SDL_Rect r = (SDL_Rect) {
+    .x = x,
+    .y = y,
+    .w = w,
+    .h = h
+  };
+  SDL_BlitSurface(surf, &r, s, &r);
+  SDL_UpdateWindowSurfaceRects(window, &r, 1);
 }
 
 void Y_repaint (void) {
-  // TODO
+  Y_repaint_rect(0, 0, surf->w, surf->h);
 }
 
 /* --- main --- */
