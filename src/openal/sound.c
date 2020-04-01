@@ -14,7 +14,7 @@
 #  include <AL/alc.h>
 #endif
 
-#include <SDL.h> // SDL_BuildAudioCVT SDL_ConvertAudio
+#include "SDL.h" // SDL_BuildAudioCVT SDL_ConvertAudio
 #include <assert.h>
 #include <stdlib.h> // malloc
 #include <string.h> // memcpy

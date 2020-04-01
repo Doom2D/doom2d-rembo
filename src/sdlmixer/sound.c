@@ -6,8 +6,8 @@
 #include "files.h" // F_findres
 #include "error.h"
 
-#include <SDL.h>
-#include <SDL_mixer.h>
+#include "SDL.h"
+#include "SDL_mixer.h"
 #include <assert.h>
 
 #define TAG_MIX1 0x4d495831
