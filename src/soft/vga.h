@@ -45,19 +45,15 @@ extern int SCRW;
 extern int SCRH;
 extern char fullscreen;
 
+extern byte *buffer;
+extern int buf_w, buf_h, pitch;
+
 extern byte bright[256];
 extern byte mixmap[256][256];
 extern byte clrmap[256*12];
 
 vgaimg *V_getvgaimg (int id);
 vgaimg *V_loadvgaimg (char *name);
-
-// переключение в режим VGA 320x200,256 цветов
-// возвращает 0, если все о'кей
-short V_init (void);
-
-// переключение в текстовый режим
-void V_done (void);
 
 // ждать обратного хода луча развертки
 void V_wait (void);
@@ -107,7 +103,6 @@ void V_remap (vgaimg *i, colormap m);
 
 void V_remap_rect (int x, int y, int w, int h, byte *cmap);
 
-void V_toggle (void);
 void V_rotspr (int x, int y, vgaimg* i, int d);
 void V_center (int f);
 void V_offset (int ox, int oy);

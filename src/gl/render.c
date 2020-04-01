@@ -1670,24 +1670,34 @@ void R_alloc (void) {
   }
 }
 
-void R_init (void) {
-  int res = 0;
+void R_set_videomode (int w, int h, int fullscreen) {
+  assert(w > 0);
+  assert(h > 0);
+  int was = Y_videomode_setted();
   int flags = SYSTEM_USE_OPENGL;
   if (fullscreen) {
     flags |= SYSTEM_USE_FULLSCREEN;
   }
-  logo("R_init: intialize opengl render\n");
-  int was = Y_videomode_setted();
-  if (SCRW <= 0 || SCRH <= 0) {
-    ERR_failinit("Invalid screen size %ix%i\n", SCRW, SCRH);
-  }
-  if (was == 0) {
-    R_init_playpal(); // only onece
-  }
-  res = Y_set_videomode(SCRW, SCRH, flags);
+  int res = Y_set_videomode(w, h, flags);
   if (res == 0) {
-    ERR_failinit("Unable to set video mode\n");
+    if (was == 0) {
+      ERR_failinit("Unable to set video mode\n");
+    }
+  } else {
+    SCRW = w;
+    SCRH = h;
   }
+}
+
+void R_toggle_fullscreen (void) {
+  Y_set_fullscreen(!Y_get_fullscreen());
+  fullscreen = Y_get_fullscreen();
+}
+
+void R_init (void) {
+  logo("R_init: intialize opengl render\n");
+  R_init_playpal();
+  R_set_videomode(SCRW, SCRH, fullscreen);
   root = R_cache_new();
   assert(root);
   R_alloc();
@@ -1696,6 +1706,7 @@ void R_init (void) {
 void R_done (void) {
   R_cache_free(root, 1);
   Y_unset_videomode();
+  root = NULL;
 }
 
 void R_setgamma (int g) {
@@ -1704,12 +1715,6 @@ void R_setgamma (int g) {
 
 int R_getgamma (void) {
   return gamma;
-}
-
-void R_toggle_fullscreen (void) {
-  Y_set_fullscreen(!Y_get_fullscreen());
-  fullscreen = Y_get_fullscreen();
-  R_alloc();
 }
 
 void R_get_name (int n, char s[8]) {

@@ -76,7 +76,7 @@ void ERR_quit (void) {
 static int Y_set_videomode_opengl (int w, int h, int fullscreen) {
   assert(w > 0);
   assert(h > 0);
-  Uint32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL;
+  Uint32 flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
   flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
   // TODO set context version and type
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
@@ -92,7 +92,6 @@ static int Y_set_videomode_opengl (int w, int h, int fullscreen) {
       window = win;
       context = ctx;
       SDL_GL_MakeCurrent(window, context);
-      SDL_ShowWindow(window);
     } else {
       SDL_DestroyWindow(win);
       win = NULL;
@@ -106,7 +105,7 @@ static int Y_set_videomode_software (int w, int h, int fullscreen) {
   assert(h > 0);
   int x = SDL_WINDOWPOS_CENTERED;
   int y = SDL_WINDOWPOS_CENTERED;
-  Uint32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL;
+  Uint32 flags = SDL_WINDOW_RESIZABLE;
   flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
   SDL_Window *win = SDL_CreateWindow(TITLE_STR, x, y, w, h, flags);
   if (win != NULL) {
@@ -115,7 +114,6 @@ static int Y_set_videomode_software (int w, int h, int fullscreen) {
       Y_unset_videomode();
       window = win;
       surf = s;
-      SDL_ShowWindow(window);
     } else {
       SDL_DestroyWindow(win);
       win = NULL;
@@ -124,14 +122,39 @@ static int Y_set_videomode_software (int w, int h, int fullscreen) {
   return win != NULL;
 }
 
+static int Y_resize_window (int w, int h, int fullscreen) {
+  assert(w > 0);
+  assert(h > 0);
+  assert(window != NULL);
+  if (surf != NULL) {
+    SDL_Surface *s = SDL_CreateRGBSurface(0, w, h, 8, 0, 0, 0, 0);
+    if (s != NULL) {
+      SDL_SetPaletteColors(s->format->palette, surf->format->palette->colors, 0, surf->format->palette->ncolors);
+      SDL_FreeSurface(surf);
+      surf = s;
+    }
+  }
+  SDL_SetWindowSize(window, w, h);
+  Y_set_fullscreen(fullscreen);
+  return 1;
+}
+
 int Y_set_videomode (int w, int h, int flags) {
   assert(w > 0);
   assert(h > 0);
   int fullscreen = (flags & SYSTEM_USE_FULLSCREEN) != 0;
   if (flags & SYSTEM_USE_OPENGL) {
-    return Y_set_videomode_opengl(w, h, fullscreen);
+    if (window != NULL && context != NULL) {
+      return Y_resize_window(w, h, fullscreen);
+    } else {
+      return Y_set_videomode_opengl(w, h, fullscreen);
+    }
   } else {
-    return Y_set_videomode_software(w, h, fullscreen);
+    if (window != NULL && surf != NULL) {
+      return Y_resize_window(w, h, fullscreen);
+    } else {
+      return Y_set_videomode_software(w, h, fullscreen);
+    }
   }
 }
 
@@ -328,6 +351,19 @@ static int sdl_to_key (int code) {
   }
 }
 
+static void window_event_handler (SDL_WindowEvent *ev) {
+  switch (ev->event) {
+    case SDL_WINDOWEVENT_RESIZED:
+      if (window != NULL && ev->windowID == SDL_GetWindowID(window)) {
+        R_set_videomode(ev->data1, ev->data2, Y_get_fullscreen());
+      }
+      break;
+    case SDL_WINDOWEVENT_CLOSE:
+      ERR_quit();
+      break;
+  }
+}
+
 static void poll_events (void (*h)(int key, int down)) {
   int key;
   SDL_Event ev;
@@ -335,6 +371,9 @@ static void poll_events (void (*h)(int key, int down)) {
     switch (ev.type) {
       case SDL_QUIT:
         ERR_quit();
+        break;
+      case SDL_WINDOWEVENT:
+        window_event_handler(&ev.window);
         break;
       case SDL_KEYDOWN:
       case SDL_KEYUP:
