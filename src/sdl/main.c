@@ -42,8 +42,13 @@
 #include "music.h" // S_initmusic S_updatemusic S_donemusic
 #include "render.h" // R_init R_draw R_done
 
+#define MODE_NONE 0
+#define MODE_OPENGL 1
+#define MODE_SOFTWARE 2
+
 static int quit = 0;
 static SDL_Surface *surf = NULL;
+static int mode = MODE_NONE;
 
 /* --- error.h --- */
 
@@ -91,32 +96,56 @@ void ERR_quit (void) {
 
 /* --- system.h --- */
 
-int Y_set_videomode (int w, int h, int flags) {
-  SDL_Surface *s;
-  int colors;
-  Uint32 f;
+int Y_set_videomode_opengl (int w, int h, int fullscreen) {
   assert(w > 0);
   assert(h > 0);
-  f = SDL_DOUBLEBUF;
-  if (flags & SYSTEM_USE_FULLSCREEN) {
-    f = flags | SDL_FULLSCREEN;
-  }
-  if (flags & SYSTEM_USE_OPENGL) {
-    f = flags | SDL_OPENGL;
-    colors = 0;
+  Uint32 flags;
+  SDL_Surface *s;
+  if (mode == MODE_OPENGL && surf->w == w && surf->h == h && Y_get_fullscreen() == fullscreen) {
+    s = surf;
   } else {
-    f = flags | SDL_SWSURFACE | SDL_HWPALETTE;
-    colors = 8;
+    flags = SDL_DOUBLEBUF | SDL_OPENGL;
+    if (fullscreen) {
+      flags = flags | SDL_FULLSCREEN;
+    }
+#   ifdef WIN32
+      flags = flags | SDL_RESIZABLE;
+#   endif
+    s = SDL_SetVideoMode(w, h, 0, flags);
+    if (s != NULL) {
+      mode = MODE_OPENGL;
+      surf = s;
+    }
   }
-  s = SDL_SetVideoMode(w, h, colors, f);
-  if (s != NULL) {
-    surf = s;
+  return s != NULL;
+}
+
+int Y_set_videomode_software (int w, int h, int fullscreen) {
+  assert(w > 0);
+  assert(h > 0);
+  Uint32 flags;
+  SDL_Surface *s;
+  if (mode == MODE_OPENGL && surf->w == w && surf->h == h && Y_get_fullscreen() == fullscreen) {
+    s = surf;
+  } else {
+    flags = SDL_DOUBLEBUF | SDL_SWSURFACE | SDL_HWPALETTE;
+    if (fullscreen) {
+      flags = flags | SDL_FULLSCREEN;
+    }
+#   ifdef WIN32
+      flags = flags | SDL_RESIZABLE;
+#   endif
+    s = SDL_SetVideoMode(w, h, 8, flags);
+    if (s != NULL) {
+      mode = MODE_SOFTWARE;
+      surf = s;
+    }
   }
   return s != NULL;
 }
 
 void Y_get_videomode (int *w, int *h) {
-  if (surf != NULL) {
+  if (mode != MODE_NONE) {
     *w = surf->w;
     *h = surf->h;
   } else {
@@ -126,40 +155,43 @@ void Y_get_videomode (int *w, int *h) {
 }
 
 int Y_videomode_setted (void) {
-  return surf != NULL;
+  return mode != MODE_NONE;
 }
 
 void Y_unset_videomode (void) {
   surf = NULL;
+  mode = MODE_NONE;
   SDL_QuitSubSystem(SDL_INIT_VIDEO);
   SDL_InitSubSystem(SDL_INIT_VIDEO);
 }
 
-void Y_set_fullscreen (int yes) {
-  assert(surf != NULL);
-  int flags = 0;
-  if ((surf->flags & SDL_FULLSCREEN) == 0) {
-    flags |= SYSTEM_USE_FULLSCREEN;
+void Y_set_fullscreen (int fullscreen) {
+  int fs = Y_get_fullscreen();
+  if (mode != MODE_NONE && fs != fullscreen) {
+    if (SDL_WM_ToggleFullScreen(surf) == 0) {
+      switch (mode) {
+        case MODE_OPENGL:
+          Y_set_videomode_opengl(surf->w, surf->h, fullscreen);
+          break;
+        case MODE_SOFTWARE:
+          Y_set_videomode_software(surf->w, surf->h, fullscreen);
+          break;
+      }
+    }
   }
-  if (surf->flags & SDL_OPENGL) {
-    flags |= SDL_OPENGL;
-  }
-  Y_set_videomode(surf->w, surf->h, flags);
 }
 
 int Y_get_fullscreen (void) {
-  return (surf != NULL) && ((surf->flags & SDL_FULLSCREEN) != 0);
+  return (mode != MODE_NONE) && ((surf->flags & SDL_FULLSCREEN) != 0);
 }
 
 void Y_swap_buffers (void) {
-  assert(surf != NULL);
-  assert(surf->flags & SDL_OPENGL);
+  assert(mode == MODE_OPENGL);
   SDL_GL_SwapBuffers();
 }
 
 void Y_get_buffer (byte **buf, int *w, int *h, int *pitch) {
-  assert(surf != NULL);
-  assert((surf->flags & SDL_OPENGL) == 0);
+  assert(mode == MODE_SOFTWARE);
   *buf = surf->pixels;
   *w = surf->w;
   *h = surf->h;
@@ -170,8 +202,7 @@ void Y_set_vga_palette (byte *vgapal) {
   int i;
   byte *p = vgapal;
   assert(vgapal != NULL);
-  assert(surf != NULL);
-  assert((surf->flags & SDL_OPENGL) == 0);
+  assert(mode == MODE_SOFTWARE);
   SDL_Color colors[256];
   for (i = 0; i < 256; i++) {
     colors[i] = (SDL_Color) {
@@ -185,14 +216,12 @@ void Y_set_vga_palette (byte *vgapal) {
 }
 
 void Y_repaint_rect (int x, int y, int w, int h) {
-  assert(surf != NULL);
-  assert((surf->flags & SDL_OPENGL) == 0);
+  assert(mode == MODE_SOFTWARE);
   SDL_UpdateRect(surf, x, y, w, h);
 }
 
 void Y_repaint (void) {
-  assert(surf != NULL);
-  assert((surf->flags & SDL_OPENGL) == 0);
+  assert(mode == MODE_SOFTWARE);
   SDL_Flip(surf);
 }
 
@@ -315,6 +344,9 @@ static void poll_events (void (*h)(int key, int down)) {
     switch (ev.type) {
       case SDL_QUIT:
         ERR_quit();
+        break;
+      case SDL_VIDEORESIZE:
+        R_set_videomode(ev.resize.w, ev.resize.h, Y_get_fullscreen());
         break;
       case SDL_KEYDOWN:
       case SDL_KEYUP:

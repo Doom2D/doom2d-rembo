@@ -1678,15 +1678,11 @@ void R_set_videomode (int w, int h, int fullscreen) {
   assert(w > 0);
   assert(h > 0);
   int was = Y_videomode_setted();
-  int flags = SYSTEM_USE_OPENGL;
-  if (fullscreen) {
-    flags |= SYSTEM_USE_FULLSCREEN;
-  }
   if (root != NULL) {
     R_cache_free(root, 0);
     root = NULL;
   }
-  int res = Y_set_videomode(w, h, flags);
+  int res = Y_set_videomode_opengl(w, h, fullscreen);
   if (res == 0) {
     if (was == 0) {
       ERR_failinit("Unable to set video mode\n");
