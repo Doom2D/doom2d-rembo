@@ -345,7 +345,7 @@ static node *R_cache_alloc (cache *root, int w, int h) {
   if (n) {
     //logo("new node %p {%i:%i:%i:%i}\n", n, n->l, n->t, n->r, n->b);
   } else {
-    logo("new node failed\n");
+    logo("new node failed {%i:%i}\n", w, h);
   }
   return n;
 }
@@ -504,6 +504,9 @@ static image R_gl_create_image (const rgba *buf, int w, int h) {
 
 static image R_gl_get_special_image (int id, rgba *(*fn)(vgaimg*)) {
   image img;
+  //char name[8];
+  //F_getresname(name, id);
+  //logo("load image: %.8s\n", name);
   vgaimg *v = R_getvga(id);
   if (v != NULL) {
     rgba *buf = (*fn)(v);
@@ -1450,7 +1453,6 @@ void R_alloc (void) {
   logo("R_alloc: load graphics\n");
   /* Game */
   scrnh[0] = R_gl_loadimage("TITLEPIC");
-  assert(scrnh[0].n);
   scrnh[1] = R_gl_loadimage("INTERPIC");
   scrnh[2] = R_gl_loadimage("ENDPIC");
   for (i = 0; i < 2; i++) {
@@ -1656,7 +1658,7 @@ void R_alloc (void) {
   mslotr = R_gl_loadimage("M_LSRGHT");
   // walls
   for (i = 1; i < ANIT; i++) {
-    for (j = 0; anm[i - 1][j]; j++) {
+    for (j = 0; j < 5 && anm[i - 1][j]; j++) {
       anip[i][j] = R_gl_loadimage(anm[i - 1][j]);
     }
     for(; j < 5; j++) {
@@ -1765,7 +1767,9 @@ static void R_reload_textures (void) {
       walp[i] = R_gl_getimage(walp[i].res);
     }
   }
-  horiz = R_gl_getimage(horiz.res);
+  if (horiz.n) {
+    horiz = R_gl_getimage(horiz.res);
+  }
 }
 
 void R_begin_load (void) {
