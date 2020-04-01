@@ -187,11 +187,10 @@ void Y_unset_videomode (void) {
   }
 }
 
-int Y_set_fullscreen (int yes) {
+void Y_set_fullscreen (int yes) {
   if (window != NULL) {
     SDL_SetWindowFullscreen(window, yes ? SDL_WINDOW_FULLSCREEN : 0);
   }
-  return yes;
 }
 
 int Y_get_fullscreen (void) {
