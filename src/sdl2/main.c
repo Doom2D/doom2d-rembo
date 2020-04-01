@@ -158,6 +158,15 @@ int Y_set_videomode (int w, int h, int flags) {
   }
 }
 
+void Y_get_videomode (int *w, int *h) {
+  if (window != NULL) {
+    SDL_GetWindowSize(window, w, h);
+  } else {
+    *w = 0;
+    *h = 0;
+  }
+}
+
 int Y_videomode_setted (void) {
   return window != NULL;
 }

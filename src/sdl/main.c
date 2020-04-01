@@ -115,6 +115,16 @@ int Y_set_videomode (int w, int h, int flags) {
   return s != NULL;
 }
 
+void Y_get_videomode (int *w, int *h) {
+  if (surf != NULL) {
+    *w = surf->w;
+    *h = surf->h;
+  } else {
+    *w = 0;
+    *h = 0;
+  }
+}
+
 int Y_videomode_setted (void) {
   return surf != NULL;
 }
@@ -125,9 +135,13 @@ void Y_unset_videomode (void) {
   SDL_InitSubSystem(SDL_INIT_VIDEO);
 }
 
-int Y_set_fullscreen (int yes) {
-  //SDL_WM_ToggleFullScreen();
-  return 0;
+void Y_set_fullscreen (int yes) {
+  assert(surf != NULL);
+  Uint32 flags = surf->flags & ~SDL_FULLSCREEN;
+  if ((surf->flags & SDL_FULLSCREEN) == 0) {
+    flags |= SDL_FULLSCREEN;
+  }
+  Y_set_videomode(surf->w, surf->h, flags);
 }
 
 int Y_get_fullscreen (void) {

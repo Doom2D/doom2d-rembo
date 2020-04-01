@@ -1670,6 +1670,8 @@ void R_alloc (void) {
   }
 }
 
+static void R_reload_textures (void);
+
 void R_set_videomode (int w, int h, int fullscreen) {
   assert(w > 0);
   assert(h > 0);
@@ -1678,29 +1680,39 @@ void R_set_videomode (int w, int h, int fullscreen) {
   if (fullscreen) {
     flags |= SYSTEM_USE_FULLSCREEN;
   }
+  if (root != NULL) {
+    R_cache_free(root, 0);
+    root = NULL;
+  }
   int res = Y_set_videomode(w, h, flags);
   if (res == 0) {
     if (was == 0) {
       ERR_failinit("Unable to set video mode\n");
     }
   } else {
-    SCRW = w;
-    SCRH = h;
+    Y_get_videomode(&SCRW, &SCRH);
+    root = R_cache_new();
+    assert(root);
+    R_alloc();
+    R_reload_textures();
   }
 }
 
 void R_toggle_fullscreen (void) {
+  R_cache_free(root, 0);
   Y_set_fullscreen(!Y_get_fullscreen());
   fullscreen = Y_get_fullscreen();
+  Y_get_videomode(&SCRW, &SCRH);
+  root = R_cache_new();
+  assert(root);
+  R_alloc();
+  R_reload_textures();
 }
 
 void R_init (void) {
   logo("R_init: intialize opengl render\n");
   R_init_playpal();
   R_set_videomode(SCRW, SCRH, fullscreen);
-  root = R_cache_new();
-  assert(root);
-  R_alloc();
 }
 
 void R_done (void) {
@@ -1742,6 +1754,18 @@ static short getani (char n[8]) {
 int R_get_special_id (int n) {
   assert(n >= 0 && n <= 256);
   return walp[n].res == -2 ? (intptr_t)walp[n].n : -1;
+}
+
+static void R_reload_textures (void) {
+  int i;
+  char s[8];
+  for (i = 0; i < max_textures; i++) {
+    R_get_name(i, s);
+    if (walp[i].res >= 0) {
+      walp[i] = R_gl_getimage(walp[i].res);
+    }
+  }
+  horiz = R_gl_getimage(horiz.res);
 }
 
 void R_begin_load (void) {
@@ -1812,6 +1836,7 @@ void R_end_load (void) {
       if (k >= 256) {
         k = j;
         j += 1;
+        max_textures += 1;
         walp[k] = R_gl_getimage(g);
         walf[k] = g & 0x8000 ? 1 : 0;
       }

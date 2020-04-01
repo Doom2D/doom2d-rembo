@@ -78,9 +78,9 @@ static void draw_rect (int x, int y, int w, int h, int c) {
 
 void V_setrect (short x, short w, short y, short h) {
   cx1 = max(x, 0);
-  cx2 = min(x + w - 1, SCRW - 1);
+  cx2 = min(x + w - 1, buf_w - 1);
   cy1 = max(y, 0);
-  cy2 = min(y + h - 1, SCRH - 1);
+  cy2 = min(y + h - 1, buf_h - 1);
 }
 
 static void putpixel (int x, int y, byte color) {
@@ -100,7 +100,7 @@ static void mappixel (int x, int y, byte *cmap) {
 
 void V_center (int f) {
   if (f) {
-    V_offset(SCRW / 2 - 320 / 2, SCRH / 2 - 200 / 2);
+    V_offset(buf_w / 2 - 320 / 2, buf_h / 2 - 200 / 2);
   } else {
     V_offset(0, 0);
   }
