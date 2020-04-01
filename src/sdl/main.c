@@ -137,9 +137,12 @@ void Y_unset_videomode (void) {
 
 void Y_set_fullscreen (int yes) {
   assert(surf != NULL);
-  Uint32 flags = surf->flags & ~SDL_FULLSCREEN;
+  int flags = 0;
   if ((surf->flags & SDL_FULLSCREEN) == 0) {
-    flags |= SDL_FULLSCREEN;
+    flags |= SYSTEM_USE_FULLSCREEN;
+  }
+  if (surf->flags & SDL_OPENGL) {
+    flags |= SDL_OPENGL;
   }
   Y_set_videomode(surf->w, surf->h, flags);
 }
