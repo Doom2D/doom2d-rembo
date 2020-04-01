@@ -1354,7 +1354,7 @@ void R_set_videomode (int w, int h, int fullscreen) {
   assert(w > 0);
   assert(h > 0);
   int was = Y_videomode_setted();
-  int res = Y_set_videomode(w, h, fullscreen ? SYSTEM_USE_FULLSCREEN : 0);
+  int res = Y_set_videomode_software(w, h, fullscreen);
   if (res == 0) {
     if (was == 0) {
       ERR_failinit("Unable to set video mode");

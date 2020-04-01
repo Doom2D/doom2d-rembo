@@ -73,55 +73,6 @@ void ERR_quit (void) {
 
 /* --- system.h --- */
 
-static int Y_set_videomode_opengl (int w, int h, int fullscreen) {
-  assert(w > 0);
-  assert(h > 0);
-  Uint32 flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
-  flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
-  // TODO set context version and type
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  int x = SDL_WINDOWPOS_CENTERED;
-  int y = SDL_WINDOWPOS_CENTERED;
-  SDL_Window *win = SDL_CreateWindow(TITLE_STR, x, y, w, h, flags);
-  if (win != NULL) {
-    SDL_GLContext ctx = SDL_GL_CreateContext(win);
-    if (ctx != NULL) {
-      Y_unset_videomode();
-      window = win;
-      context = ctx;
-      SDL_GL_MakeCurrent(window, context);
-    } else {
-      SDL_DestroyWindow(win);
-      win = NULL;
-    }
-  }
-  return win != NULL;
-}
-
-static int Y_set_videomode_software (int w, int h, int fullscreen) {
-  assert(w > 0);
-  assert(h > 0);
-  int x = SDL_WINDOWPOS_CENTERED;
-  int y = SDL_WINDOWPOS_CENTERED;
-  Uint32 flags = SDL_WINDOW_RESIZABLE;
-  flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
-  SDL_Window *win = SDL_CreateWindow(TITLE_STR, x, y, w, h, flags);
-  if (win != NULL) {
-    SDL_Surface *s = SDL_CreateRGBSurface(0, w, h, 8, 0, 0, 0, 0);
-    if (s != NULL) {
-      Y_unset_videomode();
-      window = win;
-      surf = s;
-    } else {
-      SDL_DestroyWindow(win);
-      win = NULL;
-    }
-  }
-  return win != NULL;
-}
-
 static int Y_resize_window (int w, int h, int fullscreen) {
   assert(w > 0);
   assert(h > 0);
@@ -141,23 +92,69 @@ static int Y_resize_window (int w, int h, int fullscreen) {
   return 1;
 }
 
-int Y_set_videomode (int w, int h, int flags) {
+int Y_set_videomode_opengl (int w, int h, int fullscreen) {
   assert(w > 0);
   assert(h > 0);
-  int fullscreen = (flags & SYSTEM_USE_FULLSCREEN) != 0;
-  if (flags & SYSTEM_USE_OPENGL) {
-    if (window != NULL && context != NULL) {
-      return Y_resize_window(w, h, fullscreen);
-    } else {
-      return Y_set_videomode_opengl(w, h, fullscreen);
-    }
+  Uint32 flags;
+  SDL_Window *win;
+  SDL_GLContext ctx;
+  if (window != NULL && context != NULL) {
+    Y_resize_window(w, h, fullscreen);
+    win = window;
   } else {
-    if (window != NULL && surf != NULL) {
-      return Y_resize_window(w, h, fullscreen);
-    } else {
-      return Y_set_videomode_software(w, h, fullscreen);
+    flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+    if (fullscreen) {
+      flags = flags | SDL_WINDOW_FULLSCREEN;
+    }
+    // TODO set context version and type
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    win = SDL_CreateWindow(TITLE_STR, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags);
+    if (win != NULL) {
+      ctx = SDL_GL_CreateContext(win);
+      if (ctx != NULL) {
+        Y_unset_videomode();
+        window = win;
+        context = ctx;
+        SDL_GL_MakeCurrent(window, context);
+      } else {
+        SDL_DestroyWindow(win);
+        win = NULL;
+      }
     }
   }
+  return win != NULL;
+}
+
+int Y_set_videomode_software (int w, int h, int fullscreen) {
+  assert(w > 0);
+  assert(h > 0);
+  Uint32 flags;
+  SDL_Surface *s;
+  SDL_Window *win;
+  if (window != NULL && surf != NULL) {
+    Y_resize_window(w, h, fullscreen);
+    win = window;
+  } else {
+    flags = SDL_WINDOW_RESIZABLE;
+    if (fullscreen) {
+      flags = flags | SDL_WINDOW_FULLSCREEN;
+    }
+    win = SDL_CreateWindow(TITLE_STR, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags);
+    if (win != NULL) {
+      s = SDL_CreateRGBSurface(0, w, h, 8, 0, 0, 0, 0);
+      if (s != NULL) {
+        Y_unset_videomode();
+        window = win;
+        surf = s;
+      } else {
+        SDL_DestroyWindow(win);
+        win = NULL;
+      }
+    }
+  }
+  return win != NULL;
 }
 
 void Y_get_videomode (int *w, int *h) {
@@ -364,9 +361,7 @@ static int sdl_to_key (int code) {
 static void window_event_handler (SDL_WindowEvent *ev) {
   switch (ev->event) {
     case SDL_WINDOWEVENT_RESIZED:
-      if (window != NULL && ev->windowID == SDL_GetWindowID(window)) {
-        R_set_videomode(ev->data1, ev->data2, Y_get_fullscreen());
-      }
+      R_set_videomode(ev->data1, ev->data2, Y_get_fullscreen());
       break;
     case SDL_WINDOWEVENT_CLOSE:
       ERR_quit();
@@ -383,7 +378,9 @@ static void poll_events (void (*h)(int key, int down)) {
         ERR_quit();
         break;
       case SDL_WINDOWEVENT:
-        window_event_handler(&ev.window);
+        if (ev.window.windowID == SDL_GetWindowID(window)) {
+          window_event_handler(&ev.window);
+        }
         break;
       case SDL_KEYDOWN:
       case SDL_KEYUP:
