@@ -141,7 +141,7 @@ static sdlmixer_snd *new_sdlmixer_snd (const void *data, dword len, dword rate, 
 snd_t *S_get (int id) {
   void *handle;
   sdlmixer_snd *snd = NULL;
-  if (devinit != NULL) {
+  if (devinit) {
     handle = M_lock(id);
     if (handle != NULL) {
       void *data = handle;
