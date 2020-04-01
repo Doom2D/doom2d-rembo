@@ -127,11 +127,13 @@ static int Y_resize_window (int w, int h, int fullscreen) {
   assert(h > 0);
   assert(window != NULL);
   if (surf != NULL) {
-    SDL_Surface *s = SDL_CreateRGBSurface(0, w, h, 8, 0, 0, 0, 0);
-    if (s != NULL) {
-      SDL_SetPaletteColors(s->format->palette, surf->format->palette->colors, 0, surf->format->palette->ncolors);
-      SDL_FreeSurface(surf);
-      surf = s;
+    if (surf->w != w || surf->h != h) {
+      SDL_Surface *s = SDL_CreateRGBSurface(0, w, h, 8, 0, 0, 0, 0);
+      if (s != NULL) {
+        SDL_SetPaletteColors(s->format->palette, surf->format->palette->colors, 0, surf->format->palette->ncolors);
+        SDL_FreeSurface(surf);
+        surf = s;
+      }
     }
   }
   SDL_SetWindowSize(window, w, h);
