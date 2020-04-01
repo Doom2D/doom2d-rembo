@@ -22,6 +22,7 @@
 #include "game.h"
 #include "sound.h"
 #include "music.h"
+#include "system.h"
 
 // game
 static vgaimg *scrnh[3]; // TITLEPIC INTERPIC ENDPIC
@@ -1349,30 +1350,47 @@ int R_getgamma (void) {
   return gammaa;
 }
 
+void R_set_videomode (int w, int h, int fullscreen) {
+  assert(w > 0);
+  assert(h > 0);
+  int was = Y_videomode_setted();
+  int res = Y_set_videomode(w, h, fullscreen ? SYSTEM_USE_FULLSCREEN : 0);
+  if (res == 0) {
+    if (was == 0) {
+      ERR_failinit("Unable to set video mode");
+    }
+  } else {
+    SCRW = w;
+    SCRH = h;
+    Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
+  }
+}
+
 void R_toggle_fullscreen (void) {
-  fullscreen = !fullscreen;
-  V_toggle();
+  Y_set_fullscreen(!Y_get_fullscreen());
+  fullscreen = Y_get_fullscreen();
 }
 
 void R_init () {
   int i;
+  logo("R_init: initialize software render\n");
   F_loadres(F_getresid("PLAYPAL"), main_pal, 0, 768);
   for (i = 0; i < 256; ++i) {
     bright[i] = ((int) main_pal[i][0] + main_pal[i][1] + main_pal[i][2]) * 8 / (63 * 3);
   }
   F_loadres(F_getresid("MIXMAP"), mixmap, 0, 0x10000);
   F_loadres(F_getresid("COLORMAP"), clrmap, 0, 256*12);
-  logo("V_init: настройка видео\n");
-  if (V_init() != 0) {
-    ERR_failinit("Не могу установить видеорежим VGA");
-  }
+  R_set_videomode(SCRW, SCRH, fullscreen);
   R_setgamma(gammaa);
   V_setrect(0, SCRW, 0, SCRH);
-//  V_setscr(scrbuf);
   V_clr(0, SCRW, 0, SCRH, 0);
   R_alloc();
 }
 
 void R_done (void) {
-  V_done();
+  buffer = NULL;
+  buf_w = 0;
+  buf_h = 0;
+  pitch = 0;
+  Y_unset_videomode();
 }

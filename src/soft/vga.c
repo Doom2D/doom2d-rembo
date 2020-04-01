@@ -40,8 +40,8 @@ byte bright[256];
 byte mixmap[256][256];
 byte clrmap[256*12];
 
-static byte *buffer;
-static int buf_w, buf_h, pitch;
+byte *buffer;
+int buf_w, buf_h, pitch;
 static int offx, offy;
 static int cx1, cx2, cy1, cy2;
 static byte flametab[16] = {
@@ -62,24 +62,6 @@ vgaimg *V_getvgaimg (int id) {
 
 vgaimg *V_loadvgaimg (char *name) {
   return V_getvgaimg(F_getresid(name));
-}
-
-short V_init (void) {
-  int flags = fullscreen ? SYSTEM_USE_FULLSCREEN : 0;
-  int res = Y_set_videomode(SCRW, SCRH, flags);
-  if (res == 0) {
-    ERR_failinit("Unable to set video mode");
-  }
-  Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
-  return 0;
-}
-
-void V_done (void) {
-  buffer = NULL;
-  buf_w = 0;
-  buf_h = 0;
-  pitch = 0;
-  Y_unset_videomode();
 }
 
 static void draw_rect (int x, int y, int w, int h, int c) {
@@ -240,8 +222,4 @@ void V_remap_rect (int x, int y, int w, int h, byte *cmap) {
     for (cx=x; cx<x+w; cx++)
         for (cy=y; cy<y+h; cy++)
             mappixel(cx,cy,cmap);
-}
-
-void V_toggle (void) {
-  fullscreen = Y_set_fullscreen(!Y_get_fullscreen());
 }
