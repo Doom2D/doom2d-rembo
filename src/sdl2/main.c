@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include "SDL.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h> // srand exit
