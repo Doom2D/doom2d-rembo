@@ -1360,15 +1360,18 @@ void R_set_videomode (int w, int h, int fullscreen) {
       ERR_failinit("Unable to set video mode");
     }
   } else {
-    SCRW = w;
-    SCRH = h;
+    Y_get_videomode(&SCRW, &SCRH);
     Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
+    R_setgamma(gammaa);
   }
 }
 
 void R_toggle_fullscreen (void) {
   Y_set_fullscreen(!Y_get_fullscreen());
   fullscreen = Y_get_fullscreen();
+  Y_get_videomode(&SCRW, &SCRH);
+  Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
+  R_setgamma(gammaa);
 }
 
 void R_init () {
@@ -1381,7 +1384,6 @@ void R_init () {
   F_loadres(F_getresid("MIXMAP"), mixmap, 0, 0x10000);
   F_loadres(F_getresid("COLORMAP"), clrmap, 0, 256*12);
   R_set_videomode(SCRW, SCRH, fullscreen);
-  R_setgamma(gammaa);
   V_setrect(0, SCRW, 0, SCRH);
   V_clr(0, SCRW, 0, SCRH, 0);
   R_alloc();

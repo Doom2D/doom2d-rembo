@@ -8,9 +8,10 @@
 
 /* common video subsystem routines */
 int Y_set_videomode (int w, int h, int flags);
+void Y_get_videomode (int *w, int *h);
 int Y_videomode_setted (void);
 void Y_unset_videomode (void);
-int Y_set_fullscreen (int yes);
+void Y_set_fullscreen (int yes);
 int Y_get_fullscreen (void);
 
 /* hardware specific rendering */
