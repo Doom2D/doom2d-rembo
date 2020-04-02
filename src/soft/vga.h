@@ -103,6 +103,7 @@ void V_remap (vgaimg *i, colormap m);
 
 void V_remap_rect (int x, int y, int w, int h, byte *cmap);
 
+void V_update_buffer (void);
 void V_rotspr (int x, int y, vgaimg* i, int d);
 void V_center (int f);
 void V_offset (int ox, int oy);

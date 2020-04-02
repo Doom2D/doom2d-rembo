@@ -64,6 +64,11 @@ vgaimg *V_loadvgaimg (char *name) {
   return V_getvgaimg(F_getresid(name));
 }
 
+void V_update_buffer (void) {
+  Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
+  V_setrect(0, 0, buf_w, buf_h);
+}
+
 static void draw_rect (int x, int y, int w, int h, int c) {
   int i;
   int x0 = max(x, cx1);
@@ -77,6 +82,8 @@ static void draw_rect (int x, int y, int w, int h, int c) {
 }
 
 void V_setrect (short x, short w, short y, short h) {
+  assert(w >= 0);
+  assert(h >= 0);
   cx1 = max(x, 0);
   cx2 = min(x + w - 1, buf_w - 1);
   cy1 = max(y, 0);

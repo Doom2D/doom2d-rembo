@@ -1361,7 +1361,7 @@ void R_set_videomode (int w, int h, int fullscreen) {
     }
   } else {
     Y_get_videomode(&SCRW, &SCRH);
-    Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
+    V_update_buffer();
     R_setgamma(gammaa);
   }
 }
@@ -1370,7 +1370,7 @@ void R_toggle_fullscreen (void) {
   Y_set_fullscreen(!Y_get_fullscreen());
   fullscreen = Y_get_fullscreen();
   Y_get_videomode(&SCRW, &SCRH);
-  Y_get_buffer(&buffer, &buf_w, &buf_h, &pitch);
+  V_update_buffer();
   R_setgamma(gammaa);
 }
 
