@@ -66,8 +66,6 @@ void ERR_fatal (char *s, ...) {
 }
 
 void ERR_quit (void) {
-  puts("Спасибо за то, что вы играли в Операцию \"Смятка\"!");
-  //F_loadres(F_getresid("ENDOOM"),p,0,4000);
   quit = 1;
 }
 
