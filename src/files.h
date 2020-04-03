@@ -52,7 +52,7 @@ void F_startup (void);
 void F_getsavnames (void);
 void F_savegame (int n, char *s);
 void F_loadgame (int n);
-void F_addwad (char *fn);
+void F_addwad (const char *fn);
 void F_initwads (void);
 void F_allocres (void);
 void F_loadres (int r, void *p, dword o, dword l);

@@ -26,10 +26,8 @@
 
 extern byte cheat;
 extern byte shot_vga;
-extern char cd_path[128];
-extern char cfg_file[128];
 
-void CFG_args (int argc, char *argv[]);
+void CFG_args (int argc, char **argv);
 void CFG_load (void);
 void CFG_save (void);
 

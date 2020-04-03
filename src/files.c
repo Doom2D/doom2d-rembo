@@ -155,7 +155,7 @@ void F_loadgame (int n) {
   }
 }
 
-void F_addwad (char *fn) {
+void F_addwad (const char *fn) {
   int i;
 
   for(i=0;i<MAX_WADS;++i) if(wads[i][0]==0) {
