@@ -1,4 +1,8 @@
-#include "SDL.h"
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif
+
+#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h> // srand exit
@@ -22,6 +26,7 @@
 
 #define TITLE_STR "DooM 2D (SDL2)"
 
+static Uint32 ticks;
 static int quit = 0;
 static SDL_Window *window;
 static SDL_GLContext context;
@@ -105,8 +110,14 @@ int Y_set_videomode_opengl (int w, int h, int fullscreen) {
       flags = flags | SDL_WINDOW_FULLSCREEN;
     }
     // TODO set context version and type
+#ifdef __EMSCRIPTEN__
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+#endif
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     win = SDL_CreateWindow(TITLE_STR, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags);
     if (win != NULL) {
@@ -121,6 +132,9 @@ int Y_set_videomode_opengl (int w, int h, int fullscreen) {
         win = NULL;
       }
     }
+  }
+  if (win == NULL) {
+    logo("Y_set_videomode_opengl: error: %s\n", SDL_GetError());
   }
   return win != NULL;
 }
@@ -151,6 +165,9 @@ int Y_set_videomode_software (int w, int h, int fullscreen) {
         win = NULL;
       }
     }
+  }
+  if (win == NULL) {
+    logo("Y_set_videomode_software: error: %s\n", SDL_GetError());
   }
   return win != NULL;
 }
@@ -392,15 +409,24 @@ static void poll_events (void (*h)(int key, int down)) {
   }
 }
 
+static void step (void) {
+  poll_events(&G_keyf);
+  S_updatemusic();
+  Uint32 t = SDL_GetTicks();
+  if (t - ticks > DELAY) {
+    ticks = t;
+    G_act();
+  }
+  R_draw();
+}
+
 int main (int argc, char **argv) {
   char *pw;
-  Uint32 t, ticks;
   logo("system: initialize SDL2\n");
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) == -1) {
     logo("system: failed to init SDL2: %s\n", SDL_GetError());
     return 1;
   }
-  //SDL_WM_SetCaption("Doom 2D v1.351", "Doom 2D");
   // Player 1 defaults
   pl1.ku = KEY_KP_8;
   pl1.kd = KEY_KP_5;
@@ -443,16 +469,13 @@ int main (int argc, char **argv) {
   R_init();
   G_init();
   ticks = SDL_GetTicks();
+#ifdef __EMSCRIPTEN__
+  emscripten_set_main_loop(step, 0, 1);
+#else
   while (!quit) {
-    poll_events(&G_keyf);
-    S_updatemusic();
-    t = SDL_GetTicks();
-    if (t - ticks > DELAY) {
-      ticks = t;
-      G_act();
-    }
-    R_draw();
+    step();
   }
+#endif
   CFG_save();
   R_done();
   S_donemusic();
