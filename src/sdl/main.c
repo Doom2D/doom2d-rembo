@@ -20,7 +20,11 @@
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
-#include "SDL.h"
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif
+
+#include <SDL/SDL.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h> // srand exit
@@ -46,6 +50,7 @@
 #define MODE_OPENGL 1
 #define MODE_SOFTWARE 2
 
+static Uint32 ticks;
 static int quit = 0;
 static SDL_Surface *surf = NULL;
 static int mode = MODE_NONE;
@@ -113,6 +118,8 @@ int Y_set_videomode_opengl (int w, int h, int fullscreen) {
     if (s != NULL) {
       mode = MODE_OPENGL;
       surf = s;
+    } else {
+      logo("Y_set_videomode_opengl: error: %s\n", SDL_GetError());
     }
   }
   return s != NULL;
@@ -159,8 +166,10 @@ int Y_videomode_setted (void) {
 void Y_unset_videomode (void) {
   surf = NULL;
   mode = MODE_NONE;
+#ifndef __EMSCRIPTEN__
   SDL_QuitSubSystem(SDL_INIT_VIDEO);
   SDL_InitSubSystem(SDL_INIT_VIDEO);
+#endif
 }
 
 void Y_set_fullscreen (int fullscreen) {
@@ -358,9 +367,19 @@ static void poll_events (void (*h)(int key, int down)) {
   }
 }
 
+static void step (void) {
+  poll_events(&G_keyf);
+  S_updatemusic();
+  Uint32 t = SDL_GetTicks();
+  if (t - ticks > DELAY) {
+    ticks = t;
+    G_act();
+  }
+  R_draw();
+}
+
 int main (int argc, char *argv[]) {
   char *pw;
-  Uint32 t, ticks;
   logo("main: initialize SDL\n");
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1) {
     logo("main: failed to init SDL: %s\n", SDL_GetError());
@@ -409,16 +428,13 @@ int main (int argc, char *argv[]) {
   R_init();
   G_init();
   ticks = SDL_GetTicks();
+#ifdef __EMSCRIPTEN__
+  emscripten_set_main_loop(step, 0, 1);
+#else
   while (!quit) {
-    poll_events(&G_keyf);
-    S_updatemusic();
-    t = SDL_GetTicks();
-    if (t - ticks > DELAY) {
-      ticks = t;
-      G_act();
-    }
-    R_draw();
+    step();
   }
+#endif
   CFG_save();
   R_done();
   S_donemusic();
