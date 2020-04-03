@@ -26,12 +26,10 @@
 
 #define MAXFX 300
 
-#pragma pack(1)
 typedef struct {
   int x, y, xv, yv;
   char t, s;
 } fx_t;
-#pragma pack()
 
 extern fx_t fx[MAXFX];
 

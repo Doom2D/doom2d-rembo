@@ -34,13 +34,11 @@ enum {
   I_RTORCH, I_GTORCH, I_BTORCH, I_GOR1, I_FCAN, I_GUN2
 };
 
-#pragma pack(1)
 typedef struct {
   obj_t o;
   int t;
   int s;
 } item_t;
-#pragma pack()
 
 extern item_t it[MAXITEM];
 extern int itm_rtime;

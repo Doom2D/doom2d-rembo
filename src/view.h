@@ -42,7 +42,6 @@ enum {
   GS_BVIDEO, GS_EVIDEO, GS_END3ANIM
 };
 
-#pragma pack(1)
 typedef struct {
   int x, y;		// coordinates
   int xv, yv;		// velocity
@@ -59,7 +58,6 @@ typedef struct {
   char n[8];
   char t;
 } wall_t;
-#pragma pack()
 
 extern byte w_horiz;
 extern int sky_type;

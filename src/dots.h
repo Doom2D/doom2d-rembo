@@ -28,12 +28,10 @@
 
 #define MAXDOT 400
 
-#pragma pack(1)
 typedef struct {
   obj_t o;
   byte c, t;
 } dot_t;
-#pragma pack()
 
 extern dot_t dot[MAXDOT];
 

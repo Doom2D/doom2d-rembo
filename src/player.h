@@ -54,7 +54,6 @@
 #define PL_AIR 360
 #define PL_POWERUP_TIME 546
 
-#pragma pack(1)
 typedef struct {
   obj_t o;
   int looky;
@@ -76,7 +75,6 @@ typedef struct {
   char lives;
   int ku, kd, kl, kr, kf, kj, kwl, kwr, kp;
 } player_t;
-#pragma pack()
 
 extern byte p_immortal;
 extern byte p_fly;
