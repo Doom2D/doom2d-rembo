@@ -38,7 +38,6 @@ enum {
 
 #define MN_TN (MN__LAST-MN_DEMON)
 
-#pragma pack(1)
 typedef struct {
   obj_t o;
   byte t, d, st, ftime;
@@ -48,7 +47,6 @@ typedef struct {
   int aim, life, pain, ac, tx, ty, ammo;
   short atm;
 } mn_t;
-#pragma pack(0)
 
 extern byte nomon;
 extern int hit_xv, hit_yv;

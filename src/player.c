@@ -68,13 +68,6 @@ byte plr_goanim[]="BDACDA";
 byte plr_dieanim[]="HHHHIIIIJJJJKKKKLLLLMMMM";
 byte plr_slopanim[]="OOPPQQRRSSTTUUVVWW";
 
-
-#pragma pack(1)
-struct {
-    int ku,kd,kl,kr,kf,kj,kwl,kwr,kp;
-} _keys;
-#pragma pack()
-
 static void PL_save_player (player_t *p, FILE *h) {
   myfwrite32(p->o.x, h);
   myfwrite32(p->o.y, h);

@@ -38,8 +38,6 @@
 #ifndef MAP_H_INCLUDED
 #define MAP_H_INCLUDED
 
-#pragma pack(1)
-
 /* Старый формат - версия 1.04 alpha (и раньше)
 
   названия текстур (old_wall_t)
@@ -173,7 +171,5 @@ typedef struct{
 */
 
 #define LAST_MAP_VER 2	// Самая последняя версия карты
-
-#pragma pack()
 
 #endif /* MAP_H_INCLUDED */

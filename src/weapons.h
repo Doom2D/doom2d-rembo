@@ -26,14 +26,12 @@
 
 #define MAXWPN 300
 
-#pragma pack(1)
 typedef struct {
   obj_t o;
   byte t, s;
   int own;
   short target;
 } weapon_t;
-#pragma pack()
 
 extern weapon_t wp[MAXWPN];
 

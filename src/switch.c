@@ -35,14 +35,12 @@
 
 #define MAXSW 100
 
-#pragma pack(1)
 typedef struct {
   byte x, y;
   byte t, tm;
   byte a, b, c, d;
   byte f;
 } sw_t;
-#pragma pack()
 
 int sw_secrets;
 

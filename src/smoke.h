@@ -30,13 +30,11 @@
 #define SMSN 10
 #define FLSN 8
 
-#pragma pack(1)
 typedef struct {
   int x, y, xv, yv;
   byte t, s;
   short o;
 } smoke_t;
-#pragma pack()
 
 extern smoke_t sm[MAXSMOK];
 
