@@ -24,4 +24,8 @@ void Y_set_vga_palette (byte *vgapal);
 void Y_repaint_rect (int x, int y, int w, int h);
 void Y_repaint (void);
 
+/* input */
+void Y_enable_text_input (void);
+void Y_disable_text_input (void);
+
 #endif /* SYSTEM_H_INCLUDED */
