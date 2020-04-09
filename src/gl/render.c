@@ -629,7 +629,7 @@ static image Z_getspr (const char n[4], int s, int d, char *dir) {
   return R_gl_getimage(h);
 }
 
-static void Z_putch_generic (image img[], int off, int ch) {
+static image *Z_get_char_image (image *img, int ch) {
   image *p = NULL;
   if (ch > 32 && ch < 160) {
     p = &img[ch - '!'];
@@ -637,29 +637,60 @@ static void Z_putch_generic (image img[], int off, int ch) {
       p = &img[toupper(ch) - '!'];
     }
   }
-  if (p != NULL && p->n != NULL) {
-    R_gl_draw_image(p, prx, pry, 0);
-    prx += p->w - 1;
-  } else {
-    prx += off;
-  }
+  return p;
 }
 
-static void Z_printf_generic (image img[], int off, const char *fmt, va_list ap) {
-  int i;
+static int Z_get_char_width_generic (image *img, int off, int ch) {
+  image *p = Z_get_char_image(img, ch);
+  return p == NULL ? off : p->w - 1;
+}
+
+static int Z_putch_generic (image *img, int off, int ch) {
+  image *p = Z_get_char_image(img, ch);
+  int w = p == NULL ? off : p->w - 1;
+  if (p != NULL && p->n != NULL) {
+    R_gl_draw_image(p, prx, pry, 0);
+  }
+  prx += w;
+  return w;
+}
+
+static int Z_get_string_width_generic (image *img, int off, const char *fmt, va_list ap) {
+  int i, w, ww;
   char buf[80];
   vsprintf(buf, fmt, ap);
-  for (i = 0; buf[i]; ++i) {
+  for (i = w = ww = 0; buf[i]; ++i) {
+    switch (buf[i]) {
+      case '\n':
+      case '\r':
+        ww = max(w, ww);
+        w = 0;
+        break;
+      default:
+        w += Z_get_char_width_generic(img, off, (byte)buf[i]);
+    }
+  }
+  return max(w, ww);
+}
+
+static int Z_printf_generic (image *img, int off, const char *fmt, va_list ap) {
+  int i, w, ww;
+  char buf[80];
+  vsprintf(buf, fmt, ap);
+  for (i = w = ww = 0; buf[i]; ++i) {
     switch (buf[i]) {
       case '\n':
         pry += off + 1;
       case '\r':
+        w = max(w, ww);
         prx = 0;
+        w = 0;
         break;
       default:
-        Z_putch_generic(img, off, (byte)buf[i]);
+        w += Z_putch_generic(img, off, (byte)buf[i]);
     }
   }
+  return w;
 }
 
 static void Z_gotoxy (int x, int y) {
@@ -667,18 +698,36 @@ static void Z_gotoxy (int x, int y) {
   pry = y;
 }
 
-static void Z_printbf (const char *fmt, ...) {
+static int Z_get_big_string_width (const char *fmt, ...) {
   va_list a;
   va_start(a, fmt);
-  Z_printf_generic(bfh, 12, fmt, a);
+  int w = Z_get_string_width_generic(bfh, 12, fmt, a);
   va_end(a);
+  return w;
 }
 
-static void Z_printsf (const char *fmt, ...) {
+static int Z_printbf (const char *fmt, ...) {
   va_list a;
   va_start(a, fmt);
-  Z_printf_generic(sfh, 7, fmt, a);
+  int w = Z_printf_generic(bfh, 12, fmt, a);
   va_end(a);
+  return w;
+}
+
+static int Z_get_small_string_width (const char *fmt, ...) {
+  va_list a;
+  va_start(a, fmt);
+  int w = Z_get_string_width_generic(sfh, 7, fmt, a);
+  va_end(a);
+  return w;
+}
+
+static int Z_printsf (const char *fmt, ...) {
+  va_list a;
+  va_start(a, fmt);
+  int w =Z_printf_generic(sfh, 7, fmt, a);
+  va_end(a);
+  return w;
 }
 
 static void Z_printhf (const char *fmt, ...) {
@@ -741,47 +790,102 @@ static int count_menu_entries (const new_menu_t *m) {
   return i;
 }
 
-static int count_menu_xoff (const new_menu_t *m, int sz) {
+#define SCROLLER_MIDDLE 10
+#define TEXTFIELD_MIDDLE 2
+
+static void get_entry_size (const new_menu_t *m, int i, int *w, int *h) {
   assert(m != NULL);
-  assert(sz >= 0);
-  int i, len;
-  // TODO change sz with real pixel width
-  int x = strlen(m->title) * (sz + 1);
-  int n = count_menu_entries(m);
-  for (i = 0; i < n; i++) {
-    switch (m->entries[i].type) {
-      case GM_TEXTFIELD:
-      case GM_SCROLLER:
-        len = 24 * 8; // TODO get real maxlen
-        break;
-      default: len = strlen(m->entries[i].caption) * (sz + 1); break;
-    }
-    x = max(x, len);
+  assert(i >= 0);
+  assert(w != NULL);
+  assert(h != NULL);
+  int x, y;
+  new_msg_t msg;
+  switch (m->entries[i].type) {
+    case GM_BUTTON:
+    case GM_SCROLLER:
+    case GM_TEXTFIELD:
+    case GM_TEXTFIELD_BUTTON:
+      x = Z_get_big_string_width("%s", m->entries[i].caption);
+      break;
+    case GM_SMALL_BUTTON:
+      x = Z_get_small_string_width("%s", m->entries[i].caption);
+      break;
+    default:
+      assert(0);
   }
-  return x;
+  switch (m->entries[i].type) {
+    case GM_BUTTON:
+      msg.type = GM_GETSTR;
+      if (GM_send(m, i, &msg)) {
+        x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+      }
+      y = 16;
+      break;
+    case GM_SMALL_BUTTON:
+      msg.type = GM_GETSTR;
+      if (GM_send(m, i, &msg)) {
+        x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+      }
+      y = 12;
+      break;
+    case GM_SCROLLER:
+      x += (SCROLLER_MIDDLE + 2) * 8;
+      y = 16;
+      break;
+    case GM_TEXTFIELD:
+    case GM_TEXTFIELD_BUTTON:
+      msg.type = GM_GETSTR;
+      if (GM_send(m, i, &msg)) {
+        x += (msg.string.maxlen + 2) * 8;
+      } else {
+        x += (TEXTFIELD_MIDDLE + 2) * 8;
+      }
+      y = 16;
+      break;
+    default:
+      assert(0);
+  }
+  *w = x;
+  *h = y;
+}
+
+static void get_menu_size (const new_menu_t *m, int *w, int *h) {
+  assert(m != NULL);
+  assert(w != NULL);
+  assert(h != NULL);
+  int i, x, y, xx, yy;
+  int n = count_menu_entries(m);
+  switch (m->type) {
+    case GM_BIG: x = Z_get_big_string_width("%s", m->title); break;
+    case GM_SMALL: x = Z_get_small_string_width("%s", m->title); break;
+    default: assert(0);
+  }
+  for (i = 0; i < n; i++) {
+    get_entry_size(m, i, &xx, &yy);
+    x = max(x, xx);
+    y += yy;
+  }
+  *w = x;
+  *h = y;
 }
 
 static int GM_draw (void) {
-  int i, j, xoff, yoff, n, x, y, cx, cy, cur, curoff, curmod;
+  int i, j, xoff, yoff, n, x, y, cur, curoff, w, recv;
   const new_menu_t *m = GM_get();
   new_msg_t msg;
   if (m != NULL) {
-    cx = SCRW / 2;
-    cy = SCRH / 2;
-    n = count_menu_entries(m);
-    y = cy - (n * 16 - 20) / 2;
-    cur = GM_geti();
+    get_menu_size(m, &x, &y);
+    x = SCRW / 2 - x / 2;
+    y = SCRH / 2 - y / 2;
     // --- title ---
     switch (m->type) {
       case GM_BIG:
         yoff = 20;
-        x = cx - count_menu_xoff(m, 12) / 2;
         Z_gotoxy(x, y - 10);
         Z_printbf("%s", m->title);
         break;
       case GM_SMALL:
         yoff = 8;
-        x = cx - count_menu_xoff(m, 7) / 2;
         Z_gotoxy(x, y - 10);
         Z_printsf("%s", m->title);
         break;
@@ -790,59 +894,71 @@ static int GM_draw (void) {
     }
     // --- entries ---
     curoff = yoff;
-    curmod = 0;
+    cur = GM_geti();
+    n = count_menu_entries(m);
     for (i = 0; i < n; i++) {
       if (i == cur) {
         curoff = yoff;
-        curmod = m->entries[i].type == GM_SMALL_BUTTON ? 1 : 0;
+        if (m->entries[cur].type == GM_SMALL_BUTTON) {
+          Z_gotoxy(x - 8, y + curoff);
+          Z_printsf(">");
+        } else {
+          R_gl_draw_image(&msklh[(gm_tm / 6) & 1], x - 25, y + curoff - 8, 0);
+        }
       }
       switch (m->entries[i].type) {
         case GM_BUTTON:
           Z_gotoxy(x, y + yoff);
-          Z_printbf("%s", m->entries[i].caption);
+          w = Z_printbf("%s", m->entries[i].caption);
+          msg.type = GM_GETSTR;
+          if (GM_send(m, i, &msg)) {
+            Z_gotoxy(x + w, y + yoff);
+            Z_printbf("%.*s", msg.string.maxlen, msg.string.s);
+          }
           yoff += 16;
           break;
         case GM_SMALL_BUTTON:
           Z_gotoxy(x, y + yoff);
-          Z_printsf("%s", m->entries[i].caption);
+          w = Z_printsf("%s", m->entries[i].caption);
+          msg.type = GM_GETSTR;
+          if (GM_send(m, i, &msg)) {
+            Z_gotoxy(x + w, y + yoff);
+            Z_printsf("%.*s", msg.string.maxlen, msg.string.s);
+          }
           yoff += 12;
           break;
         case GM_TEXTFIELD:
         case GM_TEXTFIELD_BUTTON:
+          msg.type = GM_GETSTR;
+          recv = GM_send(m, i, &msg);
           Z_gotoxy(x, y + yoff);
-          Z_printbf("%s", m->entries[i].caption);
-          xoff = strlen(m->entries[i].caption) * 19;
+          xoff = Z_printbf("%s", m->entries[i].caption);
           yoff += 9;
+          w = (recv ? msg.string.maxlen : TEXTFIELD_MIDDLE) + 1;
           R_gl_draw_image(&mslotl, x + xoff, y + yoff, 0);
-          for (j = 1; j < 23; j++) {
+          for (j = 1; j < w; j++) {
             R_gl_draw_image(&mslotm, x + xoff + j * 8, y + yoff, 0);
           }
           R_gl_draw_image(&mslotr, x + xoff + j * 8, y + yoff, 0);
           Z_gotoxy(x + xoff + 4, y + yoff - 7);
           if (input && i == cur) {
-            Z_printsf("%.*s", GM_MAX_INPUT, ibuf);
-            Z_gotoxy(x + xoff + 4 + 8 * icur, y + yoff - 7);
-            Z_printsf("_");
-          } else {
-            msg.type = GM_GETSTR;
-            if (GM_send(m, i, &msg)) {
-              Z_printsf("%.*s", msg.string.maxlen, msg.string.s);
-            }
+            Z_printsf("%.*s_", imax, ibuf);
+          } else if (recv) {
+            Z_printsf("%.*s", msg.string.maxlen, msg.string.s);
           }
           yoff += 7;
           break;
         case GM_SCROLLER:
           Z_gotoxy(x, y + yoff);
-          Z_printbf("%s", m->entries[i].caption);
-          xoff = strlen(m->entries[i].caption) * 19;
+          xoff = Z_printbf("%s", m->entries[i].caption);
           R_gl_draw_image(&mbarl, x + xoff, y + yoff, 0);
-          for (j = 1; j < 9; j++) {
+          for (j = 1; j < SCROLLER_MIDDLE + 1; j++) {
             R_gl_draw_image(&mbarm, x + xoff + j * 8, y + yoff, 0);
           }
           R_gl_draw_image(&mbarr, x + xoff + j * 8, y + yoff, 0);
           msg.type = GM_GETINT;
           if (GM_send(m, i, &msg)) {
-            int lev = (msg.integer.i - msg.integer.a) * (7 * 8) / msg.integer.b;
+            int lev = (msg.integer.i - msg.integer.a) * ((SCROLLER_MIDDLE - 1) * 8) / msg.integer.b;
             R_gl_draw_image(&mbaro, x + xoff + lev + 8, y + yoff, 0);
           }
           yoff += 16;
@@ -851,110 +967,9 @@ static int GM_draw (void) {
           assert(0);
       }
     }
-    // --- cursor ---
-    if (curmod) {
-      Z_gotoxy(x - 8, y + curoff);
-      Z_printsf(">");
-    } else {
-      R_gl_draw_image(&msklh[(gm_tm / 6) & 1], x - 25, y + curoff - 8, 0);
-    }
   }
   return m != NULL;
 }
-
-/*
-static void GM_draw (void) {
-  enum {MENU, MSG}; // copypasted from menu.c!
-  enum {
-    CANCEL, NEWGAME, LOADGAME, SAVEGAME, OPTIONS, QUITGAME, QUIT, ENDGAME, ENDGM,
-    PLR1, PLR2, COOP, DM, VOLUME, GAMMA, LOAD, SAVE, PLCOLOR, PLCEND, MUSIC, INTERP,
-    SVOLM, SVOLP, MVOLM, MVOLP, GAMMAM, GAMMAP, PL1CM, PL1CP, PL2CM, PL2CP
-  }; // copypasted from menu.c!
-  int i, j, k, x, y, cx, cy;
-  image *img;
-  gm_tm += 1;
-  if (mnu != NULL) {
-    cx = SCRW / 2;
-    cy = SCRH / 2;
-    if (mnu->type == MENU) {
-      y = cy - (mnu->n * 16 - 20) / 2;
-      Z_gotoxy(cx - mnu->x, y - 10); Z_printbf("%s", mnu->ttl);
-      for (i = 0; i < mnu->n; i++) {
-        if (mnu->t[i] == LOAD || mnu->t[i] == SAVE) {
-          j = y + i * 16 + 29;
-          R_gl_draw_image(&mslotl, cx - mnu->x, j, 0);
-          for (k = 8; k < 184; k += 8) {
-            R_gl_draw_image(&mslotm, cx - mnu->x + k, j, 0);
-          }
-          R_gl_draw_image(&mslotr, cx - mnu->x + 184, j, 0);
-          Z_gotoxy(cx - mnu->x + 4, j - 8);
-          if (input && i == save_mnu.cur) {
-            Z_printsf("%s_", ibuf);
-          } else {
-            Z_printsf("%s", savname[i]);
-          }
-        } else {
-          x = mnu->t[i] >= SVOLM ? (mnu->t[i] >= PL1CM ? 50 : 152) : 0;
-          Z_gotoxy(cx - mnu->x + x, y + i * 16 + 20);
-          Z_printbf("%s", mnu->m[i]);
-          switch (mnu->t[i]) {
-            case MUSIC:
-              Z_printbf(" '%s'", g_music);
-              break;
-            case INTERP:
-              Z_printbf("%s", fullscreen ? "ON" : "OFF");
-              break;
-            case PL1CM:
-            case PL1CP:
-            case PL2CM:
-            case PL2CP:
-              img = PL_getspr(*panimp, 0, 0);
-              R_gl_draw_image(img, cx - mnu->x + (mnu->t[i] == PL1CM ? 15 : 35), y + i * 16 + 20 + 14, 0);
-              img = PL_getspr(*panimp, 0, 1);
-              R_gl_set_color(pcolortab[(mnu->t[i] == PL1CM) ? p1color : p2color] + PLAYER_COLOR_OFFSET);
-              R_gl_draw_image_color(img, cx - mnu->x + (mnu->t[i] == PL1CM ? 15 : 35), y + i * 16 + 20 + 14, 0);
-              break;
-            case SVOLM:
-            case SVOLP:
-            case MVOLM:
-            case MVOLP:
-            case GAMMAM:
-            case GAMMAP:
-              j = y + i * 16 + 20;
-              R_gl_draw_image(&mbarl, cx - mnu->x, j, 0);
-              for (k = 8; k < 144; k += 8) {
-                R_gl_draw_image(&mbarm, cx - mnu->x + k, j, 0);
-              }
-              R_gl_draw_image(&mbarr, cx - mnu->x + 144, j, 0);
-              switch (mnu->t[i]) {
-                case SVOLM:
-                  k = snd_vol;
-                  break;
-                case MVOLM:
-                  k = mus_vol;
-                  break;
-                case GAMMAM:
-                  k = gamma << 5;
-                  break;
-                default:
-                  k = 0;
-                  break;
-              }
-              R_gl_draw_image(&mbaro, cx - mnu->x + 8 + k, j, 0);
-              break;
-          }
-        }
-      }
-      R_gl_draw_image(&msklh[(gm_tm / 6) & 1], cx - mnu->x - 25, y + mnu->cur * 16 + 20 - 8, 0);
-    } else if (mnu->type == MSG) {
-      Z_gotoxy(cx - strlen(mnu->ttl) * 7 / 2, cy - 10); Z_printsf(mnu->ttl);
-      Z_gotoxy(cx - 24, SCRH / 2); Z_printsf("(Y/N)");
-    } else {
-      ERR_fatal("Unknown menu type %i\n", mnu->type);
-    }
-  }
-}
-*/
 
 /* --- View --- */
 

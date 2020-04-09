@@ -85,15 +85,11 @@ struct new_menu_t {
 
 extern byte _warp;
 
-//#define PCOLORN 10
-//extern byte pcolortab[PCOLORN];
-//extern int p1color;
-//extern int p2color;
-
 #define GM_MAX_INPUT 24
 extern char ibuf[GM_MAX_INPUT];
 extern byte input;
 extern int icur;
+extern int imax;
 
 extern short lastkey;
 
