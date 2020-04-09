@@ -64,7 +64,7 @@ static int stack_p = -1;
 char ibuf[GM_MAX_INPUT];
 byte input;
 int icur;
-static int imax;
+int imax;
 static byte cbuf[32];
 short lastkey;
 
@@ -201,7 +201,11 @@ static int GM_save_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
   intptr_t i = (intptr_t)data;
   switch (msg->type) {
     case GM_ENTER:
-      F_getsavnames();
+      if (g_st == GS_GAME) {
+        F_getsavnames();
+      } else {
+        GM_pop();
+      }
       return 1;
     case GM_GETSTR:
       F_getsavnames();
@@ -279,7 +283,7 @@ static const new_menu_t newgame_menu = {
   GM_BIG, "Music", NULL, NULL,
   {
     { GM_SCROLLER, "Volume", &mus_vol, &GM_var_handler, NULL },
-    { GM_BUTTON, "Music:", g_music, &GM_var_handler, NULL },
+    { GM_BUTTON, "Music: ", g_music, &GM_var_handler, NULL },
     { 0, NULL, NULL, NULL, NULL } // end
   }
 }, options_menu = {
