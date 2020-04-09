@@ -24,7 +24,7 @@
 #include "music.h" // S_initmusic S_updatemusic S_donemusic
 #include "render.h" // R_init R_draw R_done
 
-#define TITLE_STR "DooM 2D (SDL2)"
+#define TITLE_STR "Doom 2D (SDL2)"
 
 static Uint32 ticks;
 static int quit = 0;
@@ -261,6 +261,14 @@ void Y_repaint (void) {
   Y_repaint_rect(0, 0, surf->w, surf->h);
 }
 
+void Y_enable_text_input (void) {
+  SDL_StartTextInput();
+}
+
+void Y_disable_text_input (void) {
+  SDL_StopTextInput();
+}
+
 /* --- main --- */
 
 static int sdl_to_key (int code) {
@@ -384,8 +392,56 @@ static void window_event_handler (SDL_WindowEvent *ev) {
   }
 }
 
-static void poll_events (void (*h)(int key, int down)) {
-  int key;
+static int utf8_to_wchar (char *x) {
+  int i = 0;
+  byte *s = (byte*)x;
+  if (s[0] < 0x80) {
+    return s[0];
+  } else if (s[0] < 0xE0) {
+    if (s[0] - 192 >= 0 && s[1] >= 0x80 && s[1] < 0xE0) {
+      i = (s[0] - 192) * 64 + s[1] - 128;
+    }
+  } else if (s[0] < 0xF0) {
+    if (s[1] >= 0x80 && s[1] < 0xE0 && s[2] >= 0x80 && s[2] < 0xE0) {
+      i = ((s[0] - 224) * 64 + s[1] - 128) * 64 + s[2] - 128;
+    }
+  }
+  return i;
+}
+
+static int wchar_to_cp866 (int uch) {
+  if (uch <= 0x7f) {
+    return uch;
+  } else if (uch >= 0x410 && uch <= 0x43f) {
+    return uch - 0x410 + 0x80;
+  } else if (uch >= 0x440 && uch <= 0x44f) {
+    return uch - 0x440 + 0xe0;
+  } else {
+    switch (uch) {
+      // TODO graphics from 0xb0..0xdf
+      case 0x401: return 0xf0;
+      case 0x451: return 0xf1;
+      case 0x404: return 0xf2;
+      case 0x454: return 0xf3;
+      case 0x407: return 0xf4;
+      case 0x457: return 0xf5;
+      case 0x40e: return 0xf6;
+      case 0x45e: return 0xf7;
+      case 0xb0: return 0xf8;
+      case 0x2219: return 0xf9;
+      case 0xb7: return 0xfa;
+      case 0x221a: return 0xfb;
+      case 0x2116: return 0xfc;
+      case 0xa4: return 0xfd;
+      case 0x25a0: return 0xfe;
+      case 0xa0: return 0xff;
+      default: return 0; // unknown
+    }
+  }
+}
+
+static void poll_events (void) {
+  int key, down, uch, ch;
   SDL_Event ev;
   while (SDL_PollEvent(&ev)) {
     switch (ev.type) {
@@ -399,18 +455,22 @@ static void poll_events (void (*h)(int key, int down)) {
         break;
       case SDL_KEYDOWN:
       case SDL_KEYUP:
+        down = ev.type == SDL_KEYDOWN;
         key = sdl_to_key(ev.key.keysym.scancode);
-        I_press(key, ev.type == SDL_KEYDOWN);
-        if (h != NULL) {
-          (*h)(key, ev.type == SDL_KEYDOWN);
-        }
+        I_press(key, down);
+        GM_key(key, down);
+        break;
+      case SDL_TEXTINPUT:
+        uch = utf8_to_wchar(ev.text.text);
+        ch = wchar_to_cp866(uch);
+        GM_input(ch);
         break;
     }
   }
 }
 
 static void step (void) {
-  poll_events(&G_keyf);
+  poll_events();
   S_updatemusic();
   Uint32 t = SDL_GetTicks();
   if (t - ticks > DELAY) {

@@ -21,9 +21,6 @@
 */
 
 #include "glob.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "files.h"
 #include "memory.h"
 #include "error.h"
@@ -40,118 +37,44 @@
 #include "sound.h"
 #include "music.h"
 #include "input.h"
+#include "system.h"
 
-#include <sys/stat.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 
-#define QSND_NUM 14
-
-enum{HIT100,ARMOR,JUMP,WPNS,IMMORTAL,SPEED,OPEN,EXIT};
-
-static byte panim[] = "BBDDAACCDDAABBDDAACCDDAABBDDAACCDDAAEEEEEFEFEFEFEFEFEFEFEFEFEEEEE";
-byte *panimp = panim;
-byte _warp;
-
-byte pcolortab[PCOLORN] = {
+#define PCOLORN 10
+static byte pcolortab[PCOLORN] = {
   0x18, 0x20, 0x40, 0x58, 0x60, 0x70, 0x80, 0xB0, 0xC0, 0xD0
 };
-int p1color = 5;
-int p2color = 4;
+static int p1color = 5;
+static int p2color = 4;
 
-char ibuf[24];
-byte input=0;
-static int icur;
+byte _warp;
 
-enum{MENU,MSG};
-enum{CANCEL,NEWGAME,LOADGAME,SAVEGAME,OPTIONS,QUITGAME,QUIT,ENDGAME,ENDGM,
-  PLR1,PLR2,COOP,DM,VOLUME,GAMMA,LOAD,SAVE,PLCOLOR,PLCEND,MUSIC,INTERP,
-  SVOLM,SVOLP,MVOLM,MVOLP,GAMMAM,GAMMAP,PL1CM,PL1CP,PL2CM,PL2CP};
+#define MAX_STACK 8
+static struct {
+  int n;
+  const new_menu_t *m;
+} stack[MAX_STACK];
+static int stack_p = -1;
 
-#ifndef DEMO
-static int qsnd[QSND_NUM];
-#endif
-
-static char *main_txt[]={
-  "NEW GAME","LOAD GAME","SAVE GAME","OPTIONS","EXIT"
-},*opt_txt[]={
-  "RESTART","VOLUME","BRIGHTNESS","MUSIC","FULLSCREEN:"
-},*ngplr_txt[]={
-  "ONE PLAYER","TWO PLAYERS"
-},*ngdm_txt[]={
-  "COOPERATIVE","DEATHMATCH"
-},*vol_txt[]={
-  "SOUND","MUSIC"
-},*plcolor_txt[]={
-  "FIRST","SECOND"
-},*gamma_txt[]={
-  ""
-};
-
-static byte main_typ[]={
-  NEWGAME,LOADGAME,SAVEGAME,OPTIONS,QUITGAME
-},ngplr_typ[]={
-  PLR1,PLR2
-},ngdm_typ[]={
-  COOP,DM
-},opt_typ[]={
-  ENDGAME,VOLUME,GAMMA,MUSIC,INTERP
-},quit_typ[]={
-  QUIT,CANCEL
-},endgm_typ[]={
-  ENDGM,CANCEL
-},vol_typ[]={
-  SVOLM,MVOLM
-},plcolor_typ[]={
-  PL1CM,PL2CM
-},gamma_typ[]={
-  GAMMAM
-},load_typ[]={
-  LOAD,LOAD,LOAD,LOAD,LOAD,LOAD,LOAD
-},save_typ[]={
-  SAVE,SAVE,SAVE,SAVE,SAVE,SAVE,SAVE
-};
-
-menu_t main_mnu={
-  MENU,5,0,80,"MENU",main_txt,main_typ
-},opt_mnu={
-  MENU,5,0,75,"OPTIONS",opt_txt,opt_typ
-},ngplr_mnu={
-  MENU,2,0,90,"NEW GAME",ngplr_txt,ngplr_typ
-},ngdm_mnu={
-  MENU,2,0,90,"GAME TYPE",ngdm_txt,ngdm_typ
-},vol_mnu={
-  MENU,2,0,40,"VOLUME",vol_txt,vol_typ
-},plcolor_mnu={
-  MENU,2,0,90,"COLOR",plcolor_txt,plcolor_typ
-},gamma_mnu={
-  MENU,1,0,85,"BRIGHTNESS",gamma_txt,gamma_typ
-},load_mnu={
-  MENU,7,0,85,"LOAD GAME",NULL,load_typ
-},save_mnu={
-  MENU,7,0,85,"SAVE GAME",NULL,save_typ
-},quit1_msg={
-  MSG,0,0,0,"ARE YOU SURE?",NULL,quit_typ
-},quit2_msg={
-  MSG,0,0,0,"ARE YOU SURE?",NULL,quit_typ
-},quit3_msg={
-  MSG,0,0,0,"ARE YOU SURE?",NULL,quit_typ
-},endgm_msg={
-  MSG,0,0,0,"RESTART LEVEL?",NULL,endgm_typ
-};
-
-static menu_t *qmsg[3]={&quit1_msg,&quit2_msg,&quit3_msg};
-
-menu_t *mnu=NULL;
-byte gm_redraw=0;
-
-short lastkey=0;
-static void *csnd1,*csnd2,*msnd1,*msnd2,*msnd3,*msnd4,*msnd5,*msnd6;
-static int movsndt=0;
+#define GM_MAX_INPUT 24
+char ibuf[GM_MAX_INPUT];
+byte input;
+int icur;
+static int imax;
 static byte cbuf[32];
+short lastkey;
 
+#define QSND_NUM 14
+static int qsnd[QSND_NUM];
+static snd_t *csnd1, *csnd2, *msnd1, *msnd2, *msnd3, *msnd4, *msnd5, *msnd6;
 static snd_t *voc;
 static int voc_ch;
 
-static void GMV_stop (void) {
+static void GM_stop (void) {
   if (voc != NULL) {
     if (voc_ch) {
       S_stop(voc_ch);
@@ -162,23 +85,306 @@ static void GMV_stop (void) {
   }
 }
 
-void GMV_say (const char nm[8]) {
+static void GM_say (const char nm[8]) {
   snd_t *snd = S_load(nm);
   if (snd) {
-    GMV_stop();
+    GM_stop();
     voc = S_load(nm);
     voc_ch = S_play(voc, 0, 255);
   }
 }
 
-static void GM_set (menu_t *m) {
-  mnu=m;gm_redraw=1;
-  if(g_st==GS_GAME) {
-	//V_setrect(0,SCRW,0,SCRH);V_clr(0,SCRW,0,SCRH,0);//V_setrect(0,320,0,200);V_clr(0,320,0,200,0);
-	//if(_2pl) {V_setrect(SCRW-120,120,0,SCRH);w_o=0;Z_clrst();w_o=SCRH/2;Z_clrst();}//if(_2pl) {V_setrect(200,120,0,200);w_o=0;Z_clrst();w_o=100;Z_clrst();}
-	//else {V_setrect(SCRW-120,120,0,SCRH);w_o=0;Z_clrst();}//else {V_setrect(200,120,50,100);w_o=50;Z_clrst();}
-	//pl1.drawst=pl2.drawst=0xFF;V_setrect(0,SCRW,0,SCRH);//V_setrect(0,320,0,200);
+static int GM_init_int (new_msg_t *msg, int i, int a, int b, int s) {
+  assert(msg != NULL);
+  assert(a <= b);
+  assert(s >= 0);
+  msg->integer.i = min(max(i, a), b);
+  msg->integer.a = a;
+  msg->integer.b = b;
+  msg->integer.s = s;
+  return 1;
+}
+
+static int GM_init_str (new_msg_t *msg, char *str, int maxlen) {
+  assert(msg != NULL);
+  assert(str != NULL);
+  assert(maxlen >= 0);
+  msg->string.s = str;
+  msg->string.maxlen = maxlen;
+  return 1;
+}
+
+static int GM_newgame_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  assert(msg != NULL);
+  intptr_t i = (intptr_t)data;
+  switch (msg->type) {
+    case GM_ENTER:
+      GM_say("_NEWGAME");
+      return 1;
+    case GM_SELECT:
+      _2pl = 0;
+      g_dm = 0;
+      switch (i) {
+        case 0: GM_say("_1PLAYER"); break;
+        case 1: GM_say("_2PLAYER"); break;
+        case 2: GM_say("_DM"); break;
+        // GM_say("_COOP");
+      }
+      switch (i) {
+        case 2: // DEATHMATCH
+          g_dm = 1;
+        case 1: // COOPERATIVE
+          _2pl = 1;
+        case 0: // SINGLEPLAYER
+          g_map = _warp ? _warp : 1;
+          PL_reset();
+          pl1.color = pcolortab[p1color];
+          pl2.color = pcolortab[p2color];
+          G_start();
+          GM_popall();
+          return 1;
+      }
+      break;
   }
+  return 0;
+}
+
+static int GM_var_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  assert(msg != NULL);
+  if (data == &snd_vol) {
+    switch (msg->type) {
+      case GM_GETINT: return GM_init_int(msg, snd_vol, 0, 128, 8);
+      case GM_SETINT: S_volume(msg->integer.i); return 1;
+    }
+  } else if (data == &mus_vol) {
+    switch (msg->type) {
+      case GM_GETINT: return GM_init_int(msg, mus_vol, 0, 128, 8);
+      case GM_SETINT: S_volumemusic(msg->integer.i); return 1;
+    }
+  } else if (data == g_music) {
+    switch (msg->type) {
+      case GM_GETSTR:
+        return GM_init_str(msg, g_music, 8);
+      case GM_SELECT:
+        F_freemus();
+        F_nextmus(g_music);
+        F_loadmus(g_music);
+        S_startmusic(music_time * 2); // ???
+        return 1;
+    }
+  }
+  return 0;
+}
+
+static int GM_load_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  assert(msg != NULL);
+  intptr_t i = (intptr_t)data;
+  switch (msg->type) {
+    case GM_ENTER:
+      F_getsavnames();
+      return 1;
+    case GM_GETSTR:
+      return GM_init_str(msg, (char*)savname[i], 24);
+    case GM_SELECT:
+      if (savok[i]) {
+        load_game(i);
+        GM_popall();
+        return 1;
+      }
+      break;
+  }
+  return 0;
+}
+
+static int GM_save_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  assert(msg != NULL);
+  intptr_t i = (intptr_t)data;
+  switch (msg->type) {
+    case GM_ENTER:
+      F_getsavnames();
+      return 1;
+    case GM_GETSTR:
+      F_getsavnames();
+      return GM_init_str(msg, (char*)savname[i], 24);
+    case GM_END:
+      if (g_st == GS_GAME) {
+        F_savegame(i, msg->string.s); // TODO check size
+        GM_popall();
+        return 1;
+      }
+      break;
+  }
+  return 0;
+}
+
+static int GM_exit_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  switch (msg->type) {
+    case GM_ENTER:
+      GM_say(rand() & 1 ? "_EXIT1" : "_EXIT2");
+      return 1;
+    case GM_SELECT:
+      if (data != NULL) {
+        F_freemus();
+        GM_stop();
+        Z_sound(S_get(qsnd[myrand(QSND_NUM)]), 255);
+        S_wait();
+        ERR_quit();
+      } else {
+        GM_pop();
+      }
+      return 1;
+  }
+  return 0;
+}
+
+static const new_menu_t newgame_menu = {
+  GM_BIG, "New game", NULL, NULL,
+  {
+    { GM_BUTTON, "One player", (void*)0, &GM_newgame_handler, NULL },
+    { GM_BUTTON, "Two players", (void*)1, &GM_newgame_handler, NULL },
+    { GM_BUTTON, "Deathmatch", (void*)2, &GM_newgame_handler, NULL },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+}, loadgame_menu = {
+  GM_BIG, "Load game", NULL, &GM_load_handler,
+  {
+    { GM_TEXTFIELD_BUTTON, "", (void*)0, &GM_load_handler, NULL },
+    { GM_TEXTFIELD_BUTTON, "", (void*)1, &GM_load_handler, NULL },
+    { GM_TEXTFIELD_BUTTON, "", (void*)2, &GM_load_handler, NULL },
+    { GM_TEXTFIELD_BUTTON, "", (void*)3, &GM_load_handler, NULL },
+    { GM_TEXTFIELD_BUTTON, "", (void*)4, &GM_load_handler, NULL },
+    { GM_TEXTFIELD_BUTTON, "", (void*)5, &GM_load_handler, NULL },
+    { GM_TEXTFIELD_BUTTON, "", (void*)6, &GM_load_handler, NULL },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+}, savegame_menu = {
+  GM_BIG, "Save game", NULL, &GM_save_handler,
+  {
+    { GM_TEXTFIELD, "", (void*)0, &GM_save_handler, NULL },
+    { GM_TEXTFIELD, "", (void*)1, &GM_save_handler, NULL },
+    { GM_TEXTFIELD, "", (void*)2, &GM_save_handler, NULL },
+    { GM_TEXTFIELD, "", (void*)3, &GM_save_handler, NULL },
+    { GM_TEXTFIELD, "", (void*)4, &GM_save_handler, NULL },
+    { GM_TEXTFIELD, "", (void*)5, &GM_save_handler, NULL },
+    { GM_TEXTFIELD, "", (void*)6, &GM_save_handler, NULL },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+}, sound_menu = {
+  GM_BIG, "Sound", NULL, NULL,
+  {
+    { GM_SCROLLER, "Volume", &snd_vol, &GM_var_handler, NULL },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+}, music_menu = {
+  GM_BIG, "Music", NULL, NULL,
+  {
+    { GM_SCROLLER, "Volume", &mus_vol, &GM_var_handler, NULL },
+    { GM_BUTTON, "Music:", g_music, &GM_var_handler, NULL },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+}, options_menu = {
+  GM_BIG, "Options", NULL, NULL,
+  {
+    //{ GM_BUTTON, "Video", NULL, NULL, NULL },
+    { GM_BUTTON, "Sound", NULL, NULL, &sound_menu },
+    { GM_BUTTON, "Music", NULL, NULL, &music_menu },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+}, exit_menu = {
+  GM_SMALL, "You are sure?", NULL, &GM_exit_handler,
+  {
+    { GM_SMALL_BUTTON, "Yes", (void*)1, &GM_exit_handler, NULL },
+    { GM_SMALL_BUTTON, "No", (void*)0, &GM_exit_handler, NULL },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+}, main_menu = {
+  GM_BIG, "Menu", NULL, NULL,
+  {
+    { GM_BUTTON, "New game", NULL, NULL, &newgame_menu },
+    { GM_BUTTON, "Load game", NULL, NULL, &loadgame_menu },
+    { GM_BUTTON, "Save game", NULL, NULL, &savegame_menu },
+    { GM_BUTTON, "Options", NULL, NULL, &options_menu },
+    { GM_BUTTON, "Exit", NULL, NULL, &exit_menu },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+};
+
+void GM_push (const new_menu_t *m) {
+  assert(m != NULL);
+  assert(stack_p >= -1);
+  assert(stack_p < MAX_STACK - 1);
+  new_msg_t msg;
+  stack_p += 1;
+  if (stack[stack_p].m != m) {
+    stack[stack_p].n = 0;
+    stack[stack_p].m = m;
+  }
+  msg.type = GM_ENTER;
+  GM_send_this(m, &msg);
+}
+
+void GM_pop (void) {
+  assert(stack_p >= 0);
+  new_msg_t msg;
+  stack_p -= 1;
+  msg.type = GM_LEAVE;
+  GM_send_this(stack[stack_p + 1].m, &msg);
+}
+
+void GM_popall (void) {
+  int i;
+  for (i = 0; i >= -1; i--) {
+    GM_pop();
+  }
+}
+
+const new_menu_t *GM_get (void) {
+  if (stack_p >= 0) {
+    return stack[stack_p].m;
+  } else {
+    return NULL;
+  }
+}
+
+int GM_geti (void) {
+  if (stack_p >= 0) {
+    return stack[stack_p].n;
+  } else {
+    return 0;
+  }
+}
+
+static void GM_normalize_message (new_msg_t *msg) {
+  switch (msg->type) {
+    case GM_SETINT:
+      msg->integer.i = min(max(msg->integer.i, msg->integer.a), msg->integer.b);
+      break;
+    case GM_SETSTR:
+      assert(msg->string.maxlen >= 0);
+      break;
+  }
+}
+
+int GM_send_this (const new_menu_t *m, new_msg_t *msg) {
+  assert(m != NULL);
+  assert(msg != NULL);
+  if (m->handler != NULL) {
+    GM_normalize_message(msg);
+    return m->handler(msg, m, m->data);
+  }
+  return 0;
+}
+
+int GM_send (const new_menu_t *m, int i, new_msg_t *msg) {
+  assert(m != NULL);
+  assert(i >= 0);
+  assert(msg != NULL);
+  const new_var_t *v = &m->entries[i];
+  if (v->handler != NULL) {
+    GM_normalize_message(msg);
+    return v->handler(msg, m, v->data);
+  }
+  return 0;
 }
 
 void G_code (void) {
@@ -223,347 +429,136 @@ void G_code (void) {
   Z_sound(s,128);
 }
 
-static void GM_command (int c) {
-  switch(c) {
-    case CANCEL:
-      GM_set(NULL);break;
-    case INTERP:
-      R_toggle_fullscreen();
-      GM_set(mnu);
-      break;
-    case MUSIC:
-      F_freemus();
-      F_nextmus(g_music);
-      F_loadmus(g_music);
-      S_startmusic(music_time*2);
-      GM_set(mnu);
-      break;
-    case NEWGAME:
-      GMV_say("_NEWGAME");
-      GM_set(&ngplr_mnu);break;
-    case PLR2:
-      GMV_say("_2PLAYER");
-      GM_set(&ngdm_mnu);break;
-    case PLR1:
-      GMV_say("_1PLAYER");
-      ngdm_mnu.cur=0;
-    case COOP: case DM:
-      if(c==COOP) GMV_say("_COOP");
-      else if(c==DM) GMV_say("_DM");
-      if(c!=PLR1) {GM_set(&plcolor_mnu);break;}
-    case PLCEND:
-      _2pl=ngplr_mnu.cur;
-      g_dm=ngdm_mnu.cur;
-      g_map=(_warp)?_warp:1;
-      PL_reset();
-      if(_2pl) {
-        pl1.color=pcolortab[p1color];
-        pl2.color=pcolortab[p2color];
-      }else pl1.color=0x70;
-      G_start();
-      GM_set(NULL);break;
-    case OPTIONS:
-      GMV_say("_RAZNOE");
-      GM_set(&opt_mnu);break;
-    case LOADGAME:
-      GMV_say("_OLDGAME");
-      F_getsavnames();GM_set(&load_mnu);break;
-    case SAVEGAME:
-      if(g_st!=GS_GAME) break;
-      GMV_say("_SAVEGAM");
-      F_getsavnames();GM_set(&save_mnu);break;
-    case SAVE:
-	  input=1;memcpy(ibuf,savname[save_mnu.cur],24);icur=strlen(ibuf);
-	  GM_set(mnu);break;
-    case LOAD:
-	  if(!savok[load_mnu.cur]) break;
-	  load_game(load_mnu.cur);
-	  GM_set(NULL);break;
-	case VOLUME:
-	  GMV_say("_VOLUME");
-	  GM_set(&vol_mnu);break;
-	case GAMMA:
-	  GMV_say("_GAMMA");
-	  GM_set(&gamma_mnu);break;
-	case QUITGAME:
-	  GMV_say((rand()&1)?"_EXIT1":"_EXIT2");
-	  GM_set(qmsg[myrand(3)]);break;
-	case ENDGAME:
-	  if(g_st!=GS_GAME) break;
-	  GMV_say("_RESTART");
-	  GM_set(&endgm_msg);break;
-	case QUIT:
-	  F_freemus();
-	  GMV_stop();
-#ifndef DEMO
-	  c = Z_sound(S_get(qsnd[myrand(QSND_NUM)]), 255);
-    S_wait();
-#endif
-	  ERR_quit();break;
-    case ENDGM:
-	  PL_reset();G_start();
-	  GM_set(NULL);break;
-	case PL1CM:
-	  if(--p1color<0) p1color=PCOLORN-1; break;
-	case PL1CP:
-	  if(++p1color>=PCOLORN) p1color=0; break;
-	case PL2CM:
-	  if(--p2color<0) p2color=PCOLORN-1; break;
-	case PL2CP:
-	  if(++p2color>=PCOLORN) p2color=0; break;
-	case SVOLM:
-	  S_volume(snd_vol-8);break;
-	case SVOLP:
-	  S_volume(snd_vol+8);break;
-	case MVOLM:
-	  S_volumemusic(mus_vol-8);break;
-	case MVOLP:
-	  S_volumemusic(mus_vol+8);break;
-	case GAMMAM:
-    R_setgamma(R_getgamma() - 1);
-    break;
-	case GAMMAP:
-    R_setgamma(R_getgamma() + 1);
-    break;
+static int count_menu_entries (const new_menu_t *m) {
+  assert(m != NULL);
+  int i = 0;
+  while (m->entries[i].type != 0) {
+    i += 1;
   }
+  return i;
 }
 
-struct {
-    int keysym;
-    byte ch;
-} keychar[] = {
-    {KEY_SPACE, ' '},
-    {KEY_0, '0'},
-    {KEY_1, '1'},
-    {KEY_2, '2'},
-    {KEY_3, '3'},
-    {KEY_4, '4'},
-    {KEY_5, '5'},
-    {KEY_6, '6'},
-    {KEY_7, '7'},
-    {KEY_8, '8'},
-    {KEY_9, '9'},
-    //{KEY_UNDERSCORE, '_'},
-    {KEY_A, 'A'},
-    {KEY_B, 'B'},
-    {KEY_C, 'C'},
-    {KEY_D, 'D'},
-    {KEY_E, 'E'},
-    {KEY_F, 'F'},
-    {KEY_G, 'G'},
-    {KEY_H, 'H'},
-    {KEY_I, 'I'},
-    {KEY_J, 'J'},
-    {KEY_K, 'K'},
-    {KEY_L, 'L'},
-    {KEY_M, 'M'},
-    {KEY_N, 'N'},
-    {KEY_O, 'O'},
-    {KEY_P, 'P'},
-    {KEY_Q, 'Q'},
-    {KEY_R, 'R'},
-    {KEY_S, 'S'},
-    {KEY_T, 'T'},
-    {KEY_U, 'U'},
-    {KEY_V, 'V'},
-    {KEY_W, 'W'},
-    {KEY_X, 'X'},
-    {KEY_Y, 'Y'},
-    {KEY_Z, 'Z'},
-    {KEY_COMMA,','},
-    {0}
-};
-
-static byte get_keychar (int keysym) {
-    int i = 0;
-    while (keychar[i].keysym) {
-        if (keychar[i].keysym == keysym) return keychar[i].ch;
-        i++;
-    }
-    return 0;
+static int strnlen (const char *s, int len) {
+  int i = 0;
+  while (i < len && s[i] != 0) {
+    i++;
+  }
+  return i;
 }
 
-static void shot (void) {
-/*
-  static int num=1;
-  char fn[100];//...
-#ifndef WIN32
-  char *e = getenv("HOME");
-  strncpy(fn, e, 60);
-  sprintf(&fn[strlen(fn)],"/.doom2d-rembo",num);
-  mkdir(fn, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  sprintf(&fn[strlen(fn)],"/shot%04d.bmp",num);
-#else
-  sprintf(fn,"shot%04d.bmp",num);
-#endif
-  SDL_SaveBMP(screen, fn);
-  ++num;
-*/
+static int state_for_anykey (int x) {
+  return x == GS_TITLE || x == GS_ENDSCR;
 }
 
 int GM_act (void) {
-  byte c;
-
-  if(mnu==&plcolor_mnu) {
-    if(*(++panimp)==0) panimp=panim;
-    GM_set(mnu);
-  }
-  if(movsndt>0) --movsndt; else movsndt=0;
-  if(g_st==GS_TITLE) if(!mnu) if(lastkey) {
-    GM_set(&main_mnu);Z_sound(msnd3,128);
-    lastkey=0;
-    return 1;
-  }
-  if (input) {
-    switch (lastkey) {
-      case KEY_RETURN:
-      case KEY_KP_ENTER:
-        F_savegame(save_mnu.cur, ibuf);
-        input = 0;
-        GM_set(NULL);
-        break;
-      case KEY_ESCAPE:
-        input = 0;
-        GM_set(mnu);
-        break;
-      case KEY_BACKSPACE:
-        if (icur) {
-          icur -= 1;
-          ibuf[icur] = 0;
-          GM_set(mnu);
-        }
-        break;
-      default:
-        if (icur < 23) {
-          c = get_keychar(lastkey);
-          if (c != 0) {
-            ibuf[icur] = c;
-            icur += 1;
-            ibuf[icur] = 0;
-            GM_set(mnu);
-          }
-        }
-        break;
+  int n, cur;
+  new_msg_t msg;
+  const new_var_t *v;
+  const new_menu_t *m = GM_get ();
+  if (m == NULL) {
+    if (lastkey == KEY_ESCAPE || (state_for_anykey(g_st) && lastkey != KEY_UNKNOWN)) {
+      GM_push(&main_menu);
+      Z_sound(msnd3, 128);
     }
   } else {
+    n = count_menu_entries(m);
+    cur = stack[stack_p].n;
+    v = &m->entries[cur];
     switch (lastkey) {
       case KEY_ESCAPE:
-        if (mnu == NULL) {
-          GM_set(&main_mnu);
-          Z_sound(msnd3, 128);
+        if (v->type == GM_TEXTFIELD && input) {
+          input = 0;
+          Y_disable_text_input();
+          msg.type = GM_CANCEL;
+          GM_send(m, cur, &msg);
         } else {
-          GM_set(NULL);
+          GM_pop();
           Z_sound(msnd4, 128);
-        }
-        break;
-      case KEY_F5:
-        if (mnu == NULL) {
-          Z_sound(msnd3, 128);
-          GMV_say("_GAMMA");
-          GM_set(&gamma_mnu);
-        }
-        break;
-      case KEY_F4:
-        if (mnu == NULL) {
-          Z_sound(msnd3, 128);
-          GMV_say("_VOLUME");
-          GM_set(&vol_mnu);
-        }
-        break;
-      case KEY_F2:
-        if (mnu == NULL && g_st == GS_GAME) {
-          Z_sound(msnd3, 128);
-          F_getsavnames();
-          GM_set(&save_mnu);
-        }
-        break;
-      case KEY_F3:
-        if (mnu == NULL) {
-          Z_sound(msnd3, 128);
-          F_getsavnames();
-          GM_set(&load_mnu);
-        }
-        break;
-      case KEY_F10:
-        if (mnu == NULL) {
-          Z_sound(msnd3, 128);
-          GM_command(QUITGAME);
         }
         break;
       case KEY_UP:
-      case KEY_KP_8:
-        if (mnu != NULL && mnu->type == MENU) {
-          mnu->cur -= 1;
-          if (mnu->cur < 0) {
-            mnu->cur = mnu->n - 1;
-          }
-          GM_set(mnu);
-          Z_sound(msnd1, 128);
-        }
+        stack[stack_p].n = stack[stack_p].n - 1 < 0 ? n - 1 : stack[stack_p].n - 1;
+        Z_sound(msnd1, 128);
         break;
       case KEY_DOWN:
-      case KEY_KP_5:
-      case KEY_KP_2:
-        if (mnu != NULL && mnu->type == MENU) {
-          mnu->cur += 1;
-          if (mnu->cur >= mnu->n) {
-            mnu->cur = 0;
-          }
-          GM_set(mnu);
-          Z_sound(msnd1, 128);
-        }
+        stack[stack_p].n = stack[stack_p].n + 1 >= n ? 0 : stack[stack_p].n + 1;
+        Z_sound(msnd1, 128);
         break;
       case KEY_LEFT:
       case KEY_RIGHT:
-      case KEY_KP_4:
-      case KEY_KP_6:
-        if (mnu != NULL && mnu->type == MENU && mnu->t[mnu->cur] >= SVOLM) {
-          GM_command(mnu->t[mnu->cur] + (lastkey == KEY_LEFT || lastkey == KEY_KP_4));
-          GM_set(mnu);
-          if (!movsndt) {
-            movsndt = Z_sound(lastkey == KEY_LEFT || lastkey == KEY_KP_4 ? msnd5 : msnd6, 255);
+        if (v->type == GM_SCROLLER) {
+          msg.integer.type = GM_GETINT;
+          if (GM_send(m, cur, &msg)) {
+            msg.integer.type = GM_SETINT;
+            msg.integer.i += lastkey == KEY_LEFT ? -msg.integer.s : msg.integer.s;
+            msg.integer.i = min(max(msg.integer.i, msg.integer.a), msg.integer.b);
+            if (GM_send(m, cur, &msg)) {
+              Z_sound(lastkey == KEY_LEFT ? msnd5 : msnd6, 255);
+            }
+          }
+        } else if (v->type == GM_TEXTFIELD && input) {
+          //icur += lastkey == KEY_LEFT ? -1 : +1;
+          //icur = min(max(icur, 0), strnlen(ibuf, imax));
+        }
+        break;
+      case KEY_BACKSPACE:
+        if (v->type == GM_TEXTFIELD && input) {
+          if (icur > 0) {
+            // FIXIT buffers in strncpy must not overlap
+            strncpy(&ibuf[icur - 1], &ibuf[icur], imax - icur);
+            ibuf[imax - 1] = 0;
+            icur -= 1;
           }
         }
         break;
       case KEY_RETURN:
-      case KEY_SPACE:
-      case KEY_KP_ENTER:
-        if (mnu != NULL && mnu->type == MENU) {
-          if (mnu->t[mnu->cur] >= PL1CM) {
-            Z_sound(msnd2, 128);
-            GM_command(PLCEND);
-            break;
-          } else if (mnu->t[mnu->cur] < SVOLM) {
-            Z_sound(msnd2,128);
-            GM_command(mnu->t[mnu->cur]);
+        if (v->submenu != NULL) {
+          GM_push(v->submenu);
+          Z_sound(msnd2, 128);
+        } else if (v->type == GM_TEXTFIELD) {
+          if (input) {
+            input = 0;
+            Y_disable_text_input();
+            msg.type = GM_END;
+            msg.string.s = ibuf;
+            msg.string.maxlen = imax;
+            GM_send(m, cur, &msg);
+          } else {
+            msg.type = GM_GETSTR;
+            if (GM_send(m, cur, &msg)) {
+              imax = min(msg.string.maxlen, GM_MAX_INPUT);
+              strncpy(ibuf, msg.string.s, imax);
+              icur = strnlen(ibuf, imax);
+            }
+            input = 1;
+            Y_enable_text_input();
+            msg.type = GM_BEGIN;
+            GM_send(m, cur, &msg);
           }
-        }
-        break;
-      case KEY_Y:
-        if (mnu != NULL && mnu->type == MSG) {
-          Z_sound(msnd3, 128);
-          GM_command(mnu->t[0]);
-        }
-        break;
-      case KEY_N:
-        if (mnu != NULL && mnu->type == MSG) {
-          Z_sound(msnd4, 128);
-          GM_command(mnu->t[1]);
-        }
-        break;
-      case KEY_F1:
-        if (shot_vga) {
-          shot();
-          Z_sound(msnd4, 128);
+        } else {
+          msg.type = GM_SELECT;
+          GM_send(m, cur, &msg);
         }
         break;
     }
   }
   lastkey = KEY_UNKNOWN;
-  return mnu ? 1 : 0;
+  return m != NULL;
 }
 
-void G_keyf (int key, int down) {
+void GM_input (int ch) {
+  if (ch != 0 && input) {
+    if (icur < imax) {
+      ibuf[icur] = ch;
+      icur += 1;
+      if (icur < imax) {
+        ibuf[icur] = 0;
+      }
+    }
+  }
+}
+
+void GM_key (int key, int down) {
   int i;
   if (down) {
     lastkey = key;
@@ -571,34 +566,32 @@ void G_keyf (int key, int down) {
       for (i = 0; i < 31; ++i) {
         cbuf[i] = cbuf[i + 1];
       }
-      cbuf[31] = get_keychar(key);
+      //cbuf[31] = get_keychar(key);
     }
   }
 }
 
 void GM_init (void) {
-#ifndef DEMO
   int i;
-  static char nm[QSND_NUM][6]={
-	"CYBSIT","KNTDTH","MNPAIN","PEPAIN","SLOP","MANSIT","BOSPN","VILACT",
-	"PLFALL","BGACT","BGDTH2","POPAIN","SGTATK","VILDTH"
-  };
   char s[8];
-
-  s[0]='D';s[1]='S';
-  for(i=0;i<QSND_NUM;++i) {
-    memcpy(s+2,nm[i],6);
-    qsnd[i]=F_getresid(s);
+  static const char nm[QSND_NUM][6] = {
+    "CYBSIT", "KNTDTH", "MNPAIN", "PEPAIN", "SLOP", "MANSIT", "BOSPN", "VILACT",
+    "PLFALL", "BGACT", "BGDTH2", "POPAIN", "SGTATK", "VILDTH"
+  };
+  s[0] = 'D';
+  s[1] = 'S';
+  for (i = 0; i < QSND_NUM; ++i) {
+    memcpy(s + 2, nm[i], 6);
+    qsnd[i] = F_getresid(s);
   }
-#endif
-  csnd1=Z_getsnd("HAHA1");
-  csnd2=Z_getsnd("RADIO");
-  msnd1=Z_getsnd("PSTOP");
-  msnd2=Z_getsnd("PISTOL");
-  msnd3=Z_getsnd("SWTCHN");
-  msnd4=Z_getsnd("SWTCHX");
-  msnd5=Z_getsnd("SUDI");
-  msnd6=Z_getsnd("TUDI");
+  csnd1 = Z_getsnd("HAHA1");
+  csnd2 = Z_getsnd("RADIO");
+  msnd1 = Z_getsnd("PSTOP");
+  msnd2 = Z_getsnd("PISTOL");
+  msnd3 = Z_getsnd("SWTCHN");
+  msnd4 = Z_getsnd("SWTCHX");
+  msnd5 = Z_getsnd("SUDI");
+  msnd6 = Z_getsnd("TUDI");
   F_loadmus("MENU");
   S_startmusic(0);
 }

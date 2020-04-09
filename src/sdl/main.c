@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <stdlib.h> // srand exit
 #include <string.h> // strcasecmp
+#include <ctype.h>
 #include <assert.h>
 #include "system.h"
 #include "input.h"
@@ -54,6 +55,7 @@ static Uint32 ticks;
 static int quit = 0;
 static SDL_Surface *surf = NULL;
 static int mode = MODE_NONE;
+static int text_input;
 
 /* --- error.h --- */
 
@@ -232,6 +234,14 @@ void Y_repaint (void) {
   SDL_Flip(surf);
 }
 
+void Y_enable_text_input (void) {
+  text_input = 1;
+}
+
+void Y_disable_text_input (void) {
+  text_input = 0;
+}
+
 /* --- main --- */
 
 static int sdl_to_key (int code) {
@@ -344,8 +354,8 @@ static int sdl_to_key (int code) {
   }
 }
 
-static void poll_events (void (*h)(int key, int down)) {
-  int key;
+static void poll_events (void) {
+  int key, sym, down;
   SDL_Event ev;
   while (SDL_PollEvent(&ev)) {
     switch (ev.type) {
@@ -357,10 +367,14 @@ static void poll_events (void (*h)(int key, int down)) {
         break;
       case SDL_KEYDOWN:
       case SDL_KEYUP:
-        key = sdl_to_key(ev.key.keysym.sym);
-        I_press(key, ev.type == SDL_KEYDOWN);
-        if (h != NULL) {
-          (*h)(key, ev.type == SDL_KEYDOWN);
+        sym = ev.key.keysym.sym;
+        down = ev.type == SDL_KEYDOWN;
+        key = sdl_to_key(sym);
+        I_press(key, down);
+        GM_key(key, down);
+        if (down && text_input && sym >= 0x20 && sym <= 0x7e) {
+          // TODO fix this
+          GM_input(sym);
         }
         break;
     }
@@ -368,7 +382,7 @@ static void poll_events (void (*h)(int key, int down)) {
 }
 
 static void step (void) {
-  poll_events(&G_keyf);
+  poll_events();
   S_updatemusic();
   Uint32 t = SDL_GetTicks();
   if (t - ticks > DELAY) {
@@ -385,7 +399,7 @@ int main (int argc, char *argv[]) {
     logo("main: failed to init SDL: %s\n", SDL_GetError());
     return 1;
   }
-  SDL_WM_SetCaption("Doom 2D v1.351", "Doom 2D");
+  SDL_WM_SetCaption("Doom 2D (SDL)", "Doom 2D");
   // Player 1 defaults
   pl1.ku = KEY_KP_8;
   pl1.kd = KEY_KP_5;
