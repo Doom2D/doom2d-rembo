@@ -94,7 +94,7 @@ static void GM_say (const char nm[8]) {
   }
 }
 
-static int GM_init_int (new_msg_t *msg, int i, int a, int b, int s) {
+int GM_init_int (new_msg_t *msg, int i, int a, int b, int s) {
   assert(msg != NULL);
   assert(a <= b);
   assert(s >= 0);
@@ -105,7 +105,7 @@ static int GM_init_int (new_msg_t *msg, int i, int a, int b, int s) {
   return 1;
 }
 
-static int GM_init_str (new_msg_t *msg, char *str, int maxlen) {
+int GM_init_str (new_msg_t *msg, char *str, int maxlen) {
   assert(msg != NULL);
   assert(str != NULL);
   assert(maxlen >= 0);
@@ -221,6 +221,13 @@ static int GM_save_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
   return 0;
 }
 
+static int GM_options_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  switch (msg->type) {
+    case GM_SELECT: GM_push(R_menu()); return 1;
+  }
+  return 0;
+}
+
 static int GM_exit_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
   switch (msg->type) {
     case GM_ENTER:
@@ -289,7 +296,7 @@ static const new_menu_t newgame_menu = {
 }, options_menu = {
   GM_BIG, "Options", NULL, NULL,
   {
-    //{ GM_BUTTON, "Video", NULL, NULL, NULL },
+    { GM_BUTTON, "Video", NULL, &GM_options_handler, NULL },
     { GM_BUTTON, "Sound", NULL, NULL, &sound_menu },
     { GM_BUTTON, "Music", NULL, NULL, &music_menu },
     { 0, NULL, NULL, NULL, NULL } // end

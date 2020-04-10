@@ -93,6 +93,9 @@ extern int imax;
 
 extern short lastkey;
 
+int GM_init_int (new_msg_t *msg, int i, int a, int b, int s);
+int GM_init_str (new_msg_t *msg, char *str, int maxlen);
+
 void GM_push (const new_menu_t *m);
 void GM_pop (void);
 void GM_popall (void);
