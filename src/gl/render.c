@@ -858,6 +858,7 @@ static void get_menu_size (const new_menu_t *m, int *w, int *h) {
     case GM_SMALL: x = Z_get_small_string_width("%s", m->title); break;
     default: assert(0);
   }
+  y = 0;
   for (i = 0; i < n; i++) {
     get_entry_size(m, i, &xx, &yy);
     x = max(x, xx);
