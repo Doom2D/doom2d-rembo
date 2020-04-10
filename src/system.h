@@ -3,8 +3,14 @@
 
 #include "glob.h"
 
-#define SYSTEM_USE_OPENGL (1 << 0)
-#define SYSTEM_USE_FULLSCREEN (1 << 1)
+typedef struct videomode_size_t {
+  int w, h, r;
+} videomode_size_t;
+
+typedef struct videomode_t {
+  int n;
+  videomode_size_t *modes;
+} videomode_t;
 
 /* common video subsystem routines */
 void Y_get_videomode (int *w, int *h);
@@ -15,10 +21,12 @@ int Y_get_fullscreen (void);
 
 /* hardware specific rendering */
 int Y_set_videomode_opengl (int w, int h, int fullscreen);
+const videomode_t *Y_get_videomode_list_opengl (int fullscreen);
 void Y_swap_buffers (void);
 
 /* software specific rendering */
 int Y_set_videomode_software (int w, int h, int fullscreen);
+const videomode_t *Y_get_videomode_list_software (int fullscreen);
 void Y_get_buffer (byte **buf, int *w, int *h, int *pitch);
 void Y_set_vga_palette (byte *vgapal);
 void Y_repaint_rect (int x, int y, int w, int h);

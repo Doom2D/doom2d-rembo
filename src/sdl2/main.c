@@ -31,6 +31,7 @@ static int quit = 0;
 static SDL_Window *window;
 static SDL_GLContext context;
 static SDL_Surface *surf;
+static videomode_t vlist;
 
 /* --- error.h --- */
 
@@ -199,6 +200,48 @@ void Y_unset_videomode (void) {
     SDL_DestroyWindow(window);
     window = NULL;
   }
+}
+
+static void init_videomode_list (void) {
+  int i, j, k;
+  SDL_DisplayMode m;
+  int n = SDL_GetNumDisplayModes(0);
+  if (vlist.modes != NULL) {
+    free(vlist.modes);
+    vlist.modes = NULL;
+    vlist.n = 0;
+  }
+  if (n > 0) {
+    vlist.modes = malloc(n * sizeof(videomode_size_t));
+    if (vlist.modes != NULL) {
+      j = 0;
+      for (i = 0; i < n; i++) {
+        SDL_GetDisplayMode(0, i, &m);
+        k = 0;
+        while (k < j && (m.w != vlist.modes[k].w || m.h != vlist.modes[k].h)) {
+          k++;
+        }
+        if (k >= j) {
+          vlist.modes[j] = (videomode_size_t) {
+            .w = m.w,
+            .h = m.h
+          };
+          j++;
+        }
+      }
+      vlist.n = j;
+    }
+  }
+}
+
+const videomode_t *Y_get_videomode_list_opengl (int fullscreen) {
+  init_videomode_list();
+  return &vlist;
+}
+
+const videomode_t *Y_get_videomode_list_software (int fullscreen) {
+  init_videomode_list();
+  return &vlist;
 }
 
 void Y_set_fullscreen (int yes) {

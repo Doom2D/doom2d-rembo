@@ -1837,18 +1837,7 @@ void R_set_videomode (int w, int h, int fullscreen) {
     if (was == 0) {
       ERR_failinit("Unable to set video mode\n");
     }
-  } else {
-    Y_get_videomode(&SCRW, &SCRH);
-    root = R_cache_new();
-    assert(root);
-    R_alloc();
-    R_reload_textures();
   }
-}
-
-static void R_fullscreen (int yes) {
-  R_cache_free(root, 0);
-  Y_set_fullscreen(yes);
   Y_get_videomode(&SCRW, &SCRH);
   root = R_cache_new();
   assert(root);
@@ -1857,23 +1846,57 @@ static void R_fullscreen (int yes) {
 }
 
 static int R_video_menu_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  const videomode_t *v;
   intptr_t i = (intptr_t)data;
+  static int w, h;
+  static int vmode;
   static int fullscreen;
+  static char str[16];
   switch (i) {
     case -1:
       switch (msg->type) {
-        case GM_ENTER: fullscreen = Y_get_fullscreen(); return 1;
+        case GM_ENTER:
+          Y_get_videomode(&w, &h);
+          fullscreen = Y_get_fullscreen();
+          v = Y_get_videomode_list_opengl(fullscreen);
+          vmode = 0;
+          while (vmode < v->n && v->modes[vmode].w != w && v->modes[vmode].h != h) {
+            vmode += 1;
+          }
+          if (vmode < v->n) {
+            w = v->modes[vmode].w;
+            h = v->modes[vmode].h;
+          }
+          snprintf(str, 16, "%ix%i", w, h);
+          return 1;
       }
       break;
     case 0:
+      switch (msg->type) {
+        case GM_SELECT:
+          v = Y_get_videomode_list_opengl(fullscreen);
+          vmode = vmode + 1 >= v->n ? 0 : vmode + 1;
+          if (v->n > 0) {
+            w = v->modes[vmode].w;
+            h = v->modes[vmode].h;
+          } else {
+            Y_get_videomode(&w, &h);
+          }
+          snprintf(str, 16, "%ix%i", w, h);
+          return 1;
+        case GM_GETSTR:
+          return GM_init_str(msg, str, 16);
+      }
+      break;
+    case 1:
       switch (msg->type) {
         case GM_SELECT: fullscreen = !fullscreen; return 1;
         case GM_GETSTR: return GM_init_str(msg, fullscreen ? "Yes" : "No", 3);
       }
       break;
-    case 1:
+    case 2:
       switch (msg->type) {
-        case GM_SELECT: R_fullscreen(fullscreen); return 1;
+        case GM_SELECT: R_set_videomode(w, h, fullscreen); return 1;
       }
   }
   return 0;
@@ -1882,8 +1905,9 @@ static int R_video_menu_handler (new_msg_t *msg, const new_menu_t *m, void *data
 static const new_menu_t video_menu = {
   GM_BIG, "Video", (void*)-1, &R_video_menu_handler,
   {
-    { GM_BUTTON, "Fullscreen: ", (void*)0, &R_video_menu_handler, NULL },
-    { GM_BUTTON, "Apply", (void*)1, &R_video_menu_handler, NULL },
+    { GM_BUTTON, "Videomode: ", (void*)0, &R_video_menu_handler, NULL },
+    { GM_BUTTON, "Fullscreen: ", (void*)1, &R_video_menu_handler, NULL },
+    { GM_BUTTON, "Apply", (void*)2, &R_video_menu_handler, NULL },
     { 0, NULL, NULL, NULL, NULL } // end
   }
 };
