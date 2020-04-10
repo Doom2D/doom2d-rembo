@@ -567,10 +567,16 @@ void GM_key (int key, int down) {
   if (down) {
     lastkey = key;
     if (!_2pl || cheat) {
-      for (i = 0; i < 31; ++i) {
+      for (i = 0; i < 31; i++) {
         cbuf[i] = cbuf[i + 1];
       }
-      //cbuf[31] = get_keychar(key);
+      if (key >= KEY_0 && key <= KEY_9) {
+        cbuf[31] = key - KEY_0 + '0';
+      } else if (key >= KEY_A && key <= KEY_Z) {
+        cbuf[31] = key - KEY_A + 'A';
+      } else {
+        cbuf[31] = 0;
+      }
     }
   }
 }
