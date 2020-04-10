@@ -81,8 +81,6 @@ typedef struct image {
 /* Render Specific */
 int SCRW = 320; // public
 int SCRH = 200; // public
-static int gamma;
-static int fullscreen;
 static rgb playpal[256];
 static byte bright[256];
 static GLuint lastTexture;
@@ -1598,7 +1596,7 @@ void R_draw (void) {
   Y_swap_buffers();
 }
 
-void R_alloc (void) {
+static void R_alloc (void) {
   char s[10];
   int i, j, n;
   logo("R_alloc: load graphics\n");
@@ -1847,10 +1845,9 @@ void R_set_videomode (int w, int h, int fullscreen) {
   }
 }
 
-void R_toggle_fullscreen (void) {
+static void R_fullscreen (int yes) {
   R_cache_free(root, 0);
-  Y_set_fullscreen(!Y_get_fullscreen());
-  fullscreen = Y_get_fullscreen();
+  Y_set_fullscreen(yes);
   Y_get_videomode(&SCRW, &SCRH);
   root = R_cache_new();
   assert(root);
@@ -1858,24 +1855,52 @@ void R_toggle_fullscreen (void) {
   R_reload_textures();
 }
 
+static int R_video_menu_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+  intptr_t i = (intptr_t)data;
+  static int fullscreen;
+  switch (i) {
+    case -1:
+      switch (msg->type) {
+        case GM_ENTER: fullscreen = Y_get_fullscreen(); return 1;
+      }
+      break;
+    case 0:
+      switch (msg->type) {
+        case GM_SELECT: fullscreen = !fullscreen; return 1;
+        case GM_GETSTR: return GM_init_str(msg, fullscreen ? "Yes" : "No", 3);
+      }
+      break;
+    case 1:
+      switch (msg->type) {
+        case GM_SELECT: R_fullscreen(fullscreen); return 1;
+      }
+  }
+  return 0;
+}
+
+static const new_menu_t video_menu = {
+  GM_BIG, "Video", (void*)-1, &R_video_menu_handler,
+  {
+    { GM_BUTTON, "Fullscreen: ", (void*)0, &R_video_menu_handler, NULL },
+    { GM_BUTTON, "Apply", (void*)1, &R_video_menu_handler, NULL },
+    { 0, NULL, NULL, NULL, NULL } // end
+  }
+};
+
+const new_menu_t *R_menu (void) {
+  return &video_menu;
+}
+
 void R_init (void) {
   logo("R_init: intialize opengl render\n");
   R_init_playpal();
-  R_set_videomode(SCRW, SCRH, fullscreen);
+  R_set_videomode(SCRW, SCRH, 0);
 }
 
 void R_done (void) {
   R_cache_free(root, 1);
   Y_unset_videomode();
   root = NULL;
-}
-
-void R_setgamma (int g) {
-  gamma = g < 0 ? 0 : (g > 4 ? 4 : g);
-}
-
-int R_getgamma (void) {
-  return gamma;
 }
 
 void R_get_name (int n, char s[8]) {
