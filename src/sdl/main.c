@@ -56,6 +56,7 @@ static int quit = 0;
 static SDL_Surface *surf = NULL;
 static int mode = MODE_NONE;
 static int text_input;
+static videomode_t vlist;
 
 /* --- error.h --- */
 
@@ -149,6 +150,47 @@ int Y_set_videomode_software (int w, int h, int fullscreen) {
     }
   }
   return s != NULL;
+}
+
+static void init_videomode_list (Uint32 flags) {
+  int i, n;
+  SDL_Rect **r;
+  if (vlist.modes != NULL) {
+    free(vlist.modes);
+    vlist.modes = NULL;
+    vlist.n = 0;
+  }
+  r = SDL_ListModes(NULL, flags);
+  if (r == (SDL_Rect **)-1) {
+    if ((flags & SDL_FULLSCREEN) == 0) {
+      init_videomode_list(flags | SDL_FULLSCREEN);
+    }
+  } else if (r != (SDL_Rect**)0) {
+    n = 0;
+    while (r[n] != NULL) {
+      n++;
+    }
+    vlist.modes = malloc(n * sizeof(videomode_size_t));
+    if (vlist.modes != NULL) {
+      vlist.n = n;
+      for (i = 0; i < n; i++) {
+        vlist.modes[i] = (videomode_size_t) {
+          .w = r[i]->w,
+          .h = r[i]->h
+        };
+      }
+    }
+  }
+}
+
+const videomode_t *Y_get_videomode_list_opengl (int fullscreen) {
+  init_videomode_list(SDL_OPENGL | (fullscreen ? SDL_FULLSCREEN : 0));
+  return &vlist;
+}
+
+const videomode_t *Y_get_videomode_list_software (int fullscreen) {
+  init_videomode_list(SDL_SWSURFACE | SDL_HWPALETTE | (fullscreen ? SDL_FULLSCREEN : 0));
+  return &vlist;
 }
 
 void Y_get_videomode (int *w, int *h) {
