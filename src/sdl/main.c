@@ -28,8 +28,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h> // srand exit
-#include <string.h> // strcasecmp
-#include <ctype.h>
 #include <assert.h>
 #include "system.h"
 #include "input.h"

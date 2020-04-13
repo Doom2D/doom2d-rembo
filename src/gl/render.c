@@ -22,6 +22,8 @@
 #include "view.h"
 #include "switch.h" // sw_secrets
 
+#include "cp866.h"
+
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
 #else
@@ -30,7 +32,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <assert.h>
 
 #define VGA_TRANSPARENT_COLOR 0
@@ -629,11 +630,9 @@ static image Z_getspr (const char n[4], int s, int d, char *dir) {
 
 static image *Z_get_char_image (image *img, int ch) {
   image *p = NULL;
+  ch = cp866_toupper(ch);
   if (ch > 32 && ch < 160) {
     p = &img[ch - '!'];
-    if (p->n == NULL) {
-      p = &img[toupper(ch) - '!'];
-    }
   }
   return p;
 }
