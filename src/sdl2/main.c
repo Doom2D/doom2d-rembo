@@ -11,6 +11,8 @@
 #include "system.h"
 #include "input.h"
 
+#include "cp866.h"
+
 #include "my.h" // fexists
 #include "player.h" // pl1 pl2
 #include "menu.h" // G_keyf
@@ -505,8 +507,10 @@ static void poll_events (void) {
         break;
       case SDL_TEXTINPUT:
         uch = utf8_to_wchar(ev.text.text);
-        ch = wchar_to_cp866(uch);
-        GM_input(ch);
+        ch = cp866_utoc(uch);
+        if (ch >= 0) {
+          GM_input(ch);
+        }
         break;
     }
   }

@@ -1,22 +1,18 @@
 #include "cp866.h"
 
-int cp866_isalpha (char c) {
-  unsigned char ch = c;
+int cp866_isalpha (int ch) {
   return (ch >= 0x41 && ch <= 0x5A) || (ch >= 0x61 && ch <= 0x7A) || (ch >= 0x80 && ch <= 0xAF) || (ch >= 0xE0 && ch <= 0xF7);
 }
 
-int cp866_isupper (char c) {
-  unsigned char ch = c;
+int cp866_isupper (int ch) {
   return (ch >= 0x41 && ch <= 0x5A) || (ch >= 0x80 && ch <= 0x9F) || ch == 0xF0 || ch == 0xF2 || ch == 0xF4 || ch == 0xF6;
 }
 
-int cp866_islower (char c) {
-  unsigned char ch = c;
+int cp866_islower (int ch) {
   return (ch >= 0x61 && ch <= 0x7A) || (ch >= 0xA0 && ch <= 0xAF) || (ch >= 0xE0 && ch <= 0xEF) || ch == 0xF1 || ch == 0xF3 || ch == 0xF5 || ch == 0xF7;
 }
 
-char cp866_toupper (char c) {
-  unsigned char ch = c;
+int cp866_toupper (int ch) {
   if (ch >= 0x61 && ch <= 0x7A) {
     return ch - 0x61 + 0x41;
   } else if (ch >= 0xA0 && ch <= 0xAF) {
@@ -36,8 +32,7 @@ char cp866_toupper (char c) {
   }
 }
 
-char cp866_tolower (char c) {
-  unsigned char ch = c;
+int cp866_tolower (int ch) {
   if (ch >= 0x41 && ch <= 0x5A) {
     return ch - 0x41 + 0x61;
   } else if (ch >= 0x80 && ch <= 0x8F) {
@@ -79,8 +74,7 @@ int cp866_strncasecmp (const char *a, const char *b, unsigned int n) {
   return i == 0 ? 0 : *(const unsigned char *)aa - *(const unsigned char *)bb;
 }
 
-int cp866_ctou (char c) {
-  unsigned char ch = c;
+int cp866_ctou (int ch) {
   switch (ch) {
     case 0xB0: return 0x2591;
     case 0xB1: return 0x2592;
@@ -159,8 +153,7 @@ int cp866_ctou (char c) {
   }
 }
 
-int cp866_ctoug (char c) {
-  unsigned char ch = c;
+int cp866_ctoug (int ch) {
   switch (ch) {
     case 0x00: return 0x0000;
     case 0x01: return 0x263A;

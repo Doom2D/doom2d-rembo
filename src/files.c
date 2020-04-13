@@ -39,6 +39,7 @@
 #include "switch.h"
 #include "weapons.h"
 #include "error.h"
+#include "cp866.h"
 
 typedef struct {
   byte n, i, v, d;
@@ -223,9 +224,9 @@ void F_initwads (void) {
         ERR_failinit("Не могу открыть файл2:  %s", wads[i]);
       }
       mysplitpath(wads[i], f_drive, f_dir, f_name, f_ext);
-      if (strcasecmp(f_ext, ".lmp") == 0) {
+      if (cp866_strcasecmp(f_ext, ".lmp") == 0) {
         for (k = 0; k < MAX_WAD; ++k) {
-          if (strncasecmp(wad[k].n, f_name, 8) == 0) {
+          if (cp866_strncasecmp(wad[k].n, f_name, 8) == 0) {
             wad[k].o = 0;
             wad[k].l = myfilelength(h);
             wad[k].f = i;
@@ -257,7 +258,7 @@ void F_initwads (void) {
           w.o = myfread32(h); // len
           myfread(w.n, 1, 8, h); // name
           for (k = 0; k < MAX_WAD; ++k) {
-            if (strncasecmp(wad[k].n, w.n, 8) == 0) {
+            if (cp866_strncasecmp(wad[k].n, w.n, 8) == 0) {
               wad[k].o = w.o;
               wad[k].l = w.l;
               wad[k].f = i;
@@ -329,7 +330,7 @@ void F_saveres(int r, void *p, dword o, dword l) {
 int F_findres (const char n[8]) {
   int i;
   for (i = 0; i < wad_num; i++) {
-    if (strncasecmp(wad[i].n, n, 8) == 0) {
+    if (cp866_strncasecmp(wad[i].n, n, 8) == 0) {
       return i;
     }
   }
@@ -356,7 +357,7 @@ int F_getsprid (const char n[4], int s, int d) {
 
   s+='A';d+='0';
   for(i=s_start+1;i<s_end;++i)
-    if(strncasecmp(wad[i].n,n,4)==0 && (wad[i].n[4]==s || wad[i].n[6]==s)) {
+    if(cp866_strncasecmp(wad[i].n,n,4)==0 && (wad[i].n[4]==s || wad[i].n[6]==s)) {
       if(wad[i].n[4]==s) a=wad[i].n[5]; else a=0;
       if(wad[i].n[6]==s) b=wad[i].n[7]; else b=0;
       if(a=='0') return i;
@@ -379,12 +380,12 @@ void F_nextmus (char *s) {
   for(++i;;++i) {
     if(i>=m_end) i=m_start+1;
 
-    if (strcasecmp(wad[i].n,"MENU") == 0 ||
-        strcasecmp(wad[i].n,"INTERMUS") == 0 ||
-        strcasecmp(wad[i].n,"\x8a\x8e\x8d\x85\x96\x0") == 0)
+    if (cp866_strcasecmp(wad[i].n,"MENU") == 0 ||
+        cp866_strcasecmp(wad[i].n,"INTERMUS") == 0 ||
+        cp866_strcasecmp(wad[i].n,"\x8a\x8e\x8d\x85\x96\x0") == 0)
         continue;
 
-    if(strncasecmp(wad[i].n,"DMI",3)!=0) break;
+    if(cp866_strncasecmp(wad[i].n,"DMI",3)!=0) break;
   }
   memcpy(s,wad[i].n,8);
 }
