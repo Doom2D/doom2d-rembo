@@ -46,6 +46,10 @@
 #define GM_BEGIN  8 // textfield
 #define GM_END    9 // textfield
 #define GM_CANCEL 10 // textfield
+#define GM_QUERY  11 // menu
+#define GM_GETTITLE 12 // menu
+#define GM_GETENTRY 13 // entry
+#define GM_GETCAPTION 14 // entry
 
 typedef struct new_str_msg_t {
   byte type;

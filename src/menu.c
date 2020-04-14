@@ -94,15 +94,20 @@ static void GM_say (const char nm[8]) {
   }
 }
 
-int GM_init_int (new_msg_t *msg, int i, int a, int b, int s) {
+int GM_init_int0 (new_msg_t *msg, int i, int a, int b, int s) {
   assert(msg != NULL);
-  assert(a <= b);
-  assert(s >= 0);
-  msg->integer.i = min(max(i, a), b);
+  msg->integer.i = i;
   msg->integer.a = a;
   msg->integer.b = b;
   msg->integer.s = s;
   return 1;
+}
+
+int GM_init_int (new_msg_t *msg, int i, int a, int b, int s) {
+  assert(msg != NULL);
+  assert(a <= b);
+  assert(s >= 0);
+  return GM_init_int0(msg, min(max(i, a), b), a, b, s);
 }
 
 int GM_init_str (new_msg_t *msg, char *str, int maxlen) {
@@ -376,12 +381,30 @@ static void GM_normalize_message (new_msg_t *msg) {
   }
 }
 
+static int count_menu_entries (const new_menu_t *m) {
+  assert(m != NULL);
+  int i = 0;
+  while (m->entries[i].type != 0) {
+    i += 1;
+  }
+  return i;
+}
+
 int GM_send_this (const new_menu_t *m, new_msg_t *msg) {
   assert(m != NULL);
   assert(msg != NULL);
-  if (m->handler != NULL) {
-    GM_normalize_message(msg);
-    return m->handler(msg, m, m->data);
+  int n;
+  switch (msg->type) {
+    case GM_QUERY:
+      n = count_menu_entries(m);
+      return GM_init_int0(msg, GM_geti(), n, n, m->type);
+    case GM_GETTITLE:
+      return GM_init_str(msg, m->title, strlen(m->title));
+    default:
+      if (m->handler != NULL) {
+        GM_normalize_message(msg);
+        return m->handler(msg, m, m->data);
+      }
   }
   return 0;
 }
@@ -391,9 +414,14 @@ int GM_send (const new_menu_t *m, int i, new_msg_t *msg) {
   assert(i >= 0);
   assert(msg != NULL);
   const new_var_t *v = &m->entries[i];
-  if (v->handler != NULL) {
-    GM_normalize_message(msg);
-    return v->handler(msg, m, v->data);
+  switch (msg->type) {
+    case GM_GETENTRY: return GM_init_int0(msg, v->type, 0, 0, 0);
+    case GM_GETCAPTION: return GM_init_str(msg, v->caption, strlen(v->caption));
+    default:
+      if (v->handler != NULL) {
+        GM_normalize_message(msg);
+        return v->handler(msg, m, v->data);
+      }
   }
   return 0;
 }
@@ -438,15 +466,6 @@ void G_code (void) {
   }else return;
   memset(cbuf,0,32);
   Z_sound(s,128);
-}
-
-static int count_menu_entries (const new_menu_t *m) {
-  assert(m != NULL);
-  int i = 0;
-  while (m->entries[i].type != 0) {
-    i += 1;
-  }
-  return i;
 }
 
 static int strnlen (const char *s, int len) {
