@@ -781,7 +781,7 @@ static image *PL_getspr (int s, int d, int msk) {
 #define SCROLLER_MIDDLE 10
 #define TEXTFIELD_MIDDLE 2
 
-static void get_entry_size (const new_menu_t *m, int i, int *w, int *h) {
+static void get_entry_size (const menu_t *m, int i, int *w, int *h) {
   assert(m != NULL);
   assert(i >= 0);
   assert(w != NULL);
@@ -789,7 +789,7 @@ static void get_entry_size (const new_menu_t *m, int i, int *w, int *h) {
   int x = 0;
   int y = 0;
   int type = 0;
-  new_msg_t msg;
+  menu_msg_t msg;
   msg.type = GM_GETENTRY;
   assert(GM_send(m, i, &msg));
   type = msg.integer.i;
@@ -848,12 +848,12 @@ static void get_entry_size (const new_menu_t *m, int i, int *w, int *h) {
   *h = y;
 }
 
-static void get_menu_size (const new_menu_t *m, int *w, int *h) {
+static void get_menu_size (const menu_t *m, int *w, int *h) {
   assert(m != NULL);
   assert(w != NULL);
   assert(h != NULL);
   int i, n, x, y, xx, yy, type;
-  new_msg_t msg;
+  menu_msg_t msg;
   msg.type = GM_QUERY;
   if (GM_send_this(m, &msg)) {
     n = msg.integer.b;
@@ -883,8 +883,8 @@ static void get_menu_size (const new_menu_t *m, int *w, int *h) {
 
 static int GM_draw (void) {
   int i, j, n, x, y, xoff, yoff, cur, w, type, recv;
-  const new_menu_t *m = GM_get();
-  new_msg_t msg;
+  const menu_t *m = GM_get();
+  menu_msg_t msg;
   if (m != NULL) {
     get_menu_size(m, &x, &y);
     x = SCRW / 2 - x / 2;
@@ -1860,74 +1860,72 @@ void R_set_videomode (int w, int h, int fullscreen) {
   R_reload_textures();
 }
 
-static int R_video_menu_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
-  const videomode_t *v;
-  intptr_t i = (intptr_t)data;
-  static int w, h;
+static int video_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  static int w, h, fullscreen;
+  static char buf[16];
+  static int buflen;
   static int vmode;
-  static int fullscreen;
-  static char str[16];
-  switch (i) {
-    case -1:
-      switch (msg->type) {
-        case GM_ENTER:
-          Y_get_videomode(&w, &h);
-          fullscreen = Y_get_fullscreen();
-          v = Y_get_videomode_list_opengl(fullscreen);
-          vmode = 0;
-          while (vmode < v->n && v->modes[vmode].w != w && v->modes[vmode].h != h) {
-            vmode += 1;
-          }
-          if (vmode < v->n) {
-            w = v->modes[vmode].w;
-            h = v->modes[vmode].h;
-          }
-          snprintf(str, 16, "%ix%i", w, h);
-          return 1;
-      }
-      break;
-    case 0:
-      switch (msg->type) {
-        case GM_SELECT:
-          v = Y_get_videomode_list_opengl(fullscreen);
-          vmode = vmode + 1 >= v->n ? 0 : vmode + 1;
-          if (v->n > 0) {
-            w = v->modes[vmode].w;
-            h = v->modes[vmode].h;
-          } else {
-            Y_get_videomode(&w, &h);
-          }
-          snprintf(str, 16, "%ix%i", w, h);
-          return 1;
-        case GM_GETSTR:
-          return GM_init_str(msg, str, 16);
-      }
-      break;
-    case 1:
-      switch (msg->type) {
-        case GM_SELECT: fullscreen = !fullscreen; return 1;
-        case GM_GETSTR: return GM_init_str(msg, fullscreen ? "Yes" : "No", 3);
-      }
-      break;
-    case 2:
-      switch (msg->type) {
-        case GM_SELECT: R_set_videomode(w, h, fullscreen); return 1;
-      }
+  const videomode_t *v;
+  enum { VIDEOMODE, FULLSCREEN, APPLY, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "Video", NULL,
+    {
+      { "Mode: ", NULL },
+      { "Fullscreen: ", NULL },
+      { "Apply ", NULL },
+    }
+  };
+  if (msg->type == GM_ENTER) {
+    Y_get_videomode(&w, &h);
+    fullscreen = Y_get_fullscreen();
+    v = Y_get_videomode_list_opengl(fullscreen);
+    vmode = 0;
+    while (vmode < v->n && v->modes[vmode].w != w && v->modes[vmode].h != h) {
+      vmode += 1;
+    }
+    if (vmode < v->n) {
+      w = v->modes[vmode].w;
+      h = v->modes[vmode].h;
+    }
+    snprintf(buf, 16, "%ix%i", w, h);
+    buflen = strlen(buf);
+    return 1;
   }
-  return 0;
+  if (i == VIDEOMODE) {
+    switch (msg->type) {
+      case GM_GETSTR: return GM_init_str(msg, buf, buflen);
+      case GM_SELECT:
+        v = Y_get_videomode_list_opengl(fullscreen);
+        vmode = vmode + 1 >= v->n ? 0 : vmode + 1;
+        if (v->n > 0) {
+          w = v->modes[vmode].w;
+          h = v->modes[vmode].h;
+        } else {
+          Y_get_videomode(&w, &h);
+        }
+        snprintf(buf, 16, "%ix%i", w, h);
+        buflen = strlen(buf);
+        return 1;
+    }
+  } else if (i == FULLSCREEN) {
+    switch (msg->type) {
+      case GM_GETSTR: return GM_init_str(msg, fullscreen ? "Yes" : "No ", 3);
+      case GM_SELECT: fullscreen = !fullscreen; return 1;
+    }
+  } else if (i == APPLY) {
+    switch (msg->type) {
+      case GM_SELECT: R_set_videomode(w, h, fullscreen); return 1;
+    }
+  }
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static const new_menu_t video_menu = {
-  GM_BIG, "Video", (void*)-1, &R_video_menu_handler,
-  {
-    { GM_BUTTON, "Videomode: ", (void*)0, &R_video_menu_handler, NULL },
-    { GM_BUTTON, "Fullscreen: ", (void*)1, &R_video_menu_handler, NULL },
-    { GM_BUTTON, "Apply", (void*)2, &R_video_menu_handler, NULL },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
+static const menu_t video_menu = {
+  NULL, &video_menu_handler
 };
 
-const new_menu_t *R_menu (void) {
+const menu_t *R_menu (void) {
   return &video_menu;
 }
 

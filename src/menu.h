@@ -50,42 +50,41 @@
 #define GM_GETTITLE 12 // menu
 #define GM_GETENTRY 13 // entry
 #define GM_GETCAPTION 14 // entry
+#define GM_UP 15
+#define GM_DOWN 16
 
-typedef struct new_str_msg_t {
+typedef struct menu_str_msg_t {
   byte type;
   char *s;
   int maxlen;
-} new_str_msg_t;
+} menu_str_msg_t;
 
-typedef struct new_int_msg_t {
+typedef struct menu_int_msg_t {
   byte type;
   int i, a, b, s;
-} new_int_msg_t;
+} menu_int_msg_t;
 
-typedef union new_msg_t {
+typedef union menu_msg_t {
   byte type;
-  new_str_msg_t string;
-  new_int_msg_t integer;
-} new_msg_t;
+  menu_str_msg_t string;
+  menu_int_msg_t integer;
+} menu_msg_t;
 
-typedef struct new_var_t new_var_t;
-typedef struct new_menu_t new_menu_t;
-
-struct new_var_t {
-  byte type;
-  char *caption;
+typedef struct menu_t menu_t;
+struct menu_t {
   void *data;
-  int (*handler)(new_msg_t *msg, const new_menu_t *m, void *data);
-  const new_menu_t *submenu;
+  int (*handler)(menu_msg_t *msg, const menu_t *m, void *data, int i);
 };
 
-struct new_menu_t {
+typedef struct simple_menu_t {
   byte type;
   char *title;
-  void *data;
-  int (*handler)(new_msg_t *msg, const new_menu_t *m, void *data);
-  new_var_t entries[];
-};
+  char *say;
+  struct simple_entry_t {
+    char *caption;
+    const menu_t *submenu;
+  } entries[];
+} simple_menu_t;
 
 extern byte _warp;
 
@@ -97,16 +96,20 @@ extern int imax;
 
 extern short lastkey;
 
-int GM_init_int (new_msg_t *msg, int i, int a, int b, int s);
-int GM_init_str (new_msg_t *msg, char *str, int maxlen);
+#define GM_INIT_STRING(msg, str) GM_init_str(msg, str, sizeof str);
+#define GM_CYCLE(i, m, n) ((i) < (m) ? (n) : (((i) > (n)) ? (m) : (i)))
+int GM_init_int0 (menu_msg_t *msg, int i, int a, int b, int s);
+int GM_init_int (menu_msg_t *msg, int i, int a, int b, int s);
+int GM_init_str (menu_msg_t *msg, char *str, int maxlen);
+int basic_menu_handler (menu_msg_t *msg, byte type, char *title, char *say, int n, int *cur);
+int simple_menu_handler (menu_msg_t *msg, int i, int n, const simple_menu_t *m, int *cur);
 
-void GM_push (const new_menu_t *m);
-void GM_pop (void);
-void GM_popall (void);
-const new_menu_t *GM_get (void);
-int GM_geti (void);
-int GM_send_this (const new_menu_t *m, new_msg_t *msg);
-int GM_send (const new_menu_t *m, int i, new_msg_t *msg);
+int GM_push (const menu_t *m);
+int GM_pop (void);
+int GM_popall (void);
+const menu_t *GM_get (void);
+int GM_send_this (const menu_t *m, menu_msg_t *msg);
+int GM_send (const menu_t *m, int i, menu_msg_t *msg);
 
 void GM_key (int key, int down);
 void GM_input (int ch);
