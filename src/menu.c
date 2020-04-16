@@ -55,8 +55,7 @@ byte _warp;
 
 #define MAX_STACK 8
 static struct {
-  int n;
-  const new_menu_t *m;
+  const menu_t *m;
 } stack[MAX_STACK];
 static int stack_p = -1;
 
@@ -85,16 +84,17 @@ static void GM_stop (void) {
   }
 }
 
-static void GM_say (const char nm[8]) {
+static int GM_say (const char nm[8]) {
   snd_t *snd = S_load(nm);
   if (snd) {
     GM_stop();
     voc = S_load(nm);
     voc_ch = S_play(voc, 0, 255);
   }
+  return 1;
 }
 
-int GM_init_int0 (new_msg_t *msg, int i, int a, int b, int s) {
+int GM_init_int0 (menu_msg_t *msg, int i, int a, int b, int s) {
   assert(msg != NULL);
   msg->integer.i = i;
   msg->integer.a = a;
@@ -103,14 +103,14 @@ int GM_init_int0 (new_msg_t *msg, int i, int a, int b, int s) {
   return 1;
 }
 
-int GM_init_int (new_msg_t *msg, int i, int a, int b, int s) {
+int GM_init_int (menu_msg_t *msg, int i, int a, int b, int s) {
   assert(msg != NULL);
   assert(a <= b);
   assert(s >= 0);
   return GM_init_int0(msg, min(max(i, a), b), a, b, s);
 }
 
-int GM_init_str (new_msg_t *msg, char *str, int maxlen) {
+int GM_init_str (menu_msg_t *msg, char *str, int maxlen) {
   assert(msg != NULL);
   assert(str != NULL);
   assert(maxlen >= 0);
@@ -119,57 +119,165 @@ int GM_init_str (new_msg_t *msg, char *str, int maxlen) {
   return 1;
 }
 
-static int GM_newgame_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+int basic_menu_handler (menu_msg_t *msg, byte type, char *title, char *say, int n, int *cur) {
   assert(msg != NULL);
-  intptr_t i = (intptr_t)data;
+  assert(type == GM_BIG || type == GM_SMALL);
+  assert(title != NULL);
+  assert(n >= 0);
+  assert(cur != NULL);
   switch (msg->type) {
-    case GM_ENTER:
-      GM_say("_NEWGAME");
-      return 1;
-    case GM_SELECT:
-      _2pl = 0;
-      g_dm = 0;
-      switch (i) {
-        case 0: GM_say("_1PLAYER"); break;
-        case 1: GM_say("_2PLAYER"); break;
-        case 2: GM_say("_DM"); break;
-        // GM_say("_COOP");
-      }
-      switch (i) {
-        case 2: // DEATHMATCH
-          g_dm = 1;
-        case 1: // COOPERATIVE
-          _2pl = 1;
-        case 0: // SINGLEPLAYER
-          g_map = _warp ? _warp : 1;
-          PL_reset();
-          pl1.color = pcolortab[p1color];
-          pl2.color = pcolortab[p2color];
-          G_start();
-          GM_popall();
-          return 1;
-      }
-      break;
+    case GM_QUERY: return GM_init_int0(msg, *cur, n, n, type);
+    case GM_GETTITLE: return GM_init_str(msg, title, strlen(title));
+    case GM_ENTER: return say ? GM_say(say) : 1;
+    case GM_UP: *cur = GM_CYCLE(*cur - 1, 0, n - 1); return 1;
+    case GM_DOWN: *cur = GM_CYCLE(*cur + 1, 0, n - 1); return 1;
   }
   return 0;
 }
 
-static int GM_var_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
+int simple_menu_handler (menu_msg_t *msg, int i, int n, const simple_menu_t *m, int *cur) {
   assert(msg != NULL);
-  if (data == &snd_vol) {
+  assert(n >= 0);
+  assert(i >= 0 && i < n);
+  assert(m != NULL);
+  assert(cur != NULL);
+  switch (msg->type) {
+    case GM_GETENTRY: return GM_init_int0(msg, m->type == GM_SMALL ? GM_SMALL_BUTTON : GM_BUTTON, 0, 0, 0);
+    case GM_GETCAPTION: return GM_init_str(msg, m->entries[i].caption, strlen(m->entries[i].caption));
+    case GM_SELECT: return m->entries[i].submenu ? GM_push(m->entries[i].submenu) : 1;
+  }
+  return basic_menu_handler(msg, m->type, m->title, m->say, n, cur);
+}
+
+static int start_game (int twoplayers, int dm, int level) {
+  _2pl = twoplayers;
+  g_dm = dm;
+  g_map = level ? level : 1;
+  PL_reset();
+  pl1.color = pcolortab[p1color];
+  pl2.color = pcolortab[p2color];
+  G_start();
+  return GM_popall();
+}
+
+static int new_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  enum { ONEPLAYER, TWOPLAYERS, DEATHMATCH, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "New Game", "_NEWGAME",
+    {
+      { "One Player", NULL },
+      { "Two Players", NULL },
+      { "Deathmatch", NULL },
+    }
+  };
+  if (msg->type == GM_SELECT) {
+    switch (i) {
+      case ONEPLAYER: GM_say("_1PLAYER"); return start_game(0, 0, _warp);
+      case TWOPLAYERS: GM_say("_2PLAYER"); return start_game(1, 0, _warp);
+      case DEATHMATCH: GM_say("_DM"); return start_game(1, 1, _warp);
+      // GM_say("_COOP");
+    }
+  }
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+}
+
+static const menu_t new_game_menu = {
+  NULL, &new_game_menu_handler
+};
+
+static int load_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  const int max_slots = 7;
+  assert(i >= 0 && i < max_slots);
+  switch (msg->type) {
+    case GM_ENTER: F_getsavnames(); break;
+    case GM_GETENTRY: return GM_init_int0(msg, GM_TEXTFIELD_BUTTON, 0, 0, 0);
+    case GM_GETSTR: return GM_init_str(msg, (char*)savname[i], 24);
+    case GM_SELECT:
+      if (savok[i]) {
+        load_game(i);
+        GM_popall();
+      }
+      return 1;
+  }
+  return basic_menu_handler(msg, GM_BIG, "Load game", "_OLDGAME", max_slots, &cur);
+}
+
+static const menu_t load_game_menu = {
+  NULL, &load_game_menu_handler
+};
+
+static int save_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  const int max_slots = 7;
+  assert(i >= 0 && i < max_slots);
+  switch (msg->type) {
+    case GM_ENTER:
+      if (g_st == GS_GAME) {
+        F_getsavnames();
+        break;
+      } else {
+        return GM_pop();
+      }
+    case GM_GETENTRY: return GM_init_int0(msg, GM_TEXTFIELD, 0, 0, 0);
+    case GM_GETSTR: return GM_init_str(msg, (char*)savname[i], 24);
+    case GM_END:
+      if (g_st == GS_GAME) {
+        assert(msg->string.maxlen >= 24);
+        F_savegame(i, msg->string.s);
+      }
+      return GM_popall();
+  }
+  return basic_menu_handler(msg, GM_BIG, "Save game", "_SAVGAME", max_slots, &cur);
+}
+
+static const menu_t save_game_menu = {
+  NULL, &save_game_menu_handler
+};
+
+static int sound_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  enum { VOLUME, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "Sound", NULL,
+    {
+      { "Volume", NULL },
+    }
+  };
+  if (i == VOLUME) {
     switch (msg->type) {
+      case GM_GETENTRY: return GM_init_int0(msg, GM_SCROLLER, 0, 0, 0);
       case GM_GETINT: return GM_init_int(msg, snd_vol, 0, 128, 8);
       case GM_SETINT: S_volume(msg->integer.i); return 1;
     }
-  } else if (data == &mus_vol) {
+  }
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+}
+
+static const menu_t sound_menu = {
+  NULL, &sound_menu_handler
+};
+
+static int music_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  enum { VOLUME, MUSIC, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "Music", NULL,
+    {
+      { "Volume", NULL },
+      { "Music: ", NULL },
+    }
+  };
+  if (i == VOLUME) {
     switch (msg->type) {
+      case GM_GETENTRY: return GM_init_int0(msg, GM_SCROLLER, 0, 0, 0);
       case GM_GETINT: return GM_init_int(msg, mus_vol, 0, 128, 8);
       case GM_SETINT: S_volumemusic(msg->integer.i); return 1;
     }
-  } else if (data == g_music) {
+  } else if (i == MUSIC) {
     switch (msg->type) {
-      case GM_GETSTR:
-        return GM_init_str(msg, g_music, 8);
+      case GM_GETSTR: return GM_init_str(msg, g_music, strlen(g_music));
       case GM_SELECT:
         F_freemus();
         F_nextmus(g_music);
@@ -178,183 +286,119 @@ static int GM_var_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
         return 1;
     }
   }
-  return 0;
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static int GM_load_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
-  assert(msg != NULL);
-  intptr_t i = (intptr_t)data;
-  switch (msg->type) {
-    case GM_ENTER:
-      F_getsavnames();
-      return 1;
-    case GM_GETSTR:
-      return GM_init_str(msg, (char*)savname[i], 24);
-    case GM_SELECT:
-      if (savok[i]) {
-        load_game(i);
-        GM_popall();
-        return 1;
-      }
-      break;
+static const menu_t music_menu = {
+  NULL, &music_menu_handler
+};
+
+static int options_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  enum { VIDEO, SOUND, MUSIC, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "Options", NULL,
+    {
+      { "Video", NULL },
+      { "Sound", &sound_menu },
+      { "Music", &music_menu },
+    }
+  };
+  if (msg->type == GM_SELECT) {
+    if (i == VIDEO) {
+      const menu_t *mm = R_menu();
+      return mm ? GM_push(mm) : 1;
+    }
   }
-  return 0;
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static int GM_save_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
-  assert(msg != NULL);
-  intptr_t i = (intptr_t)data;
-  switch (msg->type) {
-    case GM_ENTER:
-      if (g_st == GS_GAME) {
-        F_getsavnames();
-      } else {
-        GM_pop();
-      }
-      return 1;
-    case GM_GETSTR:
-      F_getsavnames();
-      return GM_init_str(msg, (char*)savname[i], 24);
-    case GM_END:
-      if (g_st == GS_GAME) {
-        F_savegame(i, msg->string.s); // TODO check size
-        GM_popall();
-        return 1;
-      }
-      break;
-  }
-  return 0;
-}
+static const menu_t options_menu = {
+  NULL, &options_menu_handler
+};
 
-static int GM_options_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
-  switch (msg->type) {
-    case GM_SELECT: GM_push(R_menu()); return 1;
-  }
-  return 0;
-}
-
-static int GM_exit_handler (new_msg_t *msg, const new_menu_t *m, void *data) {
-  switch (msg->type) {
-    case GM_ENTER:
-      GM_say(rand() & 1 ? "_EXIT1" : "_EXIT2");
-      return 1;
-    case GM_SELECT:
-      if (data != NULL) {
+static int exit_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  enum { YES, NO, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_SMALL, "You are sure?", NULL,
+    {
+      { "Yes", NULL },
+      { "No", NULL },
+    }
+  };
+  if (msg->type == GM_ENTER) {
+    return GM_say(rand() & 1 ? "_EXIT1" : "_EXIT2");
+  } else if (msg->type == GM_SELECT) {
+    switch (i) {
+      case YES:
         F_freemus();
         GM_stop();
         Z_sound(S_get(qsnd[myrand(QSND_NUM)]), 255);
         S_wait();
         ERR_quit();
-      } else {
-        GM_pop();
-      }
-      return 1;
+        return 1;
+      case NO:
+        return GM_pop();
+    }
   }
-  return 0;
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static const new_menu_t newgame_menu = {
-  GM_BIG, "New game", NULL, NULL,
-  {
-    { GM_BUTTON, "One player", (void*)0, &GM_newgame_handler, NULL },
-    { GM_BUTTON, "Two players", (void*)1, &GM_newgame_handler, NULL },
-    { GM_BUTTON, "Deathmatch", (void*)2, &GM_newgame_handler, NULL },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
-}, loadgame_menu = {
-  GM_BIG, "Load game", NULL, &GM_load_handler,
-  {
-    { GM_TEXTFIELD_BUTTON, "", (void*)0, &GM_load_handler, NULL },
-    { GM_TEXTFIELD_BUTTON, "", (void*)1, &GM_load_handler, NULL },
-    { GM_TEXTFIELD_BUTTON, "", (void*)2, &GM_load_handler, NULL },
-    { GM_TEXTFIELD_BUTTON, "", (void*)3, &GM_load_handler, NULL },
-    { GM_TEXTFIELD_BUTTON, "", (void*)4, &GM_load_handler, NULL },
-    { GM_TEXTFIELD_BUTTON, "", (void*)5, &GM_load_handler, NULL },
-    { GM_TEXTFIELD_BUTTON, "", (void*)6, &GM_load_handler, NULL },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
-}, savegame_menu = {
-  GM_BIG, "Save game", NULL, &GM_save_handler,
-  {
-    { GM_TEXTFIELD, "", (void*)0, &GM_save_handler, NULL },
-    { GM_TEXTFIELD, "", (void*)1, &GM_save_handler, NULL },
-    { GM_TEXTFIELD, "", (void*)2, &GM_save_handler, NULL },
-    { GM_TEXTFIELD, "", (void*)3, &GM_save_handler, NULL },
-    { GM_TEXTFIELD, "", (void*)4, &GM_save_handler, NULL },
-    { GM_TEXTFIELD, "", (void*)5, &GM_save_handler, NULL },
-    { GM_TEXTFIELD, "", (void*)6, &GM_save_handler, NULL },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
-}, sound_menu = {
-  GM_BIG, "Sound", NULL, NULL,
-  {
-    { GM_SCROLLER, "Volume", &snd_vol, &GM_var_handler, NULL },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
-}, music_menu = {
-  GM_BIG, "Music", NULL, NULL,
-  {
-    { GM_SCROLLER, "Volume", &mus_vol, &GM_var_handler, NULL },
-    { GM_BUTTON, "Music: ", g_music, &GM_var_handler, NULL },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
-}, options_menu = {
-  GM_BIG, "Options", NULL, NULL,
-  {
-    { GM_BUTTON, "Video", NULL, &GM_options_handler, NULL },
-    { GM_BUTTON, "Sound", NULL, NULL, &sound_menu },
-    { GM_BUTTON, "Music", NULL, NULL, &music_menu },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
-}, exit_menu = {
-  GM_SMALL, "You are sure?", NULL, &GM_exit_handler,
-  {
-    { GM_SMALL_BUTTON, "Yes", (void*)1, &GM_exit_handler, NULL },
-    { GM_SMALL_BUTTON, "No", (void*)0, &GM_exit_handler, NULL },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
-}, main_menu = {
-  GM_BIG, "Menu", NULL, NULL,
-  {
-    { GM_BUTTON, "New game", NULL, NULL, &newgame_menu },
-    { GM_BUTTON, "Load game", NULL, NULL, &loadgame_menu },
-    { GM_BUTTON, "Save game", NULL, NULL, &savegame_menu },
-    { GM_BUTTON, "Options", NULL, NULL, &options_menu },
-    { GM_BUTTON, "Exit", NULL, NULL, &exit_menu },
-    { 0, NULL, NULL, NULL, NULL } // end
-  }
+static const menu_t exit_menu = {
+  NULL, &exit_menu_handler
 };
 
-void GM_push (const new_menu_t *m) {
+static int main_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  enum { NEWGAME, OLDGAME, SAVEGAME, OPTIONS, EXIT, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "Menu", NULL,
+    {
+      { "New Game", &new_game_menu },
+      { "Load Game", &load_game_menu },
+      { "Save Game", &save_game_menu },
+      { "Options", &options_menu },
+      { "Exit", &exit_menu },
+    }
+  };
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+}
+
+static const menu_t main_menu = {
+  NULL, &main_menu_handler
+};
+
+int GM_push (const menu_t *m) {
   assert(m != NULL);
   assert(stack_p >= -1);
   assert(stack_p < MAX_STACK - 1);
-  new_msg_t msg;
+  menu_msg_t msg;
   stack_p += 1;
-  if (stack[stack_p].m != m) {
-    stack[stack_p].n = 0;
-    stack[stack_p].m = m;
-  }
+  stack[stack_p].m = m;
   msg.type = GM_ENTER;
   GM_send_this(m, &msg);
+  return 1;
 }
 
-void GM_pop (void) {
+int GM_pop (void) {
   assert(stack_p >= 0);
-  new_msg_t msg;
+  menu_msg_t msg;
   stack_p -= 1;
   msg.type = GM_LEAVE;
   GM_send_this(stack[stack_p + 1].m, &msg);
+  return 1;
 }
 
-void GM_popall (void) {
+int GM_popall (void) {
   int i;
   for (i = 0; i >= -1; i--) {
     GM_pop();
   }
+  return 1;
 }
 
-const new_menu_t *GM_get (void) {
+const menu_t *GM_get (void) {
   if (stack_p >= 0) {
     return stack[stack_p].m;
   } else {
@@ -362,15 +406,7 @@ const new_menu_t *GM_get (void) {
   }
 }
 
-int GM_geti (void) {
-  if (stack_p >= 0) {
-    return stack[stack_p].n;
-  } else {
-    return 0;
-  }
-}
-
-static void GM_normalize_message (new_msg_t *msg) {
+static void GM_normalize_message (menu_msg_t *msg) {
   switch (msg->type) {
     case GM_SETINT:
       msg->integer.i = min(max(msg->integer.i, msg->integer.a), msg->integer.b);
@@ -381,47 +417,23 @@ static void GM_normalize_message (new_msg_t *msg) {
   }
 }
 
-static int count_menu_entries (const new_menu_t *m) {
-  assert(m != NULL);
-  int i = 0;
-  while (m->entries[i].type != 0) {
-    i += 1;
-  }
-  return i;
-}
-
-int GM_send_this (const new_menu_t *m, new_msg_t *msg) {
+int GM_send_this (const menu_t *m, menu_msg_t *msg) {
   assert(m != NULL);
   assert(msg != NULL);
-  int n;
-  switch (msg->type) {
-    case GM_QUERY:
-      n = count_menu_entries(m);
-      return GM_init_int0(msg, GM_geti(), n, n, m->type);
-    case GM_GETTITLE:
-      return GM_init_str(msg, m->title, strlen(m->title));
-    default:
-      if (m->handler != NULL) {
-        GM_normalize_message(msg);
-        return m->handler(msg, m, m->data);
-      }
+  if (m->handler != NULL) {
+    GM_normalize_message(msg);
+    return m->handler(msg, m, m->data, 0);
   }
   return 0;
 }
 
-int GM_send (const new_menu_t *m, int i, new_msg_t *msg) {
+int GM_send (const menu_t *m, int i, menu_msg_t *msg) {
   assert(m != NULL);
   assert(i >= 0);
   assert(msg != NULL);
-  const new_var_t *v = &m->entries[i];
-  switch (msg->type) {
-    case GM_GETENTRY: return GM_init_int0(msg, v->type, 0, 0, 0);
-    case GM_GETCAPTION: return GM_init_str(msg, v->caption, strlen(v->caption));
-    default:
-      if (v->handler != NULL) {
-        GM_normalize_message(msg);
-        return v->handler(msg, m, v->data);
-      }
+  if (m->handler != NULL) {
+    GM_normalize_message(msg);
+    return m->handler(msg, m, m->data, i);
   }
   return 0;
 }
@@ -481,22 +493,25 @@ static int state_for_anykey (int x) {
 }
 
 int GM_act (void) {
-  int n, cur;
-  new_msg_t msg;
-  const new_var_t *v;
-  const new_menu_t *m = GM_get ();
+  menu_msg_t msg;
+  int n, cur, type;
+  const menu_t *m = GM_get ();
   if (m == NULL) {
     if (lastkey == KEY_ESCAPE || (state_for_anykey(g_st) && lastkey != KEY_UNKNOWN)) {
       GM_push(&main_menu);
       Z_sound(msnd3, 128);
     }
   } else {
-    n = count_menu_entries(m);
-    cur = stack[stack_p].n;
-    v = &m->entries[cur];
+    msg.type = GM_QUERY;
+    assert(GM_send_this(m, &msg));
+    cur = msg.integer.i;
+    n = msg.integer.a;
+    msg.type = GM_GETENTRY;
+    assert(GM_send(m, cur, &msg));
+    type = msg.integer.i;
     switch (lastkey) {
       case KEY_ESCAPE:
-        if (v->type == GM_TEXTFIELD && input) {
+        if (type == GM_TEXTFIELD && input) {
           input = 0;
           Y_disable_text_input();
           msg.type = GM_CANCEL;
@@ -507,16 +522,15 @@ int GM_act (void) {
         }
         break;
       case KEY_UP:
-        stack[stack_p].n = stack[stack_p].n - 1 < 0 ? n - 1 : stack[stack_p].n - 1;
-        Z_sound(msnd1, 128);
-        break;
       case KEY_DOWN:
-        stack[stack_p].n = stack[stack_p].n + 1 >= n ? 0 : stack[stack_p].n + 1;
-        Z_sound(msnd1, 128);
+        msg.type = lastkey == KEY_UP ? GM_UP : GM_DOWN;
+        if (GM_send(m, cur, &msg)) {
+          Z_sound(msnd1, 128);
+        }
         break;
       case KEY_LEFT:
       case KEY_RIGHT:
-        if (v->type == GM_SCROLLER) {
+        if (type == GM_SCROLLER) {
           msg.integer.type = GM_GETINT;
           if (GM_send(m, cur, &msg)) {
             msg.integer.type = GM_SETINT;
@@ -526,14 +540,16 @@ int GM_act (void) {
               Z_sound(lastkey == KEY_LEFT ? msnd5 : msnd6, 255);
             }
           }
-        } else if (v->type == GM_TEXTFIELD && input) {
-          //icur += lastkey == KEY_LEFT ? -1 : +1;
-          //icur = min(max(icur, 0), strnlen(ibuf, imax));
+        } else if (type == GM_TEXTFIELD) {
+          //if (input) {
+          //  icur += lastkey == KEY_LEFT ? -1 : +1;
+          //  icur = min(max(icur, 0), strnlen(ibuf, imax));
+          //}
         }
         break;
       case KEY_BACKSPACE:
-        if (v->type == GM_TEXTFIELD && input) {
-          if (icur > 0) {
+        if (type == GM_TEXTFIELD) {
+          if (input && icur > 0) {
             // FIXIT buffers in strncpy must not overlap
             strncpy(&ibuf[icur - 1], &ibuf[icur], imax - icur);
             ibuf[imax - 1] = 0;
@@ -542,10 +558,7 @@ int GM_act (void) {
         }
         break;
       case KEY_RETURN:
-        if (v->submenu != NULL) {
-          GM_push(v->submenu);
-          Z_sound(msnd2, 128);
-        } else if (v->type == GM_TEXTFIELD) {
+        if (type == GM_TEXTFIELD) {
           if (input) {
             input = 0;
             Y_disable_text_input();
@@ -559,15 +572,22 @@ int GM_act (void) {
               imax = min(msg.string.maxlen, GM_MAX_INPUT);
               strncpy(ibuf, msg.string.s, imax);
               icur = strnlen(ibuf, imax);
+            } else {
+              memset(ibuf, 0, GM_MAX_INPUT);
+              imax = GM_MAX_INPUT;
+              icur = 0;
             }
             input = 1;
             Y_enable_text_input();
             msg.type = GM_BEGIN;
             GM_send(m, cur, &msg);
           }
+          Z_sound(msnd2, 128);
         } else {
           msg.type = GM_SELECT;
-          GM_send(m, cur, &msg);
+          if (GM_send(m, cur, &msg)) {
+            Z_sound(msnd2, 128);
+          }
         }
         break;
     }

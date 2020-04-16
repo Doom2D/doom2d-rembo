@@ -5,7 +5,7 @@
 
 extern int SCRW, SCRH; // from vga.c
 
-const new_menu_t *R_menu (void);
+const menu_t *R_menu (void);
 void R_init (void);
 void R_draw (void);
 void R_done (void);
