@@ -24,6 +24,8 @@
 #include "music.h"
 #include "system.h"
 
+#include "cp866.h"
+
 // game
 static vgaimg *scrnh[3]; // TITLEPIC INTERPIC ENDPIC
 static vgaimg *ltn[2][2];
@@ -85,34 +87,62 @@ static void *Z_getspr (char n[4], int s, int d, char *dir) {
   return V_getvgaimg(h);
 }
 
-static void Z_putbfch (int c) {
-  vgaimg *p;
-  if (c > 32 && c < 160) {
-    p = bfh[c - '!'];
-  } else {
-    p = NULL;
-  }
-  if (p) {
-    V_spr(prx, pry, p);
-    prx += p->w - 1;
-  } else {
-    prx += 12;
-  }
+static vgaimg *Z_get_char_image (vgaimg **img, int ch) {
+  ch = cp866_toupper(ch);
+  return ch > 32 && ch < 160 ? img[ch - '!'] : NULL;
 }
 
-static void Z_putsfch (int c) {
-  vgaimg *p;
-  if (c > 32 && c < 160) {
-    p = sfh[c - '!'];
-  } else {
-    p = NULL;
-  }
-  if (p) {
+static int Z_get_char_width_generic (vgaimg **img, int off, int ch) {
+  vgaimg *p = Z_get_char_image(img, ch);
+  return p == NULL ? off : p->w - 1;
+}
+
+static int Z_putch_generic (vgaimg **img, int off, int ch) {
+  vgaimg *p = Z_get_char_image(img, ch);
+  int w = p == NULL ? off : p->w - 1;
+  if (p != NULL) {
     V_spr(prx, pry, p);
-    prx += p->w - 1;
-  } else {
-    prx += 7;
   }
+  prx += w;
+  return w;
+}
+
+static int Z_get_string_width_generic (vgaimg **img, int off, const char *fmt, va_list ap) {
+  int i, w, ww;
+  char buf[80];
+  vsprintf(buf, fmt, ap);
+  for (i = w = ww = 0; buf[i]; ++i) {
+    switch (buf[i]) {
+      case '\n':
+      case '\r':
+        ww = max(w, ww);
+        w = 0;
+        break;
+      default:
+        w += Z_get_char_width_generic(img, off, (byte)buf[i]);
+    }
+  }
+  return max(w, ww);
+}
+
+static int Z_printf_generic (vgaimg **img, int off, const char *fmt, va_list ap) {
+  int i, w, ww;
+  char buf[80];
+  vsprintf(buf, fmt, ap);
+  for (i = w = ww = 0; buf[i]; ++i) {
+    switch (buf[i]) {
+      case '\n':
+        pry += off + 1;
+      case '\r':
+        w = max(w, ww);
+        prx = 0;
+        w = 0;
+        break;
+      default:
+        w += Z_putch_generic(img, off, (byte)buf[i]);
+    }
+  }
+  return w;
 }
 
 static void Z_gotoxy (int x, int y) {
@@ -120,44 +150,36 @@ static void Z_gotoxy (int x, int y) {
   pry = y;
 }
 
-static void Z_printbf (char *s, ...) {
-  int i;
-  va_list ap;
-  char buf[80];
-  va_start(ap, s);
-  vsprintf(buf, s, ap);
-  va_end(ap);
-  for (i = 0; buf[i]; ++i) {
-    switch (buf[i]) {
-      case '\n':
-        pry += 13;
-      case '\r':
-        prx = 0;
-        break;
-      default:
-        Z_putbfch((byte)buf[i]);
-    }
-  }
+static int Z_get_big_string_width (const char *fmt, ...) {
+  va_list a;
+  va_start(a, fmt);
+  int w = Z_get_string_width_generic(bfh, 12, fmt, a);
+  va_end(a);
+  return w;
 }
 
-static void Z_printsf (char *s, ...) {
-  int i;
-  va_list ap;
-  char buf[80];
-  va_start(ap, s);
-  vsprintf(buf, s, ap);
-  va_end(ap);
-  for (i = 0; buf[i]; ++i) {
-    switch(buf[i]) {
-      case '\n':
-        pry += 8;
-      case '\r':
-        prx=0;
-        break;
-      default:
-        Z_putsfch((byte)buf[i]);
-    }
-  }
+static int Z_printbf (const char *fmt, ...) {
+  va_list a;
+  va_start(a, fmt);
+  int w = Z_printf_generic(bfh, 12, fmt, a);
+  va_end(a);
+  return w;
+}
+
+static int Z_get_small_string_width (const char *fmt, ...) {
+  va_list a;
+  va_start(a, fmt);
+  int w = Z_get_string_width_generic(sfh, 7, fmt, a);
+  va_end(a);
+  return w;
+}
+
+static int Z_printsf (const char *fmt, ...) {
+  va_list a;
+  va_start(a, fmt);
+  int w =Z_printf_generic(sfh, 7, fmt, a);
+  va_end(a);
+  return w;
 }
 
 static void Z_drawspr (int x, int y, void *p, char d) {
@@ -317,75 +339,211 @@ static void Z_drawfld (byte *fld, int bg) {
 
 static int gm_tm = 0; // ???
 
-static vgaimg *PL_getspr (int s, int d) {
-  return plr_spr[(s - 'A') * 2 + d];
+#define SCROLLER_MIDDLE 10
+#define TEXTFIELD_MIDDLE 2
+
+static void get_entry_size (const menu_t *m, int i, int *w, int *h) {
+  assert(m != NULL);
+  assert(i >= 0);
+  assert(w != NULL);
+  assert(h != NULL);
+  int x = 0;
+  int y = 0;
+  int type = 0;
+  menu_msg_t msg;
+  msg.type = GM_GETENTRY;
+  assert(GM_send(m, i, &msg));
+  type = msg.integer.i;
+  switch (type) {
+    case GM_BUTTON:
+    case GM_SCROLLER:
+    case GM_TEXTFIELD:
+    case GM_TEXTFIELD_BUTTON:
+      msg.type = GM_GETCAPTION;
+      if (GM_send(m, i, &msg)) {
+        x = Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+      }
+      break;
+    case GM_SMALL_BUTTON:
+      msg.type = GM_GETCAPTION;
+      if (GM_send(m, i, &msg)) {
+        x = Z_get_small_string_width("%.*s", msg.string.maxlen, msg.string.s);
+      }
+      break;
+    default:
+      assert(0);
+  }
+  switch (type) {
+    case GM_BUTTON:
+      msg.type = GM_GETSTR;
+      if (GM_send(m, i, &msg)) {
+        x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+      }
+      y = 16;
+      break;
+    case GM_SMALL_BUTTON:
+      msg.type = GM_GETSTR;
+      if (GM_send(m, i, &msg)) {
+        x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+      }
+      y = 12;
+      break;
+    case GM_SCROLLER:
+      x += (SCROLLER_MIDDLE + 2) * 8;
+      y = 16;
+      break;
+    case GM_TEXTFIELD:
+    case GM_TEXTFIELD_BUTTON:
+      msg.type = GM_GETSTR;
+      if (GM_send(m, i, &msg)) {
+        x += (msg.string.maxlen + 2) * 8;
+      } else {
+        x += (TEXTFIELD_MIDDLE + 2) * 8;
+      }
+      y = 16;
+      break;
+    default:
+      assert(0);
+  }
+  *w = x;
+  *h = y;
+}
+
+static void get_menu_size (const menu_t *m, int *w, int *h) {
+  assert(m != NULL);
+  assert(w != NULL);
+  assert(h != NULL);
+  int i, n, x, y, xx, yy, type;
+  menu_msg_t msg;
+  msg.type = GM_QUERY;
+  if (GM_send_this(m, &msg)) {
+    n = msg.integer.b;
+    type = msg.integer.s;
+    x = 0;
+    y = 0;
+    msg.type = GM_GETTITLE;
+    if (GM_send_this(m, &msg)) {
+      switch (type) {
+        case GM_BIG: x = Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s); break;
+        case GM_SMALL: x = Z_get_small_string_width("%.*s", msg.string.maxlen, msg.string.s); break;
+        default: assert(0);
+      }
+    }
+    for (i = 0; i < n; i++) {
+      get_entry_size(m, i, &xx, &yy);
+      x = max(x, xx);
+      y += yy;
+    }
+    *w = x;
+    *h = y;
+  } else {
+    *w = 0;
+    *h = 0;
+  }
 }
 
 static int GM_draw (void) {
-  enum {MENU, MSG}; // copypasted from menu.c!
-  enum {
-    CANCEL, NEWGAME, LOADGAME, SAVEGAME, OPTIONS, QUITGAME, QUIT, ENDGAME, ENDGM,
-    PLR1, PLR2, COOP, DM, VOLUME, GAMMA, LOAD, SAVE, PLCOLOR, PLCEND, MUSIC, INTERP,
-    SVOLM, SVOLP, MVOLM, MVOLP, GAMMAM, GAMMAP, PL1CM, PL1CP, PL2CM, PL2CP
-  }; // copypasted from menu.c!
-  int i, j, k, y;
-  ++gm_tm;
-  V_setrect(0, SCRW, 0, SCRH);
-  if (!mnu && !gm_redraw) {
-    return 0;
-  }
-  gm_redraw = 0;
-  if (!mnu) {
-    return 1;
-  }
-  if (mnu->type == MENU) {
-    y = (200 - mnu -> n * 16 - 20) / 2;
-    Z_gotoxy(mnu->x, y - 10); Z_printbf(mnu->ttl);
-    for (i = 0; i < mnu->n; ++i) {
-      if (mnu->t[i] == LOAD || mnu->t[i] == SAVE) {
-        j = y + i * 16 + 29;
-        V_spr(mnu->x, j, mslotl);
-        for (k = 8; k < 184; k += 8) {
-          V_spr(mnu->x + k, j, mslotm);
-        }
-        V_spr(mnu->x + 184, j, mslotr);
-        Z_gotoxy(mnu->x + 4, j - 8);
-        if (input && i == save_mnu.cur) {
-          Z_printsf("%s_", ibuf);
-        } else {
-          Z_printsf("%s", savname[i]);
+  int i, j, n, x, y, xoff, yoff, cur, w, type, recv;
+  const menu_t *m = GM_get();
+  menu_msg_t msg;
+  if (m != NULL) {
+    get_menu_size(m, &x, &y);
+    x = SCRW / 2 - x / 2;
+    y = SCRH / 2 - y / 2;
+    // --- title ---
+    msg.type = GM_QUERY;
+    if (GM_send_this(m, &msg)) {
+      cur = msg.integer.i;
+      n = msg.integer.a;
+      type = msg.integer.s;
+      msg.type = GM_GETTITLE;
+      if (GM_send_this(m, &msg)) {
+        Z_gotoxy(x, y - 10);
+        switch (type) {
+          case GM_SMALL: yoff = 8; Z_printsf("%.*s", msg.string.maxlen, msg.string.s); break;
+          case GM_BIG: yoff = 20; Z_printbf("%.*s", msg.string.maxlen, msg.string.s); break;
+          default: assert(0);
         }
       } else {
-        Z_gotoxy(mnu->x + (mnu->t[i] >= SVOLM ? (mnu->t[i] >= PL1CM ? 50 : 152) : 0), y + i * 16 + 20);
-        Z_printbf(mnu->m[i]);
+        yoff = 0;
       }
-      if (mnu->t[i] == MUSIC) {
-        Z_printbf(" '%.8s'", g_music);
-      } else if(mnu->t[i] == INTERP) {
-        Z_printbf("%s", fullscreen ? "ON" : "OFF");
-      } else if(mnu->t[i] >= PL1CM) {
-        V_manspr(mnu->x + (mnu->t[i] == PL1CM ? 15 : 35), y + i * 16 + 20 + 14, PL_getspr(*panimp, 0), pcolortab[(mnu->t[i] == PL1CM) ? p1color : p2color]);
-      } else if(mnu->t[i] >= SVOLM) {
-        j = y + i * 16 + 20;
-        V_spr(mnu->x, j, mbarl);
-        for (k = 8; k < 144; k += 8) {
-          V_spr(mnu->x + k, j, mbarm);
+      for (i = 0; i < n; i++) {
+        msg.type = GM_GETENTRY;
+        if (GM_send(m, i, &msg)) {
+          type = msg.integer.i;
+          if (i == cur) {
+            if (type == GM_SMALL_BUTTON) {
+              Z_gotoxy(x - 8, y + yoff);
+              Z_printsf(">");
+            } else {
+              V_spr(x - 25, y + yoff - 8, msklh[(gm_tm / 6) & 1]);
+            }
+          }
+          msg.type = GM_GETCAPTION;
+          if (GM_send(m, i, &msg)) {
+            Z_gotoxy(x, y + yoff);
+            if (type == GM_SMALL_BUTTON) {
+              xoff = Z_printsf("%.*s", msg.string.maxlen, msg.string.s);
+            } else {
+              xoff = Z_printbf("%.*s", msg.string.maxlen, msg.string.s);
+            }
+          } else {
+            xoff = 0;
+          }
+          switch (type) {
+            case GM_BUTTON:
+            case GM_SMALL_BUTTON:
+              msg.type = GM_GETSTR;
+              if (GM_send(m, i, &msg)) {
+                Z_gotoxy(x + xoff, y + yoff);
+                if (type == GM_SMALL_BUTTON) {
+                  Z_printsf("%.*s", msg.string.maxlen, msg.string.s);
+                } else {
+                  Z_printbf("%.*s", msg.string.maxlen, msg.string.s);
+                }
+              }
+              yoff += type == GM_BUTTON ? 16 : 12;
+              break;
+            case GM_TEXTFIELD:
+            case GM_TEXTFIELD_BUTTON:
+              yoff += 9;
+              msg.type = GM_GETSTR;
+              recv = GM_send(m, i, &msg);
+              w = recv ? msg.string.maxlen : TEXTFIELD_MIDDLE;
+              V_spr(x + xoff, y + yoff, mslotl);
+              for (j = 1; j <= w; j++) {
+                V_spr(x + xoff + j * 8, y + yoff, mslotm);
+              }
+              V_spr(x + xoff + j * 8, y + yoff, mslotr);
+              Z_gotoxy(x + xoff + 4, y + yoff - 7);
+              if (input && i == cur) {
+                Z_printsf("%.*s_", imax, ibuf);
+              } else if (recv) {
+                Z_printsf("%.*s", msg.string.maxlen, msg.string.s);
+              }
+              yoff += 7;
+              break;
+            case GM_SCROLLER:
+              V_spr(x + xoff, y + yoff, mbarl);
+              for (j = 1; j < SCROLLER_MIDDLE; j++) {
+                V_spr(x + xoff + j * 8, y + yoff, mbarm);
+              }
+              V_spr(x + xoff + j * 8, y + yoff, mbarr);
+              msg.type = GM_GETINT;
+              if (GM_send(m, i, &msg)) {
+                int lev = (msg.integer.i - msg.integer.a) * ((SCROLLER_MIDDLE - 2) * 8) / msg.integer.b;
+                V_spr(x + xoff + lev + 8, y + yoff, mbaro);
+              }
+              yoff += 16;
+              break;
+            default:
+              assert(0);
+          }
         }
-        V_spr(mnu->x + 144, j, mbarr);
-        switch(mnu->t[i]) {
-          case SVOLM: k = snd_vol; break;
-          case MVOLM: k = mus_vol; break;
-          case GAMMAM: k = gammaa << 5; break;
-        }
-        V_spr(mnu->x + 8 + k, j, mbaro);
       }
     }
-    V_spr(mnu->x - 25, y + mnu->cur * 16 + 20 - 8, msklh[(gm_tm / 6) & 1]);
-  } else {
-    Z_gotoxy((320 - strlen(mnu->ttl) * 7) / 2, 90); Z_printsf(mnu->ttl);
-    Z_gotoxy(136, 100); Z_printsf("(Y/N)");
   }
-  return 1;
+  return m != NULL;
 }
 
 /* --- dots --- */
@@ -876,9 +1034,6 @@ void R_draw (void) {
   int h;
   word hr, mn, sc;
   W_act();
-  if (g_trans && !transdraw) {
-    return;
-  }
   switch (g_st) {
     case GS_ENDANIM:
     case GS_END2ANIM:
@@ -922,92 +1077,66 @@ void R_draw (void) {
       V_center(0);
       break;
   }
-  V_center(1);
-  if (g_st != GS_GAME) {
-    if (g_trans) {
-      return;
+  V_center(0);
+  if (g_st == GS_GAME) {
+    if (_2pl) {
+      w_o = 0;
+      WD = SCRW - 120;
+      HT = SCRH / 2 - 2;
+      drawview(&pl1);
+      w_o = SCRH / 2;
+      WD = SCRW - 120;
+      HT = SCRH / 2 - 2;
+      drawview(&pl2);
+    } else{
+      w_o = 0;
+      WD = SCRW - 120;
+      HT = SCRH - 2;
+      drawview(&pl1);
     }
-    GM_draw();
-    V_copytoscr(0, SCRW, 0, SCRH);
-    return;
-  }
-  V_center(0);
-  if (_2pl) {
-    w_o = 0;
-    WD = SCRW - 120;
-    HT = SCRH / 2 - 2;
-    drawview(&pl1);
-    w_o = SCRH / 2;
-    WD = SCRW - 120;
-    HT = SCRH / 2 - 2;
-    drawview(&pl2);
-  } else{
-    w_o = 0;
-    WD = SCRW - 120;
-    HT = SCRH - 2;
-    drawview(&pl1);
-  }
-  if (g_trans) {
-    return;
-  }
-  V_center(1);
-  if (GM_draw()) {
-    pl1.drawst = 0xFF;
-    pl2.drawst = 0xFF;
-    V_copytoscr(0,SCRW,0,SCRH);
-    return;
-  }
-  V_center(0);
-  if (pl1.invl) {
-    h = get_pu_st(pl1.invl) * 6;
-  } else if (pl1.pain < 15) {
-    h = 0;
-  } else if (pl1.pain < 35) {
-    h = 1;
-  } else if (pl1.pain < 55) {
-    h = 2;
-  } else if (pl1.pain < 75) {
-    h=3;
-  } else if (pl1.pain < 95) {
-    h=4;
-  } else {
-    h = 5;
-  }
-  if (h != 0) {
-    V_maptoscr(0, SCRW - 120, 1, _2pl ? SCRH / 2 - 2 : SCRH - 2, clrmap + h * 256);
-  } else {
-    V_copytoscr(0, SCRW - 120, 1, _2pl ? SCRH / 2 - 2 : SCRH - 2);
-  }
-  if (pl1.drawst) {
-    V_copytoscr(SCRW - 120, 120, 0, _2pl ? SCRH / 2 : SCRH);
-  }
-  pl1.drawst = 0xFF;
-  if (_2pl) {
-    if (pl2.invl) {
-      h = get_pu_st(pl2.invl) * 6;
-    } else if (pl2.pain < 15) {
+    if (pl1.invl) {
+      h = get_pu_st(pl1.invl) * 6;
+    } else if (pl1.pain < 15) {
       h = 0;
-    } else if (pl2.pain < 35) {
+    } else if (pl1.pain < 35) {
       h = 1;
-    } else if (pl2.pain < 55) {
+    } else if (pl1.pain < 55) {
       h = 2;
-    } else if (pl2.pain < 75) {
-      h = 3;
-    } else if (pl2.pain < 95) {
-      h = 4;
+    } else if (pl1.pain < 75) {
+      h=3;
+    } else if (pl1.pain < 95) {
+      h=4;
     } else {
       h = 5;
     }
-    if (h) {
-      V_maptoscr(0, SCRW - 120, SCRH / 2 + 1, SCRH / 2 - 2, clrmap + h * 256);
-    } else {
-      V_copytoscr(0, SCRW - 120, SCRH / 2 + 1, SCRH / 2 - 2);
+    if (h != 0) {
+      V_maptoscr(0, SCRW - 120, 1, _2pl ? SCRH / 2 - 2 : SCRH - 2, clrmap + h * 256);
     }
-    if (pl2.drawst) {
-      V_copytoscr(SCRW - 120, 120, SCRH / 2, SCRH / 2);
+    if (_2pl) {
+      if (pl2.invl) {
+        h = get_pu_st(pl2.invl) * 6;
+      } else if (pl2.pain < 15) {
+        h = 0;
+      } else if (pl2.pain < 35) {
+        h = 1;
+      } else if (pl2.pain < 55) {
+        h = 2;
+      } else if (pl2.pain < 75) {
+        h = 3;
+      } else if (pl2.pain < 95) {
+        h = 4;
+      } else {
+        h = 5;
+      }
+      if (h) {
+        V_maptoscr(0, SCRW - 120, SCRH / 2 + 1, SCRH / 2 - 2, clrmap + h * 256);
+      }
     }
-    pl2.drawst = 0xFF;
   }
+  V_center(0);
+  V_setrect(0, SCRW, 0, SCRH);
+  GM_draw();
+  V_copytoscr(0, SCRW, 0, SCRH);
 }
 
 void R_alloc (void) {
@@ -1372,6 +1501,75 @@ void R_toggle_fullscreen (void) {
   Y_get_videomode(&SCRW, &SCRH);
   V_update_buffer();
   R_setgamma(gammaa);
+}
+
+static int video_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  static int w, h, fullscreen;
+  static char buf[16];
+  static int buflen;
+  static int vmode;
+  const videomode_t *v;
+  enum { VIDEOMODE, FULLSCREEN, APPLY, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "Video", NULL,
+    {
+      { "Mode: ", NULL },
+      { "Fullscreen: ", NULL },
+      { "Apply ", NULL },
+    }
+  };
+  if (msg->type == GM_ENTER) {
+    Y_get_videomode(&w, &h);
+    fullscreen = Y_get_fullscreen();
+    v = Y_get_videomode_list_opengl(fullscreen);
+    vmode = 0;
+    while (vmode < v->n && v->modes[vmode].w != w && v->modes[vmode].h != h) {
+      vmode += 1;
+    }
+    if (vmode < v->n) {
+      w = v->modes[vmode].w;
+      h = v->modes[vmode].h;
+    }
+    snprintf(buf, 16, "%ix%i", w, h);
+    buflen = strlen(buf);
+    return 1;
+  }
+  if (i == VIDEOMODE) {
+    switch (msg->type) {
+      case GM_GETSTR: return GM_init_str(msg, buf, buflen);
+      case GM_SELECT:
+        v = Y_get_videomode_list_opengl(fullscreen);
+        vmode = vmode + 1 >= v->n ? 0 : vmode + 1;
+        if (v->n > 0) {
+          w = v->modes[vmode].w;
+          h = v->modes[vmode].h;
+        } else {
+          Y_get_videomode(&w, &h);
+        }
+        snprintf(buf, 16, "%ix%i", w, h);
+        buflen = strlen(buf);
+        return 1;
+    }
+  } else if (i == FULLSCREEN) {
+    switch (msg->type) {
+      case GM_GETSTR: return GM_init_str(msg, fullscreen ? "Yes" : "No ", 3);
+      case GM_SELECT: fullscreen = !fullscreen; return 1;
+    }
+  } else if (i == APPLY) {
+    switch (msg->type) {
+      case GM_SELECT: R_set_videomode(w, h, fullscreen); return 1;
+    }
+  }
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+}
+
+static const menu_t video_menu = {
+  NULL, &video_menu_handler
+};
+
+const menu_t *R_menu (void) {
+  return &video_menu;
 }
 
 void R_init () {
