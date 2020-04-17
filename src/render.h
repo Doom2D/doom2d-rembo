@@ -3,8 +3,6 @@
 
 #include "menu.h"
 
-extern int SCRW, SCRH; // from vga.c
-
 const menu_t *R_menu (void);
 void R_init (void);
 void R_draw (void);
