@@ -454,37 +454,6 @@ static int utf8_to_wchar (char *x) {
   return i;
 }
 
-static int wchar_to_cp866 (int uch) {
-  if (uch <= 0x7f) {
-    return uch;
-  } else if (uch >= 0x410 && uch <= 0x43f) {
-    return uch - 0x410 + 0x80;
-  } else if (uch >= 0x440 && uch <= 0x44f) {
-    return uch - 0x440 + 0xe0;
-  } else {
-    switch (uch) {
-      // TODO graphics from 0xb0..0xdf
-      case 0x401: return 0xf0;
-      case 0x451: return 0xf1;
-      case 0x404: return 0xf2;
-      case 0x454: return 0xf3;
-      case 0x407: return 0xf4;
-      case 0x457: return 0xf5;
-      case 0x40e: return 0xf6;
-      case 0x45e: return 0xf7;
-      case 0xb0: return 0xf8;
-      case 0x2219: return 0xf9;
-      case 0xb7: return 0xfa;
-      case 0x221a: return 0xfb;
-      case 0x2116: return 0xfc;
-      case 0xa4: return 0xfd;
-      case 0x25a0: return 0xfe;
-      case 0xa0: return 0xff;
-      default: return 0; // unknown
-    }
-  }
-}
-
 static void poll_events (void) {
   int key, down, uch, ch;
   SDL_Event ev;
