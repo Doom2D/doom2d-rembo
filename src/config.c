@@ -209,10 +209,12 @@ static int CFG_write_entry (FILE *f, const cfg_t *entry) {
   return entry->t == 0 ? 0 : 1;
 }
 
-int CFG_update_config (const char *old, const char *new, const cfg_t *cfg, const char *msg) {
+int CFG_update_config (const char *old, const char *new, int n, const cfg_t **cfg, const char *msg) {
   assert(old != NULL);
   assert(new != NULL);
+  assert(n >= 0);
   assert(cfg != NULL);
+  int i, j;
   char key[64];
   char value[64];
   FILE *nf = fopen(new, "wb");
@@ -224,15 +226,21 @@ int CFG_update_config (const char *old, const char *new, const cfg_t *cfg, const
     }
     if (CFG_open_iterator(old)) {
       while (CFG_scan_iterator(key, 64, value, 64)) {
-        if (CFG_find_entry(key, cfg) == NULL) {
+        i = 0;
+        while (i < n && CFG_find_entry(key, cfg[i]) == NULL) {
+          i++;
+        }
+        if (i >= n) {
           CFG_write_key_value(nf, key, value);
         }
       }
       CFG_close_iterator();
     }
-    int i = 0;
-    while (CFG_write_entry(nf, &cfg[i])) {
-      i++;
+    for (j = 0; j < n; j++) {
+      i = 0;
+      while (CFG_write_entry(nf, &cfg[j][i])) {
+        i++;
+      }
     }
     fclose(nf);
   }
