@@ -41,7 +41,6 @@
 #include "my.h"
 #include "render.h"
 
-byte w_horiz=ON;
 int sky_type=1;
 dword walf[256];
 byte walswp[256];

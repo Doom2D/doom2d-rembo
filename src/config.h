@@ -32,7 +32,7 @@ int CFG_open_iterator (const char *name);
 int CFG_scan_iterator (char *key, int keylen, char *value, int valuelen);
 void CFG_close_iterator (void);
 
-int CFG_read_config (const char *name, const cfg_t *cfg);
+int CFG_read_config (const char *name, int n, const cfg_t **cfg);
 int CFG_update_config (const char *old, const char *new, int n, const cfg_t **cfg, const char *msg);
 
 #endif /* CONFIG_H_INCLUDED */

@@ -80,11 +80,15 @@ typedef struct image {
 } image;
 
 /* Render Specific */
-static int SCRW = 320;
-static int SCRH = 200;
+static int SCRW;
+static int SCRH;
+static float screen_scale;
 static int screen_width = 320;
 static int screen_height = 200;
-static float screen_scale = 1.0;
+static byte screen_full = 0;
+static int init_screen_width = 0;
+static int init_screen_height = 0;
+static byte init_screen_full = 0xFF;
 static rgb playpal[256];
 static byte bright[256];
 static GLuint lastTexture;
@@ -153,6 +157,7 @@ static const char *anm[ANIT - 1][5] = {
   {"W73A_1",   "W73A_2",   NULL,       NULL,    NULL},
   {"RP2_1",    "RP2_2",    "RP2_3",    "RP2_4", NULL}
 };
+static byte w_horiz = 1;
 static int max_wall_width;
 static int max_wall_height;
 static int max_textures;
@@ -1862,6 +1867,7 @@ void R_set_videomode (int w, int h, int fullscreen) {
     }
   }
   Y_get_videomode(&screen_width, &screen_height);
+  screen_full = Y_get_fullscreen();
   screen_scale = max(1, screen_width / 320);
   root = R_cache_new();
   assert(root);
@@ -1938,10 +1944,35 @@ const menu_t *R_menu (void) {
   return &video_menu;
 }
 
+const cfg_t *R_args (void) {
+  static const cfg_t args[] = {
+    { "fullscr", &init_screen_full, Y_SW_ON },
+    { "window", &init_screen_full, Y_SW_OFF },
+    { "width", &init_screen_width, Y_DWORD },
+    { "height", &init_screen_height, Y_DWORD },
+    { NULL, NULL, 0 } // end
+  };
+  return args;
+}
+
+const cfg_t *R_conf (void) {
+  static const cfg_t conf[] = {
+    { "sky", &w_horiz, Y_SW_ON },
+    { "fullscreen", &screen_full, Y_SW_ON },
+    { "screen_width", &screen_width, Y_DWORD },
+    { "screen_height", &screen_height, Y_DWORD },
+    { NULL, NULL, 0 } // end
+  };
+  return conf;
+}
+
 void R_init (void) {
   logo("R_init: intialize opengl render\n");
   R_init_playpal();
-  R_set_videomode(SCRW, SCRH, 0);
+  init_screen_width = init_screen_width > 0 ? init_screen_width : screen_width;
+  init_screen_height = init_screen_height > 0 ? init_screen_height : screen_height;
+  init_screen_full = init_screen_full != 0xFF ? init_screen_full : screen_full;
+  R_set_videomode(init_screen_width, init_screen_height, init_screen_full);
 }
 
 void R_done (void) {
