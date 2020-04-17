@@ -3,6 +3,14 @@
 
 #include "glob.h"
 
+enum { Y_BYTE = 1, Y_WORD, Y_DWORD, Y_STRING, Y_SW_ON, Y_SW_OFF, Y_FILES, Y_KEY };
+
+typedef struct cfg_t {
+  const char *cfg;
+  void *p;
+  byte t;
+} cfg_t;
+
 typedef struct videomode_size_t {
   int w, h, r;
 } videomode_size_t;
