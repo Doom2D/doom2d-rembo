@@ -26,84 +26,14 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
-#include "map.h"
-#include "sound.h"
-#include "music.h"
-#include "view.h"
-#include "monster.h"
-#include "player.h"
-#include "menu.h"
+#include "system.h"
 #include "files.h"
-#include "render.h"
-#include "error.h"
 #include "input.h"
-#include "my.h"
-
-enum {NONE, BYTE, WORD, DWORD, STRING, SW_ON, SW_OFF, FILES, KEY};
-
-typedef struct cfg_t {
-  const char *cfg;
-  void *p;
-  byte t;
-} cfg_t;
-
-byte cheat;
-byte shot_vga;
 
 static FILE *f;
 static int ch;
 
-static const cfg_t arg[] = {
-  {"file", NULL, FILES},
-  {"cheat", &cheat, SW_ON},
-  {"vga", &shot_vga, SW_ON},
-  {"sndvol", &snd_vol, WORD},
-  {"musvol",&mus_vol, WORD},
-//  {"fullscr", &fullscreen, SW_ON},
-//  {"window", &fullscreen, SW_OFF},
-  {"mon", &nomon, SW_OFF},
-//  {"gamma", &gammaa, DWORD},
-  {"warp", &_warp, BYTE},
-//  {"width", &SCRW, DWORD},
-//  {"height", &SCRH, DWORD},
-//  {"config", NULL, cfg_file, STRING},
-  {NULL, NULL, NONE} // end
-};
-
-static const cfg_t cfg[] = {
-  {"screenshot", &shot_vga, SW_ON},
-  {"sound_volume", &snd_vol, WORD},
-  {"music_volume", &mus_vol, WORD},
-//  {"fullscreen", &fullscreen, SW_ON},
-  {"sky", &w_horiz, SW_ON},
-//  {"gamma", &gammaa, DWORD},
-//  {"screen_width", &SCRW, DWORD},
-//  {"screen_height", &SCRH, DWORD},
-  {"music_random", &music_random, SW_ON},
-  {"music_time", &music_time, DWORD},
-  {"music_fade", &music_fade, DWORD},
-  {"pl1_left", &pl1.kl, KEY},
-  {"pl1_right",&pl1.kr, KEY},
-  {"pl1_up", &pl1.ku, KEY},
-  {"pl1_down", &pl1.kd, KEY},
-  {"pl1_jump", &pl1.kj, KEY},
-  {"pl1_fire", &pl1.kf, KEY},
-  {"pl1_next", &pl1.kwr, KEY},
-  {"pl1_prev", &pl1.kwl, KEY},
-  {"pl1_use", &pl1.kp, KEY},
-  {"pl2_left", &pl2.kl, KEY},
-  {"pl2_right",&pl2.kr, KEY},
-  {"pl2_up",   &pl2.ku, KEY},
-  {"pl2_down", &pl2.kd, KEY},
-  {"pl2_jump", &pl2.kj, KEY},
-  {"pl2_fire", &pl2.kf, KEY},
-  {"pl2_next", &pl2.kwr, KEY},
-  {"pl2_prev", &pl2.kwl, KEY},
-  {"pl2_use",  &pl2.kp, KEY},
-  {NULL, NULL, NONE} // end
-};
-
-static const cfg_t *CFG_find_entry (const char *key, const cfg_t *cfg) {
+const cfg_t *CFG_find_entry (const char *key, const cfg_t *cfg) {
   assert(key != NULL);
   assert(cfg != NULL);
   int i = 0;
@@ -113,19 +43,19 @@ static const cfg_t *CFG_find_entry (const char *key, const cfg_t *cfg) {
   return cfg[i].cfg ? &cfg[i] : NULL;
 }
 
-static int CFG_update_key (const char *key, const char *value, const cfg_t *cfg) {
+int CFG_update_key (const char *key, const char *value, const cfg_t *cfg) {
   const cfg_t *entry = CFG_find_entry(key, cfg);
   if (entry != NULL) {
     void *p = entry->p;
     switch (entry->t) {
-      case BYTE: *(byte*)p = atoi(value); break;
-      case WORD: *(word*)p = atoi(value); break;
-      case DWORD: *(dword*)p = atoi(value); break;
-      case STRING: strcpy(p, value); break; // TODO fix this security problem
-      case SW_ON: *(byte*)p = strcasecmp(value, "on") == 0 ? 1 : 0; break;
-      case SW_OFF: *(byte*)p = strcasecmp(value, "off") == 0 ? 0 : 1; break;
-      case FILES: F_addwad(value); break;
-      case KEY: *(int*)p = I_string_to_key(value); break;
+      case Y_BYTE: *(byte*)p = atoi(value); break;
+      case Y_WORD: *(word*)p = atoi(value); break;
+      case Y_DWORD: *(dword*)p = atoi(value); break;
+      case Y_STRING: strcpy(p, value); break; // TODO fix this security problem
+      case Y_SW_ON: *(byte*)p = strcasecmp(value, "on") == 0 ? 1 : 0; break;
+      case Y_SW_OFF: *(byte*)p = strcasecmp(value, "off") == 0 ? 0 : 1; break;
+      case Y_FILES: F_addwad(value); break;
+      case Y_KEY: *(int*)p = I_string_to_key(value); break;
       default: assert(0); // unknown type -> something broken
     }
     return 1;
@@ -136,7 +66,7 @@ static int CFG_update_key (const char *key, const char *value, const cfg_t *cfg)
 
 /* --- parser --- */
 
-static int CFG_open_iterator (const char *name) {
+int CFG_open_iterator (const char *name) {
   assert(f == NULL);
   f = fopen(name, "rb");
   if (f != NULL) {
@@ -160,7 +90,7 @@ static void CFG_skip_line (void) {
   }
 }
 
-static int CFG_scan_iterator (char *key, int keylen, char *value, int valuelen) {
+int CFG_scan_iterator (char *key, int keylen, char *value, int valuelen) {
   assert(key != NULL);
   assert(keylen > 0);
   assert(value != NULL);
@@ -202,7 +132,7 @@ static int CFG_scan_iterator (char *key, int keylen, char *value, int valuelen) 
   return found;
 }
 
-static void CFG_close_iterator (void) {
+void CFG_close_iterator (void) {
   assert(f != NULL);
   fclose(f);
   f = NULL;
@@ -210,7 +140,7 @@ static void CFG_close_iterator (void) {
 
 /* --- reader --- */
 
-static int CFG_read_config (const char *name) {
+int CFG_read_config (const char *name, const cfg_t *cfg) {
   char key[64];
   char value[64];
   assert(name != NULL);
@@ -225,28 +155,7 @@ static int CFG_read_config (const char *name) {
   }
 }
 
-void CFG_args (int argc, const char **argv) {
-  int i;
-  for (i = 1; i < argc; i++) {
-    if (argv[i][0] == '-' && argv[i][1] != 0) {
-      if (i + 1 >= argc) {
-        ERR_failinit("CFG_args: not enough arguments for parameter %s\n", argv[i]);
-      } else {
-        if (CFG_update_key(&argv[i][1], argv[i + 1], arg) != 0) {
-          ERR_failinit("CFG_args: unknown parameter %s\n", argv[i]);
-        }
-        i += 1;
-      }
-    } else {
-      ERR_failinit("CFG_args: something wrong here: %s\n", argv[i]);
-    }
-  }
-}
 
-void CFG_load (void) {
-  CFG_read_config("default.cfg");
-  CFG_read_config("doom2d.cfg");
-}
 
 /* --- writer --- */
 
@@ -268,39 +177,39 @@ static int CFG_write_entry (FILE *f, const cfg_t *entry) {
   const char *key = entry->cfg;
   if (key != NULL) {
     switch (entry->t) {
-      case BYTE:
+      case Y_BYTE:
         snprintf(buf, 64, "%i", *(byte*)entry->p);
         CFG_write_key_value(f, key, buf);
         break;
-      case WORD:
+      case Y_WORD:
         snprintf(buf, 64, "%i", *(word*)entry->p);
         CFG_write_key_value(f, key, buf);
         break;
-      case DWORD:
+      case Y_DWORD:
         snprintf(buf, 64, "%i", *(dword*)entry->p);
         CFG_write_key_value(f, key, buf);
         break;
-      case STRING:
+      case Y_STRING:
         CFG_write_key_value(f, key, entry->p);
         break;
-      case SW_ON:
-      case SW_OFF:
+      case Y_SW_ON:
+      case Y_SW_OFF:
         str = *(byte*)entry->p ? "on" : "off";
         CFG_write_key_value(f, key, str);
         break;
-      case KEY:
+      case Y_KEY:
         str = I_key_to_string(*(int*)entry->p);
         CFG_write_key_value(f, key, str);
         break;
-      case FILES: return 1; // ignore
-      case NONE: return 0; // end
+      case Y_FILES: return 1; // ignore
+      case 0: return 0; // end
       default: assert(0); // unknown type -> something broken
     }
   }
-  return entry->t == NONE ? 0 : 1;
+  return entry->t == 0 ? 0 : 1;
 }
 
-static int CFG_update_config (const char *old, const char *new, const cfg_t *cfg, const char *msg) {
+int CFG_update_config (const char *old, const char *new, const cfg_t *cfg, const char *msg) {
   assert(old != NULL);
   assert(new != NULL);
   assert(cfg != NULL);
@@ -328,11 +237,4 @@ static int CFG_update_config (const char *old, const char *new, const cfg_t *cfg
     fclose(nf);
   }
   return nf != NULL;
-}
-
-void CFG_save (void) {
-  CFG_update_config("doom2d.cfg", "doom2d.cfg", cfg, "generated by doom2d, do not modify");
-  //CFG_update_config("doom2d.cfg", "doom2d.tmp", cfg, "temporary file");
-  //CFG_update_config("doom2d.tmp", "doom2d.cfg", cfg, "generated by doom2d, do not modify");
-  //remove("doom2d.tmp");
 }

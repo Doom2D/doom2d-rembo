@@ -23,12 +23,16 @@
 #define CONFIG_H_INCLUDED
 
 #include "glob.h"
+#include "system.h"
 
-extern byte cheat;
-extern byte shot_vga;
+const cfg_t *CFG_find_entry (const char *key, const cfg_t *cfg);
+int CFG_update_key (const char *key, const char *value, const cfg_t *cfg);
 
-void CFG_args (int argc, char **argv);
-void CFG_load (void);
-void CFG_save (void);
+int CFG_open_iterator (const char *name);
+int CFG_scan_iterator (char *key, int keylen, char *value, int valuelen);
+void CFG_close_iterator (void);
+
+int CFG_read_config (const char *name, const cfg_t *cfg);
+int CFG_update_config (const char *old, const char *new, const cfg_t *cfg, const char *msg);
 
 #endif /* CONFIG_H_INCLUDED */

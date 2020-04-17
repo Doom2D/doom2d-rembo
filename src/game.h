@@ -18,6 +18,7 @@ extern int dm_pnum;
 extern int dm_pl1p;
 extern int dm_pl2p;
 extern pos_t dm_pos[100];
+extern byte cheat;
 
 extern int lt_time;
 extern int lt_type;

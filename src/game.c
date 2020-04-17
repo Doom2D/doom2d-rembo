@@ -66,6 +66,7 @@ int dm_pnum;
 int dm_pl1p;
 int dm_pl2p;
 pos_t dm_pos[100];
+byte cheat;
 
 static void *telepsnd;
 
