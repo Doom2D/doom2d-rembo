@@ -53,7 +53,7 @@ int CFG_update_key (const char *key, const char *value, const cfg_t *cfg) {
       case Y_DWORD: *(dword*)p = atoi(value); break;
       case Y_STRING: strcpy(p, value); break; // TODO fix this security problem
       case Y_SW_ON: *(byte*)p = strcasecmp(value, "on") == 0 ? 1 : 0; break;
-      case Y_SW_OFF: *(byte*)p = strcasecmp(value, "off") == 0 ? 0 : 1; break;
+      case Y_SW_OFF: *(byte*)p = strcasecmp(value, "off") == 0 ? 1 : 0; break;
       case Y_FILES: F_addwad(value); break;
       case Y_KEY: *(int*)p = I_string_to_key(value); break;
       default: assert(0); // unknown type -> something broken
@@ -140,13 +140,20 @@ void CFG_close_iterator (void) {
 
 /* --- reader --- */
 
-int CFG_read_config (const char *name, const cfg_t *cfg) {
+int CFG_read_config (const char *name, int n, const cfg_t **cfg) {
+  assert(name != NULL);
+  assert(n >= 0);
+  assert(cfg != NULL);
+  int i;
   char key[64];
   char value[64];
   assert(name != NULL);
   if (CFG_open_iterator(name)) {
     while (CFG_scan_iterator(key, 64, value, 64)) {
-      CFG_update_key(key, value, cfg);
+      i = 0;
+      while (i < n && CFG_update_key(key, value, cfg[i]) == 0) {
+        i++;
+      }
     }
     CFG_close_iterator();
     return 1;
@@ -172,21 +179,21 @@ static void CFG_write_key_value (FILE *f, const char *key, const char *value) {
 static int CFG_write_entry (FILE *f, const cfg_t *entry) {
   assert(f != NULL);
   assert(entry != NULL);
-  char buf[64];
+  char buf[16];
   const char *str;
   const char *key = entry->cfg;
   if (key != NULL) {
     switch (entry->t) {
       case Y_BYTE:
-        snprintf(buf, 64, "%i", *(byte*)entry->p);
+        snprintf(buf, 16, "%i", *(byte*)entry->p);
         CFG_write_key_value(f, key, buf);
         break;
       case Y_WORD:
-        snprintf(buf, 64, "%i", *(word*)entry->p);
+        snprintf(buf, 16, "%i", *(word*)entry->p);
         CFG_write_key_value(f, key, buf);
         break;
       case Y_DWORD:
-        snprintf(buf, 64, "%i", *(dword*)entry->p);
+        snprintf(buf, 16, "%i", *(dword*)entry->p);
         CFG_write_key_value(f, key, buf);
         break;
       case Y_STRING:

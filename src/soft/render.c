@@ -75,7 +75,13 @@ static byte walani[256];
 static int anih[ANIT][5];
 static byte anic[ANIT];
 static int max_textures;
+static byte w_horiz = 1;
 static vgaimg *horiz;
+
+static int init_screen_width = 0;
+static int init_screen_height = 0;
+static byte init_screen_full = 0xFF;
+static int init_screen_gammaa = -1;
 
 /* --- misc --- */
 
@@ -1572,6 +1578,30 @@ const menu_t *R_menu (void) {
   return &video_menu;
 }
 
+const cfg_t *R_args (void) {
+  static const cfg_t args[] = {
+    { "fullscr", &init_screen_full, Y_SW_ON },
+    { "window", &init_screen_full, Y_SW_OFF },
+    { "width", &init_screen_width, Y_DWORD },
+    { "height", &init_screen_height, Y_DWORD },
+    { "gamma", &init_screen_gammaa, Y_DWORD },
+    { NULL, NULL, 0 } // end
+  };
+  return args;
+}
+
+const cfg_t *R_conf (void) {
+  static const cfg_t conf[] = {
+    { "sky", &w_horiz, Y_SW_ON },
+    { "fullscreen", &fullscreen, Y_SW_ON },
+    { "screen_width", &SCRW, Y_DWORD },
+    { "screen_height", &SCRH, Y_DWORD },
+    { "gamma", &gammaa, Y_DWORD },
+    { NULL, NULL, 0 } // end
+  };
+  return conf;
+}
+
 void R_init () {
   int i;
   logo("R_init: initialize software render\n");
@@ -1581,6 +1611,10 @@ void R_init () {
   }
   F_loadres(F_getresid("MIXMAP"), mixmap, 0, 0x10000);
   F_loadres(F_getresid("COLORMAP"), clrmap, 0, 256*12);
+  SCRW = init_screen_width > 0 ? init_screen_width : SCRW;
+  SCRH = init_screen_height > 0 ? init_screen_height : SCRH;
+  fullscreen = init_screen_full != 0xFF ? init_screen_full : fullscreen;
+  gammaa = init_screen_gammaa >= 0 ? init_screen_gammaa : gammaa;
   R_set_videomode(SCRW, SCRH, fullscreen);
   V_setrect(0, SCRW, 0, SCRH);
   V_clr(0, SCRW, 0, SCRH, 0);

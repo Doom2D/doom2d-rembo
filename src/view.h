@@ -59,7 +59,6 @@ typedef struct {
   char t;
 } wall_t;
 
-extern byte w_horiz;
 extern int sky_type;
 extern dword walf[256];
 extern byte walswp[256];

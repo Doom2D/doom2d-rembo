@@ -1,9 +1,13 @@
 #ifndef RENDER_H_INCLUDED
 #define RENDER_H_INCLUDED
 
+#include "system.h"
 #include "menu.h"
 
+const cfg_t *R_args (void);
+const cfg_t *R_conf (void);
 const menu_t *R_menu (void);
+
 void R_init (void);
 void R_draw (void);
 void R_done (void);
