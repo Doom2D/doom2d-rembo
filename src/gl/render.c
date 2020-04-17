@@ -80,8 +80,11 @@ typedef struct image {
 } image;
 
 /* Render Specific */
-int SCRW = 320; // public
-int SCRH = 200; // public
+static int SCRW = 320;
+static int SCRH = 200;
+static int screen_width = 320;
+static int screen_height = 200;
+static float screen_scale = 1.0;
 static rgb playpal[256];
 static byte bright[256];
 static GLuint lastTexture;
@@ -544,12 +547,16 @@ static void R_gl_free_image (image *img) {
   img->res = -1;
 }
 
-static void R_gl_draw_quad (int x, int y, int w, int h) {
-  glBegin(GL_QUADS);
+static void R_gl_quad_vetexes (int x, int y, int w, int h) {
   glVertex2i(x + w, y);
   glVertex2i(x,     y);
   glVertex2i(x,     y + h);
   glVertex2i(x + w, y + h);
+}
+
+static void R_gl_draw_quad (int x, int y, int w, int h) {
+  glBegin(GL_QUADS);
+  R_gl_quad_vetexes(x, y, w, h);
   glEnd();
 }
 
@@ -605,12 +612,14 @@ static void R_gl_set_color (byte c) {
 }
 
 static void R_gl_setclip (int x, int y, int w, int h) {
-  glScissor(x, SCRH - h - y, w, h);
+  glScissor(x * screen_scale, (SCRH - h - y) * screen_scale, w * screen_scale, h * screen_scale);
 }
 
 static void R_gl_setmatrix (void) {
-  glScissor(0, 0, SCRW, SCRH);
-  glViewport(0, 0, SCRW, SCRH);
+  SCRW = screen_width / screen_scale;
+  SCRH = screen_height / screen_scale;
+  glScissor(0, 0, screen_width, screen_height);
+  glViewport(0, 0, screen_width, screen_height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(0, SCRW, SCRH, 0, 0, 1);
@@ -1031,11 +1040,11 @@ static void R_draw_dots (void) {
   glDisable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_TEXTURE_2D);
-  glBegin(GL_POINTS);
+  glBegin(GL_QUADS);
   for (i = 0; i < MAXDOT; i++) {
     if (dot[i].t != 0) {
       R_gl_set_color(dot[i].c);
-      glVertex2i(dot[i].o.x, dot[i].o.y + 1);
+      R_gl_quad_vetexes(dot[i].o.x, dot[i].o.y, 1, 1);
     }
   }
   glEnd();
@@ -1325,6 +1334,7 @@ static void R_draw_smoke (void) {
 static void R_draw_effects (void) {
   enum {NONE, TFOG, IFOG, BUBL}; // copypasted from fx.c
   int i, s;
+  glPointSize(screen_scale);
   for (i = 0; i < MAXFX; ++i) {
     switch (fx[i].t) {
       case TFOG:
@@ -1339,10 +1349,8 @@ static void R_draw_effects (void) {
         glDisable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_TEXTURE_2D);
-        glBegin(GL_POINTS);
         R_gl_set_color(0xC0 + fx[i].s);
-        glVertex2i(fx[i].x >> 8, (fx[i].y >> 8) + 1);
-        glEnd();
+        R_gl_draw_quad(fx[i].x >> 8, fx[i].y >> 8, 1, 1);
         break;
     }
   }
@@ -1853,7 +1861,8 @@ void R_set_videomode (int w, int h, int fullscreen) {
       ERR_failinit("Unable to set video mode\n");
     }
   }
-  Y_get_videomode(&SCRW, &SCRH);
+  Y_get_videomode(&screen_width, &screen_height);
+  screen_scale = max(1, screen_width / 320);
   root = R_cache_new();
   assert(root);
   R_alloc();

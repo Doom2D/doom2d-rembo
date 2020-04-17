@@ -64,8 +64,8 @@ static const cfg_t arg[] = {
   {"mon", &nomon, SW_OFF},
 //  {"gamma", &gammaa, DWORD},
   {"warp", &_warp, BYTE},
-  {"width", &SCRW, DWORD},
-  {"height", &SCRH, DWORD},
+//  {"width", &SCRW, DWORD},
+//  {"height", &SCRH, DWORD},
 //  {"config", NULL, cfg_file, STRING},
   {NULL, NULL, NONE} // end
 };
@@ -77,8 +77,8 @@ static const cfg_t cfg[] = {
 //  {"fullscreen", &fullscreen, SW_ON},
   {"sky", &w_horiz, SW_ON},
 //  {"gamma", &gammaa, DWORD},
-  {"screen_width", &SCRW, DWORD},
-  {"screen_height", &SCRH, DWORD},
+//  {"screen_width", &SCRW, DWORD},
+//  {"screen_height", &SCRH, DWORD},
   {"music_random", &music_random, SW_ON},
   {"music_time", &music_time, DWORD},
   {"music_fade", &music_fade, DWORD},
