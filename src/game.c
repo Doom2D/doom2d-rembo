@@ -48,6 +48,7 @@
 #include "error.h"
 #include "input.h"
 
+#include "save.h"
 
 #define LT_DELAY 8
 #define LT_HITTIME 6
@@ -92,47 +93,6 @@ static void set_trans(int st) {
       return;
   }
   g_trans=1;g_transt=0;
-}
-
-void G_savegame (FILE* h) {
-  myfwrite8(_2pl, h);
-  myfwrite8(g_dm, h);
-  myfwrite8(g_exit, h);
-  myfwrite8(g_map, h);
-  myfwrite32(g_time, h);
-  myfwrite32(dm_pl1p, h);
-  myfwrite32(dm_pl2p, h);
-  myfwrite32(dm_pnum, h);
-  int i = 0;
-  while (i < dm_pnum) {
-    myfwrite32(dm_pos[i].x, h);
-    myfwrite32(dm_pos[i].y, h);
-    myfwrite8(dm_pos[i].d, h);
-    i += 1;
-  }
-  myfwrite8(cheat, h);
-  myfwrite(g_music, 8, 1, h);
-}
-
-void G_loadgame (FILE* h) {
-  _2pl = myfread8(h);
-  g_dm = myfread8(h);
-  g_exit = myfread8(h);
-  g_map = myfread8(h);
-  g_time = myfread32(h);
-  dm_pl1p = myfread32(h);
-  dm_pl2p = myfread32(h);
-  dm_pnum = myfread32(h);
-  int i = 0;
-  while (i < dm_pnum) {
-    dm_pos[i].x = myfread32(h);
-    dm_pos[i].y = myfread32(h);
-    dm_pos[i].d = myfread8(h);
-    i += 1;
-  }
-  cheat = myfread8(h);
-  myfread(g_music, 8, 1, h);
-  F_loadmus(g_music);
 }
 
 int G_load (FILE *h) {

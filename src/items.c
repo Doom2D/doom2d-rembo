@@ -41,46 +41,6 @@ static int tsndtm, rsndtm;
 
 int itm_rtime = 1092;
 
-void IT_savegame (FILE *h) {
-  int i, n;
-  for (n = MAXITEM - 1; n >= 0 && it[n].t == 0; n--) {
-    // empty
-  }
-  n += 1;
-  myfwrite32(n, h);
-  for (i = 0; i < n; i++) {
-    myfwrite32(it[i].o.x, h);
-    myfwrite32(it[i].o.y, h);
-    myfwrite32(it[i].o.xv, h);
-    myfwrite32(it[i].o.yv, h);
-    myfwrite32(it[i].o.vx, h);
-    myfwrite32(it[i].o.vy, h);
-    myfwrite32(it[i].o.r, h);
-    myfwrite32(it[i].o.h, h);
-    myfwrite32(it[i].t, h);
-    myfwrite32(it[i].s, h);
-  }
-  myfwrite32(itm_rtime, h);
-}
-
-void IT_loadgame (FILE *h) {
-  int i, n;
-  n = myfread32(h);
-  for (i = 0; i < n; i++) {
-    it[i].o.x = myfread32(h);
-    it[i].o.y = myfread32(h);
-    it[i].o.xv = myfread32(h);
-    it[i].o.yv = myfread32(h);
-    it[i].o.vx = myfread32(h);
-    it[i].o.vy = myfread32(h);
-    it[i].o.r = myfread32(h);
-    it[i].o.h = myfread32(h);
-    it[i].t = myfread32(h);
-    it[i].s = myfread32(h);
-  }
-  itm_rtime = myfread32(h);
-}
-
 void IT_alloc (void) {
   int i, j, n;
   static char nm[][6] = {

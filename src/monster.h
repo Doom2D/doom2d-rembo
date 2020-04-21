@@ -51,9 +51,10 @@ typedef struct {
 extern byte nomon;
 extern int hit_xv, hit_yv;
 extern mn_t mn[MAXMN];
+extern int mnum, gsndt;
 
-void MN_savegame (FILE *h);
-void MN_loadgame (FILE *h);
+void setst (int i, int st);
+
 void MN_alloc (void);
 void MN_init (void);
 int MN_spawn (int x, int y, byte d, int t);

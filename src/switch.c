@@ -32,60 +32,14 @@
 #include "game.h"
 #include "my.h"
 #include "monster.h"
-
-#define MAXSW 100
-
-typedef struct {
-  byte x, y;
-  byte t, tm;
-  byte a, b, c, d;
-  byte f;
-} sw_t;
+#include "render.h"
 
 int sw_secrets;
+sw_t sw[MAXSW];
 
-static sw_t sw[MAXSW];
 static void *sndswn, *sndswx, *sndnoway, *sndbdo, *sndbdc, *sndnotele;
 static int swsnd;
 static byte cht, chto, chf, f_ch;
-
-void SW_savegame (FILE *h) {
-  int i, n;
-  for (n = MAXSW - 1; n >= 0 && sw[n].t == 0; n--) {
-    // empty
-  }
-  n += 1;
-  myfwrite32(n, h);
-  for (i = 0; i < n; i++) {
-    myfwrite8(sw[i].x, h);
-    myfwrite8(sw[i].y, h);
-    myfwrite8(sw[i].t, h);
-    myfwrite8(sw[i].tm, h);
-    myfwrite8(sw[i].a, h);
-    myfwrite8(sw[i].b, h);
-    myfwrite8(sw[i].c, h);
-    myfwrite8(sw[i].d, h);
-    myfwrite8(sw[i].f, h);
-  }
-  myfwrite32(sw_secrets, h);
-}
-
-void SW_loadgame (FILE *h) {
-  int i, n;
-  n = myfread32(h);
-  for (i = 0; i < n; i++) {
-    sw[i].x = myfread8(h);
-    sw[i].y = myfread8(h);
-    sw[i].t = myfread8(h);
-    sw[i].tm = myfread8(h);
-    sw[i].a = myfread8(h);
-    sw[i].b = myfread8(h);
-    sw[i].c = myfread8(h);
-    sw[i].d = myfread8(h);
-    sw[i].f = myfread8(h);
-  }
-  sw_secrets = myfread32(h);
-}
 
 int SW_load (FILE *h) {
   int i;

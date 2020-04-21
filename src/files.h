@@ -43,15 +43,10 @@ typedef struct {
 } mwad_t;
 
 extern int d_start, d_end;
-extern byte savname[7][24];
-extern byte savok[7];
 extern mwad_t wad[MAX_WAD];
 extern map_block_t blk;
 
 void F_startup (void);
-void F_getsavnames (void);
-void F_savegame (int n, char *s);
-void F_loadgame (int n);
 void F_addwad (const char *fn);
 void F_initwads (void);
 void F_allocres (void);

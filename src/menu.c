@@ -39,6 +39,8 @@
 #include "input.h"
 #include "system.h"
 
+#include "save.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

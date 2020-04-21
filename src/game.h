@@ -27,8 +27,6 @@ extern int lt_ypos;
 
 extern int g_trans;
 
-void G_savegame (FILE* h);
-void G_loadgame (FILE* h);
 int G_load (FILE *h);
 void load_game (int n);
 void G_start (void);

@@ -25,7 +25,6 @@
 
 #include "glob.h"
 #include "view.h" // obj_t
-#include <stdio.h> // FILE
 
 #define PL_DRAWLIFE  1
 #define PL_DRAWARMOR 2
@@ -88,8 +87,6 @@ extern byte plr_goanim[];
 extern byte plr_dieanim[];
 extern byte plr_slopanim[];
 
-void PL_savegame (FILE *h);
-void PL_loadgame (FILE *h);
 int PL_isdead (player_t *p);
 void PL_init (void);
 void PL_alloc (void);

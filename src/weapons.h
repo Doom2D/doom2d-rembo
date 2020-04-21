@@ -22,8 +22,6 @@
 #ifndef WEAPONS_H_INLUDED
 #define WEAPONS_H_INLUDED
 
-#include <stdio.h> // FILE
-
 #define MAXWPN 300
 
 typedef struct {
@@ -35,8 +33,6 @@ typedef struct {
 
 extern weapon_t wp[MAXWPN];
 
-void WP_savegame (FILE *h);
-void WP_loadgame (FILE *h);
 void WP_alloc (void);
 void WP_init (void);
 void WP_act (void);

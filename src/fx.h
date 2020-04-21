@@ -22,8 +22,6 @@
 #ifndef FX_H_INLUDED
 #define FX_H_INLUDED
 
-#include <stdio.h> // FILE
-
 #define MAXFX 300
 
 typedef struct {
@@ -33,8 +31,6 @@ typedef struct {
 
 extern fx_t fx[MAXFX];
 
-void FX_savegame (FILE *h);
-void FX_loadgame (FILE *h);
 void FX_alloc (void);
 void FX_init (void);
 void FX_act (void);

@@ -24,7 +24,6 @@
 
 #include "glob.h"
 #include "view.h" // obj_t
-#include <stdio.h> // FILE
 
 #define MAXDOT 400
 
@@ -35,8 +34,6 @@ typedef struct {
 
 extern dot_t dot[MAXDOT];
 
-void DOT_savegame (FILE *h);
-void DOT_loadgame (FILE *h);
 void DOT_init (void);
 void DOT_alloc (void);
 void DOT_act (void);

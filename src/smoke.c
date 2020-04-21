@@ -40,41 +40,6 @@ static int lsm;
 static void *burnsnd;
 static int burntm=0;
 
-void SMK_savegame (FILE *h) {
-  int i, n;
-  for (i = n = 0; i < MAXSMOK; ++i) {
-    if (sm[i].t) {
-      ++n;
-    }
-  }
-  myfwrite32(n, h);
-  for (i = 0; i < MAXSMOK; ++i) {
-    if (sm[i].t) {
-      myfwrite32(sm[i].x, h);
-      myfwrite32(sm[i].y, h);
-      myfwrite32(sm[i].xv, h);
-      myfwrite32(sm[i].xv, h);
-      myfwrite8(sm[i].t, h);
-      myfwrite8(sm[i].s, h);
-      myfwrite16(sm[i].o, h);
-    }
-  }
-}
-
-void SMK_loadgame (FILE *h) {
-  int i, n;
-  n = myfread32(h);
-  for (i = 0; i < n; ++i) {
-    sm[i].x = myfread32(h);
-    sm[i].y = myfread32(h);
-    sm[i].xv = myfread32(h);
-    sm[i].xv = myfread32(h);
-    sm[i].t = myfread8(h);
-    sm[i].s = myfread8(h);
-    sm[i].o = myfread16(h);
-  }
-}
-
 void SMK_init (void) {
   int i;
 

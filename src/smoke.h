@@ -23,7 +23,6 @@
 #define SMOKE_H_INLUDED
 
 #include "glob.h"
-#include <stdio.h> // FILE
 
 #define MAXSMOK 500
 
@@ -38,8 +37,6 @@ typedef struct {
 
 extern smoke_t sm[MAXSMOK];
 
-void SMK_savegame (FILE *h);
-void SMK_loadgame (FILE *h);
 void SMK_init (void);
 void SMK_alloc (void);
 void SMK_act (void);
