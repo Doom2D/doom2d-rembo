@@ -61,7 +61,6 @@ typedef struct {
 
 extern int sky_type;
 extern dword walf[256];
-extern byte walswp[256];
 extern byte fldb[FLDH][FLDW];
 extern byte fldf[FLDH][FLDW];
 extern byte fld[FLDH][FLDW];

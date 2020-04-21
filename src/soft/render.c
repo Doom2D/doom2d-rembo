@@ -72,6 +72,7 @@ static int w_o, w_x, w_y;
 static vgaimg *walp[256];
 static int walh[256];
 static byte walani[256];
+static byte walswp[256];
 static int anih[ANIT][5];
 static byte anic[ANIT];
 static int max_textures;
@@ -1627,4 +1628,15 @@ void R_done (void) {
   buf_h = 0;
   pitch = 0;
   Y_unset_videomode();
+}
+
+void R_switch_texture (int x, int y) {
+  assert(x >= 0 && x < FLDW);
+  assert(y >= 0 && y < FLDH);
+  fldb[y][x] = walswp[fldb[y][x]];
+}
+
+int R_get_swp (int n) {
+  assert(n >= 0 && n < 256);
+  return walswp[n];
 }
