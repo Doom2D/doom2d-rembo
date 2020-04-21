@@ -66,7 +66,6 @@ static void allocres (int h) {
 
 void *M_lock (int h) {
   if(h==-1 || h==0xFFFF) return NULL;
-  h&=-1-0x8000;
   if(h>=MAX_WAD) ERR_fatal("M_lock: странный номер ресурса");
   if(!resl[h]) if(!resp[h]) allocres(h);
   ++resl[h];
@@ -84,9 +83,9 @@ void M_unlock (void *p) {
 }
 
 int M_locked (int h) {
-  return (h != -1) && (h != 0xFFFF) && (resl[h & (-1 - 0x8000)] != 0);
+  return (h != -1) && (h != 0xFFFF) && (resl[h] != 0);
 }
 
 int M_was_locked (int h) {
-  return (h != -1) && (h != 0xFFFF) && (resp[h & (-1 - 0x8000)] != NULL);
+  return (h != -1) && (h != 0xFFFF) && (resp[h] != NULL);
 }

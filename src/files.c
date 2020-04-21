@@ -351,21 +351,24 @@ void F_getresname (char n[8], int r) {
 }
 
 // get sprite id
-int F_getsprid (const char n[4], int s, int d) {
+int F_getsprid (const char n[4], int s, int d, char *dir) {
   int i;
-  byte a,b;
-
-  s+='A';d+='0';
-  for(i=s_start+1;i<s_end;++i)
-    if(cp866_strncasecmp(wad[i].n,n,4)==0 && (wad[i].n[4]==s || wad[i].n[6]==s)) {
-      if(wad[i].n[4]==s) a=wad[i].n[5]; else a=0;
-      if(wad[i].n[6]==s) b=wad[i].n[7]; else b=0;
-      if(a=='0') return i;
-      if(b=='0') return(i|0x8000);
-      if(a==d) return i;
-      if(b==d) return(i|0x8000);
+  byte a, b;
+  s += 'A';
+  d += '0';
+  for (i = s_start + 1; i < s_end; i++) {
+    if (cp866_strncasecmp(wad[i].n, n, 4) == 0 && (wad[i].n[4] == s || wad[i].n[6] == s)) {
+      a = wad[i].n[4] == s ? wad[i].n[5] : 0;
+      b = wad[i].n[6] == s ? wad[i].n[7] : 0;
+      if (a == '0' || b == '0' || a == d || b == d) {
+        if (dir != NULL) {
+          *dir = a != '0' && b == '0' || a != d && b == d;
+        }
+        return i;
+      }
     }
-  ERR_fatal("F_getsprid: изображение %.4s%c%c не найдено",n,(byte)s,(byte)d);
+  }
+  ERR_fatal("F_getsprid: image %.4s%c%c not found", n, s, d);
   return -1;
 }
 

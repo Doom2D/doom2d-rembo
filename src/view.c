@@ -68,26 +68,26 @@ void W_savegame (FILE* h) {
 
 void W_loadgame (FILE* h) {
   int i;
-  char s[256][8];
+  char s[8];
   sky_type = myfread32(h);
   R_loadsky(sky_type);
-  for (i = 1; i < 256; ++i) {
-    myfread(s[i], 8, 1, h);
-  }
   R_begin_load();
-  i = myfread32(h); // ignore
-  for (i = 1; i < 256; i++) {
-    walf[i] = myfread32(h);
-    R_load(s[i], walf[i] & 1);
+  for (i = 1; i < 256; ++i) {
+    myfread(s, 8, 1, h);
+    if (s[0]) {
+      R_load(s);
+    }
+  }
+  R_end_load();
+  for (i = 0; i < 256; i++) {
+    myfread32(h); // useless
   }
   for (i = 0; i < 256; i++) {
-    //walswp[i] = myfread8(h);
-    (void)myfread8(h); // useless in new code
+    walf[i] = myfread8(h);
   }
   myfread(fldb, FLDW*FLDH, 1, h);
   myfread(fld, FLDW*FLDH, 1, h);
   myfread(fldf, FLDW*FLDH, 1, h);
-  R_end_load();
 }
 
 void W_init (void) {
@@ -122,16 +122,17 @@ static void unpack (void *buf, int len, void *obuf) {
 }
 
 int W_load (FILE *h) {
+  int i;
   char s[8];
-  int i, j, t;
   void *p, *buf;
   switch (blk.t) {
   case MB_WALLNAMES:
     R_begin_load();
+    memset(walf, 0, sizeof(walf));
     for (i = 1; i < 256 && blk.sz > 0; i++, blk.sz -= 9) {
       myfread(s, 8, 1, h);
-      t = myfread8(h);
-      R_load(s, t);
+      walf[i] = myfread8(h) ? 1 : 0; // ???
+      R_load(s);
       if (strncasecmp(s, "VTRAP01", 8) == 0) {
         walf[i] |= 2;
       }

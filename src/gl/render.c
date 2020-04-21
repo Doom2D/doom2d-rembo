@@ -542,7 +542,7 @@ static image R_gl_loadimage (const char name[8]) {
 }
 
 static image R_gl_get_special_spr (const char n[4], int s, int d, rgba *(*fn)(vgaimg*)) {
-  return R_gl_get_special_image(F_getsprid(n, s, d), fn);
+  return R_gl_get_special_image(F_getsprid(n, s, d, NULL), fn);
 }
 
 static void R_gl_free_image (image *img) {
@@ -636,10 +636,7 @@ static void R_gl_setmatrix (void) {
 /* --- Misc --- */
 
 static image Z_getspr (const char n[4], int s, int d, char *dir) {
-  int h = F_getsprid(n, s, d);
-  if (dir != NULL) {
-    *dir = (h & 0x8000) ? 1 : 0;
-  }
+  int h = F_getsprid(n, s, d, dir);
   return R_gl_getimage(h);
 }
 
@@ -2040,7 +2037,7 @@ void R_begin_load (void) {
   max_textures = 1;
 }
 
-void R_load (char s[8], int f) {
+void R_load (char s[8]) {
   assert(max_textures < 256);
   if (!s[0]) {
     walp[max_textures] = (image) {
@@ -2062,9 +2059,6 @@ void R_load (char s[8], int f) {
     };
   } else {
     walp[max_textures] = R_gl_loadimage(s);
-    if (f) {
-      walp[max_textures].res |= 0x8000;
-    }
     if (s[0] == 'S' && s[1] == 'W' && s[4] == '_') {
       walswp[max_textures] = 0;
     }
@@ -2083,7 +2077,7 @@ void R_end_load (void) {
     if (walswp[i] == 0) {
       R_get_name(i, s);
       s[5] ^= 1;
-      g = F_getresid(s) | (walp[i].res & 0x8000);
+      g = F_getresid(s);
       k = 1;
       while (k < 256 && walp[k].res != g) {
         k += 1;
@@ -2093,7 +2087,7 @@ void R_end_load (void) {
         j += 1;
         max_textures += 1;
         walp[k] = R_gl_getimage(g);
-        walf[k] = g & 0x8000 ? 1 : 0;
+        walf[k] = walf[i];
       }
       walswp[i] = k;
       walswp[k] = i;

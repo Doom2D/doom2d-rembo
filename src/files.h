@@ -59,7 +59,7 @@ void F_loadres (int r, void *p, dword o, dword l);
 int F_findres (const char n[8]);
 int F_getresid (const char n[8]);
 void F_getresname (char n[8], int r);
-int F_getsprid (const char n[4], int s, int d);
+int F_getsprid (const char n[4], int s, int d, char *dir);
 int F_getreslen (int r);
 void F_nextmus (char *s);
 void F_randmus (char *s);
