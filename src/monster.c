@@ -90,12 +90,12 @@ static char *sleepanim[MN_TN]={
 
 int hit_xv, hit_yv;
 mn_t mn[MAXMN];
+int mnum, gsndt;
 
 static void *fsnd,*pauksnd,*trupsnd;
 static void *snd[MN_TN][5],*impsitsnd[2],*impdthsnd[2],*firsnd,*slopsnd,*gsnd[4];
 static void *swgsnd,*pchsnd,*telesnd;
 static void *positsnd[3],*podthsnd[3];
-static int mnum,gsndt;
 static mnsz_t mnsz[MN_TN+1]={
 //rad  ht  life  pain rv jv  slop min_pn
     0,  0,    0,    0, 0, 0,    0,    0,	// none
@@ -121,7 +121,7 @@ static mnsz_t mnsz[MN_TN+1]={
     8, 26,  400,   70, 8,10,   30,   50		// man
 };
 
-static void setst(int i,int st) {
+void setst (int i, int st) {
   char *a;
   int t;
 
@@ -161,81 +161,6 @@ static void setst(int i,int st) {
 	  break;
   }
   mn[i].ap=a;
-}
-
-void MN_savegame (FILE *h) {
-  int i, n;
-  for (n = MAXMN - 1; n >= 0 && mn[n].t == 0; n--) {
-    // empty
-  }
-  n += 1;
-  myfwrite32(n, h);
-  for (i = 0; i < n; i++) {
-    myfwrite32(mn[i].o.x, h);
-    myfwrite32(mn[i].o.y, h);
-    myfwrite32(mn[i].o.xv, h);
-    myfwrite32(mn[i].o.yv, h);
-    myfwrite32(mn[i].o.vx, h);
-    myfwrite32(mn[i].o.vy, h);
-    myfwrite32(mn[i].o.r, h);
-    myfwrite32(mn[i].o.h, h);
-    myfwrite8(mn[i].t, h);
-    myfwrite8(mn[i].d, h);
-    myfwrite8(mn[i].st, h);
-    myfwrite8(mn[i].ftime, h);
-    myfwrite32(mn[i].fobj, h);
-    myfwrite32(mn[i].s, h);
-    myfwrite32(0, h); // mn[i].ap useless, changed after load
-    myfwrite32(mn[i].aim, h);
-    myfwrite32(mn[i].life, h);
-    myfwrite32(mn[i].pain, h);
-    myfwrite32(mn[i].ac, h);
-    myfwrite32(mn[i].tx, h);
-    myfwrite32(mn[i].ty, h);
-    myfwrite32(mn[i].ammo, h);
-    myfwrite16(mn[i].atm, h);
-  }
-  myfwrite32(mnum, h);
-  myfwrite32(gsndt, h);
-}
-
-void MN_loadgame (FILE *h) {
-  int i, n, c;
-  n = myfread32(h);
-  for (i = 0; i < n; i++) {
-    mn[i].o.x = myfread32(h);
-    mn[i].o.y = myfread32(h);
-    mn[i].o.xv = myfread32(h);
-    mn[i].o.yv = myfread32(h);
-    mn[i].o.vx = myfread32(h);
-    mn[i].o.vy = myfread32(h);
-    mn[i].o.r = myfread32(h);
-    mn[i].o.h = myfread32(h);
-    mn[i].t = myfread8(h);
-    mn[i].d = myfread8(h);
-    mn[i].st = myfread8(h);
-    mn[i].ftime = myfread8(h);
-    mn[i].fobj = myfread32(h);
-    mn[i].s = myfread32(h);
-    mn[i].ap = NULL; myfread32(h); // useless, changed after loading
-    mn[i].aim = myfread32(h);
-    mn[i].life = myfread32(h);
-    mn[i].pain = myfread32(h);
-    mn[i].ac = myfread32(h);
-    mn[i].tx = myfread32(h);
-    mn[i].ty = myfread32(h);
-    mn[i].ammo = myfread32(h);
-    mn[i].atm = myfread16(h);
-  }
-  mnum = myfread32(h);
-  gsndt = myfread32(h);
-  for (n = 0; n < MAXMN; ++n) {
-    if (mn[n].t) {
-      c = mn[n].ac;
-      setst(n, mn[n].st);
-      mn[n].ac = c;
-    }
-  }
 }
 
 #define GGAS_TOTAL (MN__LAST-MN_DEMON+16+10)

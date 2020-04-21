@@ -51,47 +51,6 @@ static init_t bl_ini[MAXINI],sp_ini[MAXINI];
 static int bl_r,sp_r,sr_r,sxr[MAXSR],syr[MAXSR];
 static int ldot;
 
-void DOT_savegame (FILE *h) {
-  int i, n;
-  for (i = n = 0; i < MAXDOT; ++i) {
-    if (dot[i].t) {
-      ++n;
-    }
-  }
-  myfwrite32(n, h);
-  for (i = 0; i < MAXDOT; ++i) {
-    if (dot[i].t) {
-      myfwrite32(dot[i].o.x, h);
-      myfwrite32(dot[i].o.y, h);
-      myfwrite32(dot[i].o.xv, h);
-      myfwrite32(dot[i].o.yv, h);
-      myfwrite32(dot[i].o.vx, h);
-      myfwrite32(dot[i].o.vy, h);
-      myfwrite32(dot[i].o.r, h);
-      myfwrite32(dot[i].o.h, h);
-      myfwrite8(dot[i].c, h);
-      myfwrite8(dot[i].t, h);
-    }
-  }
-}
-
-void DOT_loadgame (FILE *h) {
-  int i, n;
-  n = myfread32(h);
-  for (i = 0; i < n; i++) {
-    dot[i].o.x = myfread32(h);
-    dot[i].o.y = myfread32(h);
-    dot[i].o.xv = myfread32(h);
-    dot[i].o.yv = myfread32(h);
-    dot[i].o.vx = myfread32(h);
-    dot[i].o.vy = myfread32(h);
-    dot[i].o.r = myfread32(h);
-    dot[i].o.h = myfread32(h);
-    dot[i].c = myfread8(h);
-    dot[i].t = myfread8(h);
-  }
-}
-
 void DOT_init(void) {
   int i;
 

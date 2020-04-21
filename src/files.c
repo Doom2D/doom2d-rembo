@@ -46,8 +46,6 @@ typedef struct {
 } dmv;
 
 int d_start, d_end;
-byte savname[7][24];
-byte savok[7];
 mwad_t wad[MAX_WAD];
 map_block_t blk;
 
@@ -73,87 +71,6 @@ static char f_ext[__MAX_EXT];
 void F_startup (void) {
   logo("F_startup: настройка файловой системы\n");
   memset(wads,0,sizeof(wads));
-}
-
-static char *getsavfpname (int n, int ro) {
-  static char fn[]="savgame0.dat";
-  fn[7]=n+'0';
-#ifndef WIN32
-  static char p[100];
-  char *e = getenv("HOME");
-  strncpy(p,e,60);
-  strcat(p,"/.doom2d-rembo");
-  if (!ro) mkdir(p, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  strcat(p,"/");
-  strcat(p,fn);
-#else
-  strcpy(p,fn);
-#endif
-  return p;
-}
-
-void F_getsavnames (void) {
-  int i;
-  FILE *h;
-  short ver;
-  char *p;
-  for (i = 0; i < 7; ++i) {
-    p = getsavfpname(i, 1);
-    memset(savname[i], 0, 24);
-    savok[i] = 0;
-    h = fopen(p, "rb");
-    if (h != NULL) {
-      ver = -1;
-      myfread(savname[i], 24, 1, h);
-      ver = myfread16(h);
-      savname[i][23] = 0;
-      savok[i] = (ver == 3) ? 1 : 0;
-      fclose(h);
-    }
-  }
-}
-
-void F_savegame (int n, char *s) {
-  char *p = getsavfpname(n, 0);
-  FILE *h = fopen(p, "wb");
-  if (h != NULL) {
-    myfwrite(s, 24, 1, h); // slot name
-    myfwrite16(3, h); // version
-    G_savegame(h);
-    W_savegame(h);
-    DOT_savegame(h);
-    SMK_savegame(h);
-    FX_savegame(h);
-    IT_savegame(h);
-    MN_savegame(h);
-    PL_savegame(h);
-    SW_savegame(h);
-    WP_savegame(h);
-    fclose(h);
-  }
-}
-
-void F_loadgame (int n) {
-  short ver;
-  char *p = getsavfpname(n, 1);
-  FILE *h = fopen(p, "rb");
-  if (h != NULL) {
-    fseek(h, 24, SEEK_SET); // skip name
-    ver = myfread16(h); // version
-    if (ver == 3) {
-      G_loadgame(h);
-      W_loadgame(h);
-      DOT_loadgame(h);
-      SMK_loadgame(h);
-      FX_loadgame(h);
-      IT_loadgame(h);
-      MN_loadgame(h);
-      PL_loadgame(h);
-      SW_loadgame(h);
-      WP_loadgame(h);
-    }
-    fclose(h);
-  }
 }
 
 void F_addwad (const char *fn) {

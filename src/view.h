@@ -65,8 +65,6 @@ extern byte fldb[FLDH][FLDW];
 extern byte fldf[FLDH][FLDW];
 extern byte fld[FLDH][FLDW];
 
-void W_savegame (FILE *h);
-void W_loadgame (FILE *h);
 void W_init (void);
 int W_load (FILE *h);
 

@@ -23,7 +23,6 @@
 #define ITEMS_H_INCLUDED
 
 #include "view.h" // obj_t
-#include <stdio.h> // FILE
 
 #define MAXITEM 300
 
@@ -43,8 +42,6 @@ typedef struct {
 extern item_t it[MAXITEM];
 extern int itm_rtime;
 
-void IT_savegame (FILE *h);
-void IT_loadgame (FILE *h);
 void IT_alloc (void);
 void IT_init (void);
 int IT_load (FILE *h);

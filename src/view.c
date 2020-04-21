@@ -47,49 +47,6 @@ byte fldb[FLDH][FLDW];
 byte fldf[FLDH][FLDW];
 byte fld[FLDH][FLDW];
 
-void W_savegame (FILE* h) {
-  char s[8];
-  int i;
-  myfwrite32(sky_type, h);
-  for(i = 1; i < 256; ++i) {
-    R_get_name(i, s);
-    myfwrite(s, 8, 1, h);
-  }
-  for (i = 0; i < 256; i++) {
-    myfwrite32(walf[i], h);
-  }
-  for (i = 0; i < 256; i++) {
-    myfwrite8(R_get_swp(i), h);
-  }
-  myfwrite(fldb, FLDW*FLDH, 1, h);
-  myfwrite(fld, FLDW*FLDH, 1, h);
-  myfwrite(fldf, FLDW*FLDH, 1, h);
-}
-
-void W_loadgame (FILE* h) {
-  int i;
-  char s[8];
-  sky_type = myfread32(h);
-  R_loadsky(sky_type);
-  R_begin_load();
-  for (i = 1; i < 256; ++i) {
-    myfread(s, 8, 1, h);
-    if (s[0]) {
-      R_load(s);
-    }
-  }
-  R_end_load();
-  for (i = 0; i < 256; i++) {
-    myfread32(h); // useless
-  }
-  for (i = 0; i < 256; i++) {
-    walf[i] = myfread8(h);
-  }
-  myfread(fldb, FLDW*FLDH, 1, h);
-  myfread(fld, FLDW*FLDH, 1, h);
-  myfread(fldf, FLDW*FLDH, 1, h);
-}
-
 void W_init (void) {
   DOT_init();
   SMK_init();

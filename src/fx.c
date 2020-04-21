@@ -97,39 +97,6 @@ static void init_fx1sin(void) {
   }
 }
 
-void FX_savegame (FILE *h) {
-  int i, n;
-  for (i = n = 0; i < MAXFX; ++i) {
-    if (fx[i].t) {
-      ++n;
-    }
-  }
-  myfwrite32(n, h);
-  for (i = 0; i < MAXFX; ++i) {
-    if (fx[i].t) {
-      myfwrite32(fx[i].x, h);
-      myfwrite32(fx[i].y, h);
-      myfwrite32(fx[i].xv, h);
-      myfwrite32(fx[i].yv, h);
-      myfwrite8(fx[i].t, h);
-      myfwrite8(fx[i].s, h);
-    }
-  }
-}
-
-void FX_loadgame (FILE *h) {
-  int i, n;
-  n = myfread32(h);
-  for (i = 0; i < n; i++) {
-    fx[i].x = myfread32(h);
-    fx[i].y = myfread32(h);
-    fx[i].xv = myfread32(h);
-    fx[i].yv = myfread32(h);
-    fx[i].t = myfread8(h);
-    fx[i].s = myfread8(h);
-  }
-}
-
 void FX_alloc (void) {
   bsnd[0]=Z_getsnd("BUBL1");
   bsnd[1]=Z_getsnd("BUBL2");
