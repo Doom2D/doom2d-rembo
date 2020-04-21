@@ -162,6 +162,7 @@ static int max_wall_width;
 static int max_wall_height;
 static int max_textures;
 static image walp[256];
+static byte walswp[256];
 static byte walani[256];
 static image anip[ANIT][5];
 static byte anic[ANIT];
@@ -2106,4 +2107,15 @@ void R_loadsky (int sky) {
   s[4] = '0' + sky;
   R_gl_free_image(&horiz);
   horiz = R_gl_loadimage(s);
+}
+
+void R_switch_texture (int x, int y) {
+  assert(x >= 0 && x < FLDW);
+  assert(y >= 0 && y < FLDH);
+  fldb[y][x] = walswp[fldb[y][x]];
+}
+
+int R_get_swp (int n) {
+  assert(n >= 0 && n < 256);
+  return walswp[n];
 }

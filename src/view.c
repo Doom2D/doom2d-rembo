@@ -43,7 +43,6 @@
 
 int sky_type=1;
 dword walf[256];
-byte walswp[256];
 byte fldb[FLDH][FLDW];
 byte fldf[FLDH][FLDW];
 byte fld[FLDH][FLDW];
@@ -60,7 +59,7 @@ void W_savegame (FILE* h) {
     myfwrite32(walf[i], h);
   }
   for (i = 0; i < 256; i++) {
-    myfwrite8(walswp[i], h);
+    myfwrite8(R_get_swp(i), h);
   }
   myfwrite(fldb, FLDW*FLDH, 1, h);
   myfwrite(fld, FLDW*FLDH, 1, h);

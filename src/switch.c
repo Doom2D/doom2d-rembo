@@ -335,8 +335,10 @@ int SW_press (int x, int y, int r, int h, byte t, int o) {
 		  else ++pl2.secrets;
 		  sw[i].tm=1;sw[i].t=0;break;
       }
-      if(sw[i].tm)
-        {fldb[sw[i].y][sw[i].x]=walswp[fldb[sw[i].y][sw[i].x]];p=1;}
+      if (sw[i].tm != 0) {
+        R_switch_texture(sw[i].x, sw[i].y);
+        p = 1;
+      }
       if(sw[i].tm==1) sw[i].tm=0;
     }
   }
