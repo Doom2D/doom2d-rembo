@@ -87,10 +87,7 @@ static int init_screen_gammaa = -1;
 /* --- misc --- */
 
 static void *Z_getspr (char n[4], int s, int d, char *dir) {
-  int h = F_getsprid(n, s, d);
-  if (dir) {
-    *dir = (h & 0x8000) ? 1 : 0;
-  }
+  int h = F_getsprid(n, s, d, dir);
   return V_getvgaimg(h);
 }
 
@@ -1412,7 +1409,7 @@ void R_begin_load (void) {
   max_textures = 1;
 }
 
-void R_load (char s[8], int f) {
+void R_load (char s[8]) {
   assert(max_textures < 256);
   if (!s[0]) {
     walh[max_textures] = -1;
@@ -1424,9 +1421,6 @@ void R_load (char s[8], int f) {
     } else {
       walh[max_textures] = F_getresid(s);
       walp[max_textures] = V_getvgaimg(walh[max_textures]);
-      if (f) {
-        walh[max_textures] |= 0x8000;
-      }
       if (s[0] == 'S' && s[1] == 'W' && s[4] == '_') {
         walswp[max_textures] = 0;
       }
@@ -1444,7 +1438,7 @@ void R_end_load (void) {
     if (walswp[i] == 0) {
       R_get_name(i, s);
       s[5] ^= 1;
-      g = F_getresid(s) | (walh[i] & 0x8000);
+      g = F_getresid(s);
       k = 1;
       while (k < 256 && walh[k] != g) {
         k += 1;
@@ -1454,7 +1448,7 @@ void R_end_load (void) {
         j += 1;
         walh[k] = g;
         walp[k] = V_getvgaimg(g);
-        walf[k] = g & 0x8000 ? 1 : 0;
+        walf[k] = walf[i];
       }
       walswp[i] = k;
       walswp[k] = i;
