@@ -803,58 +803,59 @@ static void get_entry_size (const menu_t *m, int i, int *w, int *h) {
   int type = 0;
   menu_msg_t msg;
   msg.type = GM_GETENTRY;
-  assert(GM_send(m, i, &msg));
-  type = msg.integer.i;
-  switch (type) {
-    case GM_BUTTON:
-    case GM_SCROLLER:
-    case GM_TEXTFIELD:
-    case GM_TEXTFIELD_BUTTON:
-      msg.type = GM_GETCAPTION;
-      if (GM_send(m, i, &msg)) {
-        x = Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
-      }
-      break;
-    case GM_SMALL_BUTTON:
-      msg.type = GM_GETCAPTION;
-      if (GM_send(m, i, &msg)) {
-        x = Z_get_small_string_width("%.*s", msg.string.maxlen, msg.string.s);
-      }
-      break;
-    default:
-      assert(0);
-  }
-  switch (type) {
-    case GM_BUTTON:
-      msg.type = GM_GETSTR;
-      if (GM_send(m, i, &msg)) {
-        x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
-      }
-      y = 16;
-      break;
-    case GM_SMALL_BUTTON:
-      msg.type = GM_GETSTR;
-      if (GM_send(m, i, &msg)) {
-        x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
-      }
-      y = 12;
-      break;
-    case GM_SCROLLER:
-      x += (SCROLLER_MIDDLE + 2) * 8;
-      y = 16;
-      break;
-    case GM_TEXTFIELD:
-    case GM_TEXTFIELD_BUTTON:
-      msg.type = GM_GETSTR;
-      if (GM_send(m, i, &msg)) {
-        x += (msg.string.maxlen + 2) * 8;
-      } else {
-        x += (TEXTFIELD_MIDDLE + 2) * 8;
-      }
-      y = 16;
-      break;
-    default:
-      assert(0);
+  if (GM_send(m, i, &msg)) {
+    type = msg.integer.i;
+    switch (type) {
+      case GM_BUTTON:
+      case GM_SCROLLER:
+      case GM_TEXTFIELD:
+      case GM_TEXTFIELD_BUTTON:
+        msg.type = GM_GETCAPTION;
+        if (GM_send(m, i, &msg)) {
+          x = Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+        }
+        break;
+      case GM_SMALL_BUTTON:
+        msg.type = GM_GETCAPTION;
+        if (GM_send(m, i, &msg)) {
+          x = Z_get_small_string_width("%.*s", msg.string.maxlen, msg.string.s);
+        }
+        break;
+      default:
+        assert(0);
+    }
+    switch (type) {
+      case GM_BUTTON:
+        msg.type = GM_GETSTR;
+        if (GM_send(m, i, &msg)) {
+          x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+        }
+        y = 16;
+        break;
+      case GM_SMALL_BUTTON:
+        msg.type = GM_GETSTR;
+        if (GM_send(m, i, &msg)) {
+          x += Z_get_big_string_width("%.*s", msg.string.maxlen, msg.string.s);
+        }
+        y = 12;
+        break;
+      case GM_SCROLLER:
+        x += (SCROLLER_MIDDLE + 2) * 8;
+        y = 16;
+        break;
+      case GM_TEXTFIELD:
+      case GM_TEXTFIELD_BUTTON:
+        msg.type = GM_GETSTR;
+        if (GM_send(m, i, &msg)) {
+          x += (msg.string.maxlen + 2) * 8;
+        } else {
+          x += (TEXTFIELD_MIDDLE + 2) * 8;
+        }
+        y = 16;
+        break;
+      default:
+        assert(0);
+    }
   }
   *w = x;
   *h = y;

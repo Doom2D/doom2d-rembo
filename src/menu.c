@@ -354,6 +354,7 @@ static const menu_t exit_menu = {
 static int main_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
   static int cur;
   enum { NEWGAME, OLDGAME, SAVEGAME, OPTIONS, EXIT, __NUM__ };
+  assert(i >= 0 && i < __NUM__);
   static const simple_menu_t sm = {
     GM_BIG, "Menu", NULL,
     {
@@ -497,7 +498,7 @@ static int state_for_anykey (int x) {
 int GM_act (void) {
   menu_msg_t msg;
   int n, cur, type;
-  const menu_t *m = GM_get ();
+  const menu_t *m = GM_get();
   if (m == NULL) {
     if (lastkey == KEY_ESCAPE || (state_for_anykey(g_st) && lastkey != KEY_UNKNOWN)) {
       GM_push(&main_menu);
@@ -505,93 +506,98 @@ int GM_act (void) {
     }
   } else {
     msg.type = GM_QUERY;
-    assert(GM_send_this(m, &msg));
-    cur = msg.integer.i;
-    n = msg.integer.a;
-    msg.type = GM_GETENTRY;
-    assert(GM_send(m, cur, &msg));
-    type = msg.integer.i;
-    switch (lastkey) {
-      case KEY_ESCAPE:
-        if (type == GM_TEXTFIELD && input) {
-          input = 0;
-          Y_disable_text_input();
-          msg.type = GM_CANCEL;
-          GM_send(m, cur, &msg);
-        } else {
-          GM_pop();
-          Z_sound(msnd4, 128);
-        }
-        break;
-      case KEY_UP:
-      case KEY_DOWN:
-        msg.type = lastkey == KEY_UP ? GM_UP : GM_DOWN;
-        if (GM_send(m, cur, &msg)) {
-          Z_sound(msnd1, 128);
-        }
-        break;
-      case KEY_LEFT:
-      case KEY_RIGHT:
-        if (type == GM_SCROLLER) {
-          msg.integer.type = GM_GETINT;
-          if (GM_send(m, cur, &msg)) {
-            msg.integer.type = GM_SETINT;
-            msg.integer.i += lastkey == KEY_LEFT ? -msg.integer.s : msg.integer.s;
-            msg.integer.i = min(max(msg.integer.i, msg.integer.a), msg.integer.b);
-            if (GM_send(m, cur, &msg)) {
-              Z_sound(lastkey == KEY_LEFT ? msnd5 : msnd6, 255);
-            }
-          }
-        } else if (type == GM_TEXTFIELD) {
-          //if (input) {
-          //  icur += lastkey == KEY_LEFT ? -1 : +1;
-          //  icur = min(max(icur, 0), strnlen(ibuf, imax));
-          //}
-        }
-        break;
-      case KEY_BACKSPACE:
-        if (type == GM_TEXTFIELD) {
-          if (input && icur > 0) {
-            // FIXIT buffers in strncpy must not overlap
-            strncpy(&ibuf[icur - 1], &ibuf[icur], imax - icur);
-            ibuf[imax - 1] = 0;
-            icur -= 1;
-          }
-        }
-        break;
-      case KEY_RETURN:
-        if (type == GM_TEXTFIELD) {
-          if (input) {
-            input = 0;
-            Y_disable_text_input();
-            msg.type = GM_END;
-            msg.string.s = ibuf;
-            msg.string.maxlen = imax;
-            GM_send(m, cur, &msg);
-          } else {
-            msg.type = GM_GETSTR;
-            if (GM_send(m, cur, &msg)) {
-              imax = min(msg.string.maxlen, GM_MAX_INPUT);
-              strncpy(ibuf, msg.string.s, imax);
-              icur = strnlen(ibuf, imax);
+    if (GM_send_this(m, &msg)) {
+      cur = msg.integer.i;
+      n = msg.integer.a;
+      msg.type = GM_GETENTRY;
+      if (GM_send(m, cur, &msg)) {
+        type = msg.integer.i;
+        switch (lastkey) {
+          case KEY_ESCAPE:
+            if (type == GM_TEXTFIELD && input) {
+              input = 0;
+              Y_disable_text_input();
+              msg.type = GM_CANCEL;
+              GM_send(m, cur, &msg);
             } else {
-              memset(ibuf, 0, GM_MAX_INPUT);
-              imax = GM_MAX_INPUT;
-              icur = 0;
+              GM_pop();
+              Z_sound(msnd4, 128);
             }
-            input = 1;
-            Y_enable_text_input();
-            msg.type = GM_BEGIN;
-            GM_send(m, cur, &msg);
-          }
-          Z_sound(msnd2, 128);
-        } else {
-          msg.type = GM_SELECT;
-          if (GM_send(m, cur, &msg)) {
-            Z_sound(msnd2, 128);
-          }
+            break;
+          case KEY_UP:
+          case KEY_DOWN:
+            if (input == 0) {
+              msg.type = lastkey == KEY_UP ? GM_UP : GM_DOWN;
+              if (GM_send(m, cur, &msg)) {
+                Z_sound(msnd1, 128);
+              }
+            }
+            break;
+          case KEY_LEFT:
+          case KEY_RIGHT:
+            if (type == GM_SCROLLER) {
+              msg.integer.type = GM_GETINT;
+              if (GM_send(m, cur, &msg)) {
+                msg.integer.type = GM_SETINT;
+                msg.integer.i += lastkey == KEY_LEFT ? -msg.integer.s : msg.integer.s;
+                msg.integer.i = min(max(msg.integer.i, msg.integer.a), msg.integer.b);
+                if (GM_send(m, cur, &msg)) {
+                  Z_sound(lastkey == KEY_LEFT ? msnd5 : msnd6, 255);
+                }
+              }
+            } else if (type == GM_TEXTFIELD) {
+              //if (input) {
+              //  icur += lastkey == KEY_LEFT ? -1 : +1;
+              //  icur = min(max(icur, 0), strnlen(ibuf, imax));
+              //}
+            }
+            break;
+          case KEY_BACKSPACE:
+            if (type == GM_TEXTFIELD) {
+              if (input && icur > 0) {
+                // FIXIT buffers in strncpy must not overlap
+                strncpy(&ibuf[icur - 1], &ibuf[icur], imax - icur);
+                ibuf[imax - 1] = 0;
+                icur -= 1;
+              }
+            }
+            break;
+          case KEY_RETURN:
+            if (type == GM_TEXTFIELD) {
+              if (input) {
+                input = 0;
+                Y_disable_text_input();
+                msg.type = GM_END;
+                msg.string.s = ibuf;
+                msg.string.maxlen = imax;
+                GM_send(m, cur, &msg);
+              } else {
+                msg.type = GM_GETSTR;
+                if (GM_send(m, cur, &msg)) {
+                  imax = min(msg.string.maxlen, GM_MAX_INPUT);
+                  strncpy(ibuf, msg.string.s, imax);
+                  icur = strnlen(ibuf, imax);
+                } else {
+                  memset(ibuf, 0, GM_MAX_INPUT);
+                  imax = GM_MAX_INPUT;
+                  icur = 0;
+                }
+                input = 1;
+                Y_enable_text_input();
+                msg.type = GM_BEGIN;
+                GM_send(m, cur, &msg);
+              }
+              Z_sound(msnd2, 128);
+            } else {
+              msg.type = GM_SELECT;
+              if (cur < 0) abort();
+              if (GM_send(m, cur, &msg)) {
+                Z_sound(msnd2, 128);
+              }
+            }
+            break;
         }
-        break;
+      }
     }
   }
   lastkey = KEY_UNKNOWN;
