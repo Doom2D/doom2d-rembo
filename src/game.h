@@ -4,7 +4,6 @@
 #include "glob.h"
 #include "view.h" // pos_t
 #include "player.h" // player_t
-#include <stdio.h> // FILE
 
 extern byte transdraw;
 extern byte _2pl;
@@ -27,7 +26,6 @@ extern int lt_ypos;
 
 extern int g_trans;
 
-int G_load (FILE *h);
 void load_game (int n);
 void G_start (void);
 void G_init (void);

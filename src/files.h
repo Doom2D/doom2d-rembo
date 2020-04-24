@@ -44,7 +44,8 @@ typedef struct {
 
 extern int d_start, d_end;
 extern mwad_t wad[MAX_WAD];
-extern map_block_t blk;
+extern char wads[MAX_WADS][__MAX_PATH];
+extern FILE* wadh[MAX_WADS];
 
 void F_startup (void);
 void F_addwad (const char *fn);
@@ -59,6 +60,5 @@ int F_getreslen (int r);
 void F_nextmus (char *s);
 void F_randmus (char *s);
 void F_readstr (FILE* h, char *s, int m);
-void F_loadmap (char n[8]);
 
 #endif /* FILES_H_INCLUDED */

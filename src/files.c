@@ -47,7 +47,8 @@ typedef struct {
 
 int d_start, d_end;
 mwad_t wad[MAX_WAD];
-map_block_t blk;
+char wads[MAX_WADS][__MAX_PATH];
+FILE* wadh[MAX_WADS];
 
 static byte seq[255];
 static byte seqn;
@@ -59,9 +60,6 @@ static void **dmi;
 static int m_start, m_end;
 static int s_start, s_end;
 static int wad_num;
-
-static char wads[MAX_WADS][__MAX_PATH];
-static FILE* wadh[MAX_WADS];
 
 static char f_drive[__MAX_DRIVE];
 static char f_dir[__MAX_DIR];
@@ -354,44 +352,6 @@ void F_readstrz (FILE* h,char *s,int m) {
   s[i] = 0;
 }
 */
-
-void F_loadmap (char n[8]) {
-  int r, o;
-  FILE *h;
-  map_header_t hdr;
-  W_init();
-  r = F_getresid(n);
-  h = wadh[wad[r].f];
-  fseek(h, wad[r].o, SEEK_SET);
-  myfread(hdr.id, 8, 1, h);
-  hdr.ver = myfread16(h);
-  if (memcmp(hdr.id, "Doom2D\x1A", 8) != 0) {
-    ERR_fatal("%.8s не является уровнем", n);
-  }
-  for(;;) {
-    blk.t = myfread16(h);
-    blk.st = myfread16(h);
-    blk.sz = myfread32(h);
-    if(blk.t == MB_END) {
-      break;
-    }
-    if(blk.t == MB_COMMENT) {
-      fseek(h, blk.sz, SEEK_CUR);
-      continue;
-    }
-    o = ftell(h) + blk.sz;
-    if(!G_load(h)) {
-      if(!W_load(h)) {
-        if(!IT_load(h)) {
-          if(!SW_load(h)) {
-            ERR_fatal("Неизвестный блок %d(%d) в уровне %.8s", blk.t, blk.st, n);
-          }
-        }
-      }
-    }
-    fseek(h, o, SEEK_SET);
-  }
-}
 
 /*void F_freemus(void) {
 

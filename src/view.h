@@ -66,6 +66,5 @@ extern byte fldf[FLDH][FLDW];
 extern byte fld[FLDH][FLDW];
 
 void W_init (void);
-int W_load (FILE *h);
 
 #endif /* VIEW_H_INCLUDED */
