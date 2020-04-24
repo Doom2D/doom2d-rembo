@@ -47,10 +47,10 @@ static int G_load (FILE *h) {
   switch (blk.t) {
     case MB_MUSIC:
       myfread(g_music, 8, 1, h);
-      if (music_random) {
-        F_randmus(g_music);
-      }
-      F_loadmus(g_music);
+      //if (music_random) {
+      //  F_randmus(g_music);
+      //}
+      MUS_load(g_music);
       return 1;
   }
   return 0;

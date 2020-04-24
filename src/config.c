@@ -35,15 +35,20 @@ static int ch;
 
 const cfg_t *CFG_find_entry (const char *key, const cfg_t *cfg) {
   assert(key != NULL);
-  assert(cfg != NULL);
-  int i = 0;
-  while (cfg[i].cfg && strcasecmp(cfg[i].cfg, key) != 0) {
-    i++;
+  if (cfg != NULL) {
+    int i = 0;
+    while (cfg[i].cfg && strcasecmp(cfg[i].cfg, key) != 0) {
+      i++;
+    }
+    return cfg[i].cfg ? &cfg[i] : NULL;
+  } else {
+    return NULL;
   }
-  return cfg[i].cfg ? &cfg[i] : NULL;
 }
 
 int CFG_update_key (const char *key, const char *value, const cfg_t *cfg) {
+  assert(key != NULL);
+  assert(value != NULL);
   const cfg_t *entry = CFG_find_entry(key, cfg);
   if (entry != NULL) {
     void *p = entry->p;
@@ -58,6 +63,7 @@ int CFG_update_key (const char *key, const char *value, const cfg_t *cfg) {
       case Y_KEY: *(int*)p = I_string_to_key(value); break;
       default: assert(0); // unknown type -> something broken
     }
+    //logo("CFG_update_key: [%s] = [%s]\n", key, value);
     return 1;
   } else {
     return 0;
@@ -244,9 +250,11 @@ int CFG_update_config (const char *old, const char *new, int n, const cfg_t **cf
       CFG_close_iterator();
     }
     for (j = 0; j < n; j++) {
-      i = 0;
-      while (CFG_write_entry(nf, &cfg[j][i])) {
-        i++;
+      if (cfg[j] != NULL) {
+        i = 0;
+        while (CFG_write_entry(nf, &cfg[j][i])) {
+          i++;
+        }
       }
     }
     fclose(nf);

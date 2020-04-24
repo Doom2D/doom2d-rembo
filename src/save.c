@@ -135,7 +135,7 @@ static void G_loadgame (FILE *h) {
   }
   cheat = myfread8(h);
   myfread(g_music, 8, 1, h);
-  F_loadmus(g_music);
+  MUS_load(g_music);
 }
 
 static void IT_savegame (FILE *h) {

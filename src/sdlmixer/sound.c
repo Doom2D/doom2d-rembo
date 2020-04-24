@@ -28,7 +28,7 @@ typedef struct sdlmixer_snd {
   Mix_Chunk *c;
 } sdlmixer_snd;
 
-short snd_vol; // public 0..128
+static short snd_vol;
 
 static int devfreq = MIX_DEFAULT_FREQUENCY;
 static Uint32 devformat = AUDIO_S16SYS; // MIX_DEFAULT_FORMAT
@@ -39,44 +39,93 @@ static int devinit;
 
 /* music */
 
-short mus_vol;
-char music_random;
-int music_time;
-int music_fade;
+const cfg_t *MUS_args (void) {
+  return NULL;
+}
 
-void S_initmusic (void) {
+const cfg_t *MUS_conf (void) {
+  return NULL;
+}
+
+const menu_t *MUS_menu (void) {
+  return NULL;
+}
+
+void MUS_init (void) {
 
 }
 
-void S_donemusic (void) {
+void MUS_done (void) {
 
 }
 
-void S_startmusic (int time) {
+void MUS_start (int time) {
 
 }
 
-void S_stopmusic (void) {
+void MUS_stop (void) {
 
 }
 
-void S_volumemusic (int v) {
+void MUS_volume (int v) {
 
 }
 
-void F_loadmus (char n[8]) {
+void MUS_load (char n[8]) {
 
 }
 
-void F_freemus (void) {
+void MUS_free (void) {
 
 }
 
-void S_updatemusic (void) {
+void MUS_update (void) {
 
 }
 
 /* Sound */
+
+static int sound_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+  static int cur;
+  enum { VOLUME, __NUM__ };
+  static const simple_menu_t sm = {
+    GM_BIG, "Sound", NULL,
+    {
+      { "Volume", NULL },
+    }
+  };
+  if (i == VOLUME) {
+    switch (msg->type) {
+      case GM_GETENTRY: return GM_init_int0(msg, GM_SCROLLER, 0, 0, 0);
+      case GM_GETINT: return GM_init_int(msg, snd_vol, 0, 128, 8);
+      case GM_SETINT: S_volume(msg->integer.i); return 1;
+    }
+  }
+  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+}
+
+const menu_t *S_menu (void) {
+  static const menu_t m = {
+    NULL, &sound_menu_handler
+  };
+  return &m;
+}
+
+const cfg_t *S_args (void) {
+  static const cfg_t args[] = {
+    { "sndvol", &snd_vol, Y_WORD },
+    { NULL, NULL, 0 }
+  };
+  return args;
+}
+
+const cfg_t *S_conf (void) {
+  static const cfg_t conf[] = {
+    { "sound_volume", &snd_vol, Y_WORD },
+    { NULL, NULL, 0 }
+  };
+  return conf;
+}
 
 void S_init (void) {
   assert(devinit == 0);

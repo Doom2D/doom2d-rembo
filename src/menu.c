@@ -238,78 +238,27 @@ static const menu_t save_game_menu = {
   NULL, &save_game_menu_handler
 };
 
-static int sound_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
-  static int cur;
-  enum { VOLUME, __NUM__ };
-  static const simple_menu_t sm = {
-    GM_BIG, "Sound", NULL,
-    {
-      { "Volume", NULL },
-    }
-  };
-  if (i == VOLUME) {
-    switch (msg->type) {
-      case GM_GETENTRY: return GM_init_int0(msg, GM_SCROLLER, 0, 0, 0);
-      case GM_GETINT: return GM_init_int(msg, snd_vol, 0, 128, 8);
-      case GM_SETINT: S_volume(msg->integer.i); return 1;
-    }
-  }
-  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
-}
-
-static const menu_t sound_menu = {
-  NULL, &sound_menu_handler
-};
-
-static int music_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
-  static int cur;
-  enum { VOLUME, MUSIC, __NUM__ };
-  static const simple_menu_t sm = {
-    GM_BIG, "Music", NULL,
-    {
-      { "Volume", NULL },
-      { "Music: ", NULL },
-    }
-  };
-  if (i == VOLUME) {
-    switch (msg->type) {
-      case GM_GETENTRY: return GM_init_int0(msg, GM_SCROLLER, 0, 0, 0);
-      case GM_GETINT: return GM_init_int(msg, mus_vol, 0, 128, 8);
-      case GM_SETINT: S_volumemusic(msg->integer.i); return 1;
-    }
-  } else if (i == MUSIC) {
-    switch (msg->type) {
-      case GM_GETSTR: return GM_init_str(msg, g_music, strlen(g_music));
-      case GM_SELECT:
-        F_freemus();
-        F_nextmus(g_music);
-        F_loadmus(g_music);
-        S_startmusic(music_time * 2); // ???
-        return 1;
-    }
-  }
-  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
-}
-
-static const menu_t music_menu = {
-  NULL, &music_menu_handler
-};
-
 static int options_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
   static int cur;
+  const menu_t *mm;
   enum { VIDEO, SOUND, MUSIC, __NUM__ };
   static const simple_menu_t sm = {
     GM_BIG, "Options", NULL,
     {
       { "Video", NULL },
-      { "Sound", &sound_menu },
-      { "Music", &music_menu },
+      { "Sound", NULL },
+      { "Music", NULL },
     }
   };
   if (msg->type == GM_SELECT) {
-    if (i == VIDEO) {
-      const menu_t *mm = R_menu();
-      return mm ? GM_push(mm) : 1;
+    switch (i) {
+      case VIDEO: mm = R_menu(); break;
+      case SOUND: mm = S_menu(); break;
+      case MUSIC: mm = MUS_menu(); break;
+      default: mm = NULL;
+    }
+    if (mm != NULL) {
+      return GM_push(mm);
     }
   }
   return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
@@ -334,7 +283,7 @@ static int exit_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int 
   } else if (msg->type == GM_SELECT) {
     switch (i) {
       case YES:
-        F_freemus();
+        MUS_free();
         GM_stop();
         Z_sound(S_get(qsnd[myrand(QSND_NUM)]), 255);
         S_wait();
@@ -656,6 +605,6 @@ void GM_init (void) {
   msnd4 = Z_getsnd("SWTCHX");
   msnd5 = Z_getsnd("SUDI");
   msnd6 = Z_getsnd("TUDI");
-  F_loadmus("MENU");
-  S_startmusic(0);
+  MUS_load("MENU");
+  MUS_start(0);
 }

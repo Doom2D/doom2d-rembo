@@ -27,12 +27,16 @@
 #ifndef SOUND_H_INCLUDED
 #define SOUND_H_INCLUDED
 
+#include "menu.h"
+#include "system.h"
+
 typedef struct {
   int tag;
 } snd_t;
 
-// Sound volume 0..128
-extern short snd_vol;
+const cfg_t *S_args (void);
+const cfg_t *S_conf (void);
+const menu_t *S_menu (void);
 
 // Get sound handle for resource <id>
 snd_t *S_get (int id);

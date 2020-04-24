@@ -96,7 +96,7 @@ static void set_trans(int st) {
 }
 
 void load_game (int n) {
-  F_freemus();
+  MUS_free();
   W_init();
   F_loadgame(n);
   set_trans(GS_GAME);
@@ -107,13 +107,13 @@ void load_game (int n) {
   BM_mark(&pl1.o,BM_PLR1);
   if(_2pl) BM_mark(&pl2.o,BM_PLR2);
   MN_mark();
-  S_startmusic(music_time);
+  //MUS_start(music_time);
+  MUS_start(0);
 }
 
 void G_start (void) {
   char s[8];
-
-  F_freemus();
+  MUS_free();
   sprintf(s,"MAP%02u",(word)g_map);
   F_loadmap(s);
   set_trans(GS_GAME);
@@ -131,7 +131,8 @@ void G_start (void) {
   BM_mark(&pl1.o,BM_PLR1);
   if(_2pl) BM_mark(&pl2.o,BM_PLR2);
   MN_mark();
-  S_startmusic(music_time);
+  //MUS_start(music_time);
+  MUS_start(0);
 }
 
 #define GGAS_TOTAL (MN__LAST-MN_DEMON+16+10)
@@ -263,7 +264,7 @@ void G_act (void) {
         G_start();
       } else {
 	      g_st = GS_BVIDEO;
-        F_freemus();
+        MUS_free();
 	    }
     }
 #endif
@@ -319,7 +320,7 @@ void G_act (void) {
   if(g_exit==1) {
 
 	if(G_end_video()) {
-	  F_freemus();
+	  MUS_free();
 	  g_st=GS_EVIDEO;
 	  return;
 	}
@@ -330,20 +331,23 @@ inter:
 	  case 31: case 32: g_map=16;set_trans(GS_INTER);break;
 	  default: ++g_map;set_trans(GS_INTER);break;
 	}
-	F_freemus();
-	if(g_st==GS_INTER) {
-	  F_loadmus("INTERMUS");
-        }else {F_loadmus("\x8a\x8e\x8d\x85\x96\x0");if(mus_vol>0) {S_volumemusic(128);} }
-	S_startmusic(0);
+	MUS_free();
+	if (g_st == GS_INTER) {
+	  MUS_load("INTERMUS");
+  } else {
+    MUS_load("\x8a\x8e\x8d\x85\x96\x0");
+    MUS_volume(128);
+  }
+	MUS_start(0);
   }else if(g_exit==2) {
 	switch(g_map) {
 	  case 31: g_map=32;set_trans(GS_INTER);break;
 	  case 32: g_map=16;set_trans(GS_INTER);break;
 	  default: g_map=31;set_trans(GS_INTER);break;
 	}
-	F_freemus();
-	F_loadmus("INTERMUS");
-	S_startmusic(0);
+	MUS_free();
+	MUS_load("INTERMUS");
+	MUS_start(0);
   }
   
 #ifdef DEMO
