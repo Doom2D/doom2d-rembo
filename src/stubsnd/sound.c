@@ -2,48 +2,65 @@
 #include "sound.h"
 #include "music.h"
 
-short snd_vol;
-
-short mus_vol;
-char music_random;
-int music_time;
-int music_fade;
-
 /* Music */
 
-void S_initmusic (void) {
+const cfg_t *MUS_args (void) {
+  return NULL;
+}
+
+const cfg_t *MUS_conf (void) {
+  return NULL;
+}
+
+const menu_t *MUS_menu (void) {
+  return NULL;
+}
+
+void MUS_init (void) {
 
 }
 
-void S_donemusic (void) {
+void MUS_done (void) {
 
 }
 
-void S_startmusic (int time) {
+void MUS_start (int time) {
 
 }
 
-void S_stopmusic (void) {
+void MUS_stop (void) {
 
 }
 
-void S_volumemusic (int v) {
+void MUS_volume (int v) {
 
 }
 
-void F_loadmus (char n[8]) {
+void MUS_load (char n[8]) {
 
 }
 
-void F_freemus (void) {
+void MUS_free (void) {
 
 }
 
-void S_updatemusic (void) {
+void MUS_update (void) {
 
 }
 
 /* Sound */
+
+const cfg_t *S_args (void) {
+  return NULL;
+}
+
+const cfg_t *S_conf (void) {
+  return NULL;
+}
+
+const menu_t *S_menu (void) {
+  return NULL;
+}
 
 snd_t *S_get (int id) {
   return NULL;
