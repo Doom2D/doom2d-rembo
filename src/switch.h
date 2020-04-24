@@ -22,7 +22,6 @@
 #ifndef SWITCH_H_INCLUDED
 #define SWITCH_H_INCLUDED
 
-#include <stdio.h> // FILE
 #include "view.h" // obj_t
 
 #define MAXSW 100
@@ -43,7 +42,6 @@ typedef struct {
 extern int sw_secrets;
 extern sw_t sw[MAXSW];
 
-int SW_load (FILE *h);
 void SW_alloc (void);
 void SW_init (void);
 void Z_water_trap (obj_t *o);

@@ -95,19 +95,6 @@ static void set_trans(int st) {
   g_trans=1;g_transt=0;
 }
 
-int G_load (FILE *h) {
-  switch (blk.t) {
-    case MB_MUSIC:
-      myfread(g_music, 8, 1, h);
-      if (music_random) {
-        F_randmus(g_music);
-      }
-      F_loadmus(g_music);
-      return 1;
-  }
-  return 0;
-}
-
 void load_game (int n) {
   F_freemus();
   W_init();

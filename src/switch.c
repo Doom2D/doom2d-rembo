@@ -41,33 +41,6 @@ static void *sndswn, *sndswx, *sndnoway, *sndbdo, *sndbdc, *sndnotele;
 static int swsnd;
 static byte cht, chto, chf, f_ch;
 
-int SW_load (FILE *h) {
-  int i;
-  switch(blk.t) {
-    case MB_SWITCH2:
-      sw_secrets = 0;
-      for (i = 0; i < MAXSW && blk.sz > 0; ++i, blk.sz -= 9) {
-        sw[i].x = myfread8(h);
-        sw[i].y = myfread8(h);
-        sw[i].t = myfread8(h);
-        sw[i].tm = myfread8(h); // unused
-        sw[i].a = myfread8(h);
-        sw[i].b = myfread8(h);
-        sw[i].c = myfread8(h);
-        sw[i].d = myfread8(h); // unused
-        sw[i].f = myfread8(h);
-        sw[i].tm = 0;
-        sw[i].d = 0;
-        sw[i].f |= 0x80;
-        if (sw[i].t == SW_SECRET) {
-          ++sw_secrets;
-        }
-      }
-      return 1;
-  }
-  return 0;
-}
-
 void SW_alloc (void) {
   sndswn=Z_getsnd("SWTCHN");
   sndswx=Z_getsnd("SWTCHX");

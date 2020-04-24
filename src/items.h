@@ -44,7 +44,6 @@ extern int itm_rtime;
 
 void IT_alloc (void);
 void IT_init (void);
-int IT_load (FILE *h);
 void IT_act (void);
 void IT_spawn (int x, int y, int t);
 void IT_drop_ammo (int t, int n, int x, int y);
