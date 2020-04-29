@@ -1,56 +1,61 @@
 #include "render.h"
 
-int SCRW, SCRH; // public
-static int gamma;
-
-void R_draw (void) {
-
+const cfg_t *R_args (void) {
+  return NULL;
 }
 
-void R_alloc (void) {
+const cfg_t *R_conf (void) {
+  return NULL;
+}
 
+const menu_t *R_menu (void) {
+  return NULL;
 }
 
 void R_init (void) {
+  // stub
+}
 
+void R_draw (void) {
+  // stub
 }
 
 void R_done (void) {
-
+  // stub
 }
 
-void R_setgamma (int g) {
-  gamma = g;
+void R_set_videomode (int w, int h, int fullscreen) {
+  // stub
 }
 
-int R_getgamma (void) {
-  return gamma;
-}
-
-void R_toggle_fullscreen (void) {
-
+void R_switch_texture (int x, int y) {
+  // stub
 }
 
 void R_get_name (int n, char s[8]) {
-
+  s[0] = 0;
 }
 
 int R_get_special_id (int n) {
   return -1;
 }
 
-void R_begin_load (void) {
-
+int R_get_swp (int n) {
+  return 0;
 }
 
-void R_load (char s[8], int f) {
+void R_begin_load (void) {
+  // stub
+}
 
+void R_load (char s[8]) {
+  // stub
 }
 
 void R_end_load (void) {
-
+  // stub
 }
 
 void R_loadsky (int sky) {
-
+  // stub
 }
