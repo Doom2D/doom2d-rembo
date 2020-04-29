@@ -162,7 +162,7 @@ static int start_game (int twoplayers, int dm, int level) {
   return GM_popall();
 }
 
-static int new_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+static int new_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   enum { ONEPLAYER, TWOPLAYERS, DEATHMATCH, __NUM__ };
   static const simple_menu_t sm = {
@@ -184,11 +184,7 @@ static int new_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, 
   return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static const menu_t new_game_menu = {
-  NULL, &new_game_menu_handler
-};
-
-static int load_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+static int load_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   const int max_slots = 7;
   assert(i >= 0 && i < max_slots);
@@ -206,11 +202,7 @@ static int load_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data,
   return basic_menu_handler(msg, GM_BIG, "Load game", "_OLDGAME", max_slots, &cur);
 }
 
-static const menu_t load_game_menu = {
-  NULL, &load_game_menu_handler
-};
-
-static int save_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+static int save_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   const int max_slots = 7;
   assert(i >= 0 && i < max_slots);
@@ -234,11 +226,7 @@ static int save_game_menu_handler (menu_msg_t *msg, const menu_t *m, void *data,
   return basic_menu_handler(msg, GM_BIG, "Save game", "_SAVGAME", max_slots, &cur);
 }
 
-static const menu_t save_game_menu = {
-  NULL, &save_game_menu_handler
-};
-
-static int options_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+static int options_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   const menu_t *mm;
   enum { VIDEO, SOUND, MUSIC, __NUM__ };
@@ -264,11 +252,7 @@ static int options_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, i
   return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static const menu_t options_menu = {
-  NULL, &options_menu_handler
-};
-
-static int exit_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+static int exit_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   enum { YES, NO, __NUM__ };
   static const simple_menu_t sm = {
@@ -296,30 +280,31 @@ static int exit_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int 
   return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static const menu_t exit_menu = {
-  NULL, &exit_menu_handler
-};
-
-static int main_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
-  static int cur;
+static int main_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   enum { NEWGAME, OLDGAME, SAVEGAME, OPTIONS, EXIT, __NUM__ };
   assert(i >= 0 && i < __NUM__);
+  static int cur;
+  static const menu_t hm[__NUM__] = {
+    { new_game_menu_handler },
+    { load_game_menu_handler },
+    { save_game_menu_handler },
+    { options_menu_handler},
+    { exit_menu_handler }
+  };
   static const simple_menu_t sm = {
     GM_BIG, "Menu", NULL,
     {
-      { "New Game", &new_game_menu },
-      { "Load Game", &load_game_menu },
-      { "Save Game", &save_game_menu },
-      { "Options", &options_menu },
-      { "Exit", &exit_menu },
+      { "New Game", &hm[NEWGAME] },
+      { "Load Game", &hm[OLDGAME] },
+      { "Save Game", &hm[SAVEGAME] },
+      { "Options", &hm[OPTIONS] },
+      { "Exit", &hm[EXIT] }
     }
   };
   return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static const menu_t main_menu = {
-  NULL, &main_menu_handler
-};
+static const menu_t main_menu = { &main_menu_handler };
 
 int GM_push (const menu_t *m) {
   assert(m != NULL);
@@ -374,7 +359,7 @@ int GM_send_this (const menu_t *m, menu_msg_t *msg) {
   assert(msg != NULL);
   if (m->handler != NULL) {
     GM_normalize_message(msg);
-    return m->handler(msg, m, m->data, 0);
+    return m->handler(msg, m, 0);
   }
   return 0;
 }
@@ -385,7 +370,7 @@ int GM_send (const menu_t *m, int i, menu_msg_t *msg) {
   assert(msg != NULL);
   if (m->handler != NULL) {
     GM_normalize_message(msg);
-    return m->handler(msg, m, m->data, i);
+    return m->handler(msg, m, i);
   }
   return 0;
 }
