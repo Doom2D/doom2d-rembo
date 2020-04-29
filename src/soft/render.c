@@ -1566,12 +1566,9 @@ static int video_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int
   return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
 }
 
-static const menu_t video_menu = {
-  NULL, &video_menu_handler
-};
-
 const menu_t *R_menu (void) {
-  return &video_menu;
+  static const menu_t m = { video_menu_handler };
+  return &m;
 }
 
 const cfg_t *R_args (void) {

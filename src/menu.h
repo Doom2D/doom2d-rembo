@@ -72,8 +72,7 @@ typedef union menu_msg_t {
 
 typedef struct menu_t menu_t;
 struct menu_t {
-  void *data;
-  int (*handler)(menu_msg_t *msg, const menu_t *m, void *data, int i);
+  int (*handler)(menu_msg_t *msg, const menu_t *m, int i);
 };
 
 typedef struct simple_menu_t {
