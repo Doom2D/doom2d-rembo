@@ -110,7 +110,7 @@ void MUS_update (void) {
 
 /* Sound */
 
-static int sound_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+static int sound_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   enum { VOLUME, __NUM__ };
   static const simple_menu_t sm = {
@@ -130,7 +130,7 @@ static int sound_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int
 }
 
 const menu_t *S_menu (void) {
-  static const menu_t m = { sound_menu_handler };
+  static const menu_t m = { &sound_menu_handler };
   return &m;
 }
 
