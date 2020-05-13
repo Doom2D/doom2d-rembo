@@ -1,28 +1,19 @@
-/*
-   Управление графикой VGA для DOS4GW
-   Модуль версии 1.0
-   Copyright (C) Алексей Волынсков, 1996
-
-   Copyright (C) Prikol Software 1996-1997
-   Copyright (C) Aleksey Volynskov 1996-1997
-   Copyright (C) <ARembo@gmail.com> 2011
-
-   This file is part of the Doom2D:Rembo project.
-
-   Doom2D:Rembo is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License version 2 as
-   published by the Free Software Foundation.
-
-   Doom2D:Rembo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <http://www.gnu.org/licenses/> or
-   write to the Free Software Foundation, Inc.,
-   51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
-*/
+/* Copyright (C) 1996-1997 Aleksey Volynskov
+ * Copyright (C) 2011 Rambo
+ * Copyright (C) 2020 SovietPony
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License ONLY.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef VGA_H_INCLUDED
 #define VGA_H_INCLUDED
