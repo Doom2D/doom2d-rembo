@@ -543,7 +543,7 @@ static char *getsavfpname (int n, int ro) {
   static char p[100];
   char *e = getenv("HOME");
   strncpy(p, e, 60);
-  strcat(p, "/.doom2d-rembo");
+  strcat(p, "/.flatwaifu");
   if (!ro) {
     mkdir(p, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   }
