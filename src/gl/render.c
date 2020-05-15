@@ -568,16 +568,12 @@ static void R_gl_free_image (image *img) {
   img->res = -1;
 }
 
-static void R_gl_quad_vetexes (int x, int y, int w, int h) {
+static void R_gl_draw_quad (int x, int y, int w, int h) {
+  glBegin(GL_QUADS);
   glVertex2i(x + w, y);
   glVertex2i(x,     y);
   glVertex2i(x,     y + h);
   glVertex2i(x + w, y + h);
-}
-
-static void R_gl_draw_quad (int x, int y, int w, int h) {
-  glBegin(GL_QUADS);
-  R_gl_quad_vetexes(x, y, w, h);
   glEnd();
 }
 
@@ -1062,8 +1058,12 @@ static void R_draw_dots (void) {
   glBegin(GL_QUADS);
   for (i = 0; i < MAXDOT; i++) {
     if (dot[i].t != 0) {
-      R_gl_set_color(dot[i].c);
-      R_gl_quad_vetexes(dot[i].o.x, dot[i].o.y, 1, 1);
+      int x = dot[i].o.x;
+      int y = dot[i].o.y;
+      R_gl_set_color(dot[i].c); glVertex2i(x + 1, y);
+      R_gl_set_color(dot[i].c); glVertex2i(x, y);
+      R_gl_set_color(dot[i].c); glVertex2i(x, y + 1);
+      R_gl_set_color(dot[i].c); glVertex2i(x + 1, y + 1);
     }
   }
   glEnd();
