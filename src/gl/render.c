@@ -1353,7 +1353,6 @@ static void R_draw_smoke (void) {
 static void R_draw_effects (void) {
   enum {NONE, TFOG, IFOG, BUBL}; // copypasted from fx.c
   int i, s;
-  glPointSize(screen_scale);
   for (i = 0; i < MAXFX; ++i) {
     switch (fx[i].t) {
       case TFOG:
