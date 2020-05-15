@@ -410,7 +410,7 @@ void G_code (void) {
   Z_sound(s,128);
 }
 
-static int strnlen (const char *s, int len) {
+static int x_strnlen (const char *s, int len) {
   int i = 0;
   while (i < len && s[i] != 0) {
     i++;
@@ -475,7 +475,7 @@ int GM_act (void) {
             } else if (type == GM_TEXTFIELD) {
               //if (input) {
               //  icur += lastkey == KEY_LEFT ? -1 : +1;
-              //  icur = min(max(icur, 0), strnlen(ibuf, imax));
+              //  icur = min(max(icur, 0), x_strnlen(ibuf, imax));
               //}
             }
             break;
@@ -503,7 +503,7 @@ int GM_act (void) {
                 if (GM_send(m, cur, &msg)) {
                   imax = min(msg.string.maxlen, GM_MAX_INPUT);
                   strncpy(ibuf, msg.string.s, imax);
-                  icur = strnlen(ibuf, imax);
+                  icur = x_strnlen(ibuf, imax);
                 } else {
                   memset(ibuf, 0, GM_MAX_INPUT);
                   imax = GM_MAX_INPUT;
