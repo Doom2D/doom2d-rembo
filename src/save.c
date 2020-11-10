@@ -538,9 +538,9 @@ static void WP_loadgame (FILE *h) {
 
 static char *getsavfpname (int n, int ro) {
   static char fn[] = "savgame0.dat";
+  static char p[100];
   fn[7] = n + '0';
 #ifndef WIN32
-  static char p[100];
   char *e = getenv("HOME");
   strncpy(p, e, 60);
   strcat(p, "/.flatwaifu");
