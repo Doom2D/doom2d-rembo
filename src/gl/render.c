@@ -1141,7 +1141,7 @@ static int wpnspr (player_t *p) {
 }
 
 static void R_draw_player (player_t *p) {
-  enum {STAND, GO, DIE, SLOP, DEAD, MESS, OUT, FALL}; // copypasted from player.c!
+  enum {STAND, GO, DIE, SLOP, DEAD, MESS, OUT_, FALL}; // copypasted from player.c!
   static const int wytab[] = {-1, -2, -1, 0};
   int s = 'A';
   int w = 0;
@@ -1187,7 +1187,7 @@ static void R_draw_player (player_t *p) {
     case SLOP:
       s = plr_slopanim[p->s];
       break;
-    case OUT:
+    case OUT_:
       s = 0;
       break;
   }
