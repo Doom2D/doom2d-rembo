@@ -200,7 +200,7 @@ static int save_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   const int max_slots = 7;
   assert(i >= 0 && i < max_slots);
   switch (msg->type) {
-    case GM_SELECT:
+    case GM_ENTER:
       if (g_st == GS_GAME) {
         F_getsavnames();
         break;
