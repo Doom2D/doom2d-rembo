@@ -45,6 +45,7 @@
 #define GM_GETCAPTION 14 // entry
 #define GM_UP 15
 #define GM_DOWN 16
+#define GM_KEY 17
 
 typedef struct menu_str_msg_t {
   byte type;

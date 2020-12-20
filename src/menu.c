@@ -200,7 +200,7 @@ static int save_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   const int max_slots = 7;
   assert(i >= 0 && i < max_slots);
   switch (msg->type) {
-    case GM_ENTER:
+    case GM_SELECT:
       if (g_st == GS_GAME) {
         F_getsavnames();
         break;
@@ -219,16 +219,79 @@ static int save_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   return basic_menu_handler(msg, GM_BIG, "Save game", "_SAVGAME", max_slots, &cur);
 }
 
+typedef struct controls_menu_t {
+  menu_t base;
+  int *pl_keys;
+} controls_menu_t;
+
+static int controls_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
+  static int cur = 0;
+  static int state = 0;
+  const int max_controls = 9;
+  const char *str = NULL;
+  const controls_menu_t *mm = (controls_menu_t*)m;
+  const char *captions[] = {
+    "Up: ", "Down: ", "Left: ", "Right: ", "Fire: ", "Jump: ", "Prev: ", "Next: ", "Press: "
+  };
+  assert(i >= 0 && i < max_controls);
+  switch (msg->type) {
+    case GM_ENTER:
+      state = 0;
+      break; /* default behavior */
+    case GM_LEAVE:
+      if (state == 0) {
+        break; /* default behavior */
+      } else {
+        state = 0;
+        return 1;
+      }
+    case GM_UP:
+    case GM_DOWN:
+      if (state == 0) {
+        break; /* default behavior */
+      } else {
+        return 1; /* ignore */
+      }
+    case GM_KEY:
+      if (state != 0 && msg->integer.i != KEY_UNKNOWN) {
+        mm->pl_keys[cur] = msg->integer.i;
+        state = 0;
+      }
+      return 1;
+    case GM_GETENTRY:
+      return GM_init_int0(msg, GM_SMALL_BUTTON, 0, 0, 0);
+    case GM_GETCAPTION:
+      return GM_init_str(msg, (char*)captions[i], strlen(captions[i]));
+    case GM_GETSTR:
+      str = state == 0 || i != cur ? I_key_to_string(mm->pl_keys[i]) : "...";
+      return GM_init_str(msg, (char*)str, strlen(str));
+    case GM_SELECT:
+      state = state == 0 ? 1 : 0;
+      return 1;
+  }
+  return basic_menu_handler(msg, GM_BIG, "Player 1 controls", NULL, max_controls, &cur);
+}
+
 static int options_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   const menu_t *mm;
-  enum { VIDEO, SOUND, MUSIC, __NUM__ };
+  enum { VIDEO, SOUND, MUSIC, CONTROLS_1, CONTROLS_2, __NUM__ };
+  static const controls_menu_t c1 = {
+    { controls_menu_handler },
+    &pl1.ku
+  };
+  static const controls_menu_t c2 = {
+    { controls_menu_handler },
+    &pl2.ku
+  };
   static const simple_menu_t sm = {
     GM_BIG, "Options", NULL,
     {
       { "Video", NULL },
       { "Sound", NULL },
       { "Music", NULL },
+      { "Controls 1", &c1.base },
+      { "Controls 2", &c2.base },
     }
   };
   if (msg->type == GM_SELECT) {
@@ -432,12 +495,19 @@ int GM_act (void) {
       Z_sound(msnd3, 128);
     }
   } else {
+    /* 1. send key */
+    msg.type = GM_KEY;
+    GM_init_int0(&msg, lastkey, 0, 0, 0);
+    GM_send_this(m, &msg);
+    /* 2. send query */
     msg.type = GM_QUERY;
     if (GM_send_this(m, &msg)) {
+      /* 3. send getentry */
       cur = msg.integer.i;
       n = msg.integer.a;
       msg.type = GM_GETENTRY;
       if (GM_send(m, cur, &msg)) {
+        /* 4. send actions */
         type = msg.integer.i;
         switch (lastkey) {
           case KEY_ESCAPE:
