@@ -22,6 +22,7 @@
 #include "system.h"
 #include "files.h"
 #include "input.h"
+#include "cp866.h"
 
 static FILE *f;
 static int ch;
@@ -30,7 +31,7 @@ const cfg_t *CFG_find_entry (const char *key, const cfg_t *cfg) {
   assert(key != NULL);
   if (cfg != NULL) {
     int i = 0;
-    while (cfg[i].cfg && strcasecmp(cfg[i].cfg, key) != 0) {
+    while (cfg[i].cfg && cp866_strcasecmp(cfg[i].cfg, key) != 0) {
       i++;
     }
     return cfg[i].cfg ? &cfg[i] : NULL;
@@ -50,8 +51,8 @@ int CFG_update_key (const char *key, const char *value, const cfg_t *cfg) {
       case Y_WORD: *(word*)p = atoi(value); break;
       case Y_DWORD: *(dword*)p = atoi(value); break;
       case Y_STRING: strcpy(p, value); break; // TODO fix this security problem
-      case Y_SW_ON: *(byte*)p = strcasecmp(value, "on") == 0 ? 1 : 0; break;
-      case Y_SW_OFF: *(byte*)p = strcasecmp(value, "off") == 0 ? 1 : 0; break;
+      case Y_SW_ON: *(byte*)p = cp866_strcasecmp(value, "on") == 0 ? 1 : 0; break;
+      case Y_SW_OFF: *(byte*)p = cp866_strcasecmp(value, "off") == 0 ? 1 : 0; break;
       case Y_FILES: F_addwad(value); break;
       case Y_KEY: *(int*)p = I_string_to_key(value); break;
       default: assert(0); // unknown type -> something broken

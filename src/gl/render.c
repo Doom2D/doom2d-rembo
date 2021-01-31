@@ -2007,7 +2007,7 @@ void R_get_name (int n, char s[8]) {
 
 static short getani (char n[8]) {
   short i = 0;
-  while (i < ANIT - 1 && strncasecmp(n, anm[i][0], 8) != 0) {
+  while (i < ANIT - 1 && cp866_strncasecmp(n, anm[i][0], 8) != 0) {
     i++;
   }
   return i < ANIT - 1 ? i + 1 : 0;
@@ -2060,7 +2060,7 @@ void R_load (char s[8]) {
       .h = 0,
       .res = -1,
     };
-  } else if (strncasecmp(s, "_WATER_", 7) == 0) {
+  } else if (cp866_strncasecmp(s, "_WATER_", 7) == 0) {
     walp[max_textures] = (image) {
       .n = (void*)((intptr_t)s[7] - '0' + 1),
       .x = 0,

@@ -1393,13 +1393,13 @@ void R_get_name (int n, char s[8]) {
 }
 
 static short getani (char n[8]) {
-  if (strncasecmp(n, "WALL22_1", 8) == 0) {
+  if (cp866_strncasecmp(n, "WALL22_1", 8) == 0) {
     return 1;
-  } else if (strncasecmp(n, "WALL58_1", 8) == 0) {
+  } else if (cp866_strncasecmp(n, "WALL58_1", 8) == 0) {
     return 2;
-  } else if (strncasecmp(n, "W73A_1", 8) == 0) {
+  } else if (cp866_strncasecmp(n, "W73A_1", 8) == 0) {
     return 3;
-  } else if (strncasecmp(n, "RP2_1", 8) == 0) {
+  } else if (cp866_strncasecmp(n, "RP2_1", 8) == 0) {
     return 4;
   } else {
     return 0;
@@ -1433,7 +1433,7 @@ void R_load (char s[8]) {
     walh[max_textures] = -1;
     walp[max_textures] = NULL;
   } else {
-    if (strncasecmp(s, "_WATER_", 7) == 0) {
+    if (cp866_strncasecmp(s, "_WATER_", 7) == 0) {
       walh[max_textures] = -2;
       walp[max_textures] = (void*)((intptr_t)s[7] - '0' + 1);
     } else {
