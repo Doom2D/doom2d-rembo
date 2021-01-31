@@ -19,7 +19,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
+#ifdef UNIX
+#  include <sys/stat.h>
+#endif
 #include "files.h"
 #include "map.h"
 #include "my.h"
