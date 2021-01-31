@@ -136,7 +136,7 @@ void G_init (void) {
   int i,j;
   char s[9];
 
-  logo("G_init: настройка ресурсов игры ");
+  logo("G_init: setup game resources ");
   logo_gas(5,GGAS_TOTAL);
   telepsnd=Z_getsnd("TELEPT");
   ltnsnd[0]=Z_getsnd("THUND1");

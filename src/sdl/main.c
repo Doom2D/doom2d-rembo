@@ -135,7 +135,7 @@ void ERR_fatal (char *s, ...) {
   S_done();
   M_shutdown();
   SDL_Quit();
-  puts("\nКРИТИЧЕСКАЯ ОШИБКА:");
+  puts("\nCRITICAL ERROR:");
   va_start(ap, s);
   vprintf(s, ap);
   va_end(ap);

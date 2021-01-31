@@ -1164,7 +1164,7 @@ void R_draw (void) {
 void R_alloc (void) {
   int i, j, n;
   char s[10];
-  logo("R_alloc: загрузка графики\n");
+  logo("R_alloc: load graphics\n");
   // game
   scrnh[0] = V_loadvgaimg("TITLEPIC");
   scrnh[1] = V_loadvgaimg("INTERPIC");

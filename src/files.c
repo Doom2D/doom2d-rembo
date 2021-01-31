@@ -64,7 +64,7 @@ static char f_name[__MAX_FNAME];
 static char f_ext[__MAX_EXT];
 
 void F_startup (void) {
-  logo("F_startup: настройка файловой системы\n");
+  logo("F_startup: setup file system\n");
   memset(wads,0,sizeof(wads));
 }
 
@@ -74,7 +74,7 @@ void F_addwad (const char *fn) {
   for(i=0;i<MAX_WADS;++i) if(wads[i][0]==0) {
     strcpy(wads[i],fn);return;
   }
-  ERR_failinit("Не могу добавить WAD %s",fn);
+  ERR_failinit("Unable to add WAD %s",fn);
 }
 
 static int myfilelength (FILE *h) {
@@ -93,20 +93,20 @@ void F_initwads (void) {
   int n, o;
   wad_t w;
 
-  logo("F_initwads: подключение WAD-файлов\n");
+  logo("F_initwads: use WAD-files\n");
   for (i = 0; i < MAX_WAD; ++i) {
     wad[i].n[0] = 0;
   }
 
-  logo("   подключается  %s\n", wads[0]);
+  logo("   add %s\n", wads[0]);
   if ((wadh[0] = h = fopen(wads[0], "rb")) == NULL) {
-    ERR_failinit("Не могу открыть файл: %s", wads[0]);
+    ERR_failinit("Unable to open file: %s", wads[0]);
   }
 
   s[0] = '\0';
   myfread(s, 1, 4, h);
   if (strncmp(s, "IWAD", 4) != 0 && strncmp(s, "PWAD", 4) != 0) {
-    ERR_failinit("Нет подписи IWAD или PWAD (1)");
+    ERR_failinit("Not IWAD or PWAD (1)");
   }
 
   p = 0; // wad number
@@ -118,7 +118,7 @@ void F_initwads (void) {
     w.l = myfread32(h); // len
     myfread(w.n, 1, 8, h); // name
     if (p >= MAX_WAD) {
-      ERR_failinit("Слишком много элементов WAD'а");
+      ERR_failinit("Too many entries in the WAD");
     }
     wad[p].o = w.o;
     wad[p].l = w.l;
@@ -131,9 +131,9 @@ void F_initwads (void) {
 
   for (i = 1; i < MAX_WADS; ++i) {
     if (wads[i][0] != 0) {
-      logo("  подключается %s\n", wads[i]);
+      logo("  add %s\n", wads[i]);
       if ((wadh[i] = h = fopen(wads[i], "rb")) == NULL) {
-        ERR_failinit("Не могу открыть файл2:  %s", wads[i]);
+        ERR_failinit("Unable to open file (2):  %s", wads[i]);
       }
       mysplitpath(wads[i], f_drive, f_dir, f_name, f_ext);
       if (cp866_strcasecmp(f_ext, ".lmp") == 0) {
@@ -146,7 +146,7 @@ void F_initwads (void) {
           }
           if (k >= MAX_WAD) {
             if (p >= MAX_WAD) {
-              ERR_failinit("Слишком много элементов WAD'а");
+              ERR_failinit("Too many entries in the WAD");
             }
             memset(wad[p].n, 0, 8);
             strncpy(wad[p].n, f_name, 8);
@@ -160,7 +160,7 @@ void F_initwads (void) {
         s[0] = '\0';
         myfread(s, 1, 4, h);
         if (strncmp(s, "IWAD", 4) != 0 && strncmp(s, "PWAD", 4) != 0) {
-          ERR_failinit("Нет подписи IWAD или PWAD (2)");
+          ERR_failinit("Not IWAD or PWAD (2)");
         }
         n = myfread32(h); // num
         o = myfread32(h); // offset
@@ -178,7 +178,7 @@ void F_initwads (void) {
             }
             if (k >= MAX_WAD) {
               if (p >= MAX_WAD) {
-                ERR_failinit("Слишком много элементов WAD'а");
+                ERR_failinit("Too many entries in the WAD");
               }
               memcpy(wad[p].n, w.n, 8);
               wad[p].o = w.o;
@@ -216,10 +216,10 @@ void F_loadres (int r, void *p, dword o, dword l) {
   oo=ftell(fh=wadh[wad[r].f]);
 
   if(fseek(fh,wad[r].o+o,SEEK_SET)!=0)
-    ERR_fatal("Ошибка при чтении файла");
+    ERR_fatal("Error while file reading");
 
   if((dword)myfreadc(p,1,l,fh)!=l)
-    ERR_fatal("Ошибка при загрузке ресурса %.8s",wad[r].n);
+    ERR_fatal("Error while loading resource %.8s", wad[r].n);
   
   fseek(fh,oo,SEEK_SET);
   
@@ -231,7 +231,7 @@ void F_saveres(int r, void *p, dword o, dword l) {
   FILE* fh = wadh[wad[r].f];
   int oo = ftell(fh);
   if (fseek(fh, wad[r].o + o, SEEK_SET) != 0) {
-    ERR_fatal("Ошибка при чтении файла");
+    ERR_fatal("Error while reading file");
   }
   myfwrite(p, l, 1, fh);
   fseek(fh, oo, SEEK_SET);
@@ -253,7 +253,7 @@ int F_findres (const char n[8]) {
 int F_getresid (const char n[8]) {
   int i = F_findres(n);
   if (i == -1) {
-    ERR_fatal("F_getresid: ресурс %.8s не найден", n);
+    ERR_fatal("F_getresid: resource %.8s not found", n);
   }
   return i;
 }
