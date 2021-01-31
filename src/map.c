@@ -32,6 +32,7 @@
 #include <string.h>
 #include "my.h"
 #include "error.h"
+#include "cp866.h"
 
 enum {
   MB_COMMENT = -1, MB_END = 0,
@@ -244,7 +245,7 @@ static int W_load (FILE *h) {
       myfread(s, 8, 1, h);
       walf[i] = myfread8(h) ? 1 : 0; // ???
       R_load(s);
-      if (strncasecmp(s, "VTRAP01", 8) == 0) {
+      if (cp866_strncasecmp(s, "VTRAP01", 8) == 0) {
         walf[i] |= 2;
       }
     }
