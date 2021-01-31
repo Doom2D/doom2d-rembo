@@ -41,8 +41,12 @@ typedef unsigned int dword;
 #define __MAX_FNAME 50
 #define __MAX_EXT 50
 
-#define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)>(b)?(a):(b))
+#ifndef min
+#  define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#  define max(a,b) ((a)>(b)?(a):(b))
+#endif
 
 #define myrand(a) (rand()%(a))
 
