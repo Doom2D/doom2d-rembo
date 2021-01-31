@@ -33,7 +33,9 @@
 
 #include <stdio.h> // FILE
 #include <string.h>
-#include <sys/stat.h>
+#ifdef UNIX
+#  include <sys/stat.h>
+#endif
 #include "files.h"
 #include "my.h"
 
@@ -540,7 +542,7 @@ static char *getsavfpname (int n, int ro) {
   static char fn[] = "savgame0.dat";
   static char p[100];
   fn[7] = n + '0';
-#ifndef WIN32
+#ifdef UNIX
   char *e = getenv("HOME");
   strncpy(p, e, 60);
   strcat(p, "/.flatwaifu");
