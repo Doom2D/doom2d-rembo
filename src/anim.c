@@ -94,7 +94,7 @@ int ANM_play(void) {
               u=line(y*320*SQ,u);
           }else{y+=*u+1;++u;}
         break;
-      default: ERR_fatal("Плохой ANM-файл");
+      default: ERR_fatal("Bad ANM-file");
     }
     anm=((anm_blk_t*)((byte*)anm+anm->len))+1;
   if(anm->t==AB_END) return 0;

@@ -101,7 +101,7 @@ static int IT_load (FILE *h) {
     }
 	  if (!g_dm) {
       if (j == -1) {
-        ERR_fatal("Предмет игрок_1 не найден");
+        ERR_fatal("Player 1 point not exists on the map");
       }
       dm_pos[0].x = it[j].o.x;
       dm_pos[0].y = it[j].o.y;
@@ -115,7 +115,7 @@ static int IT_load (FILE *h) {
     }
 	  if (!g_dm && _2pl) {
       if (j == -1) {
-        ERR_fatal("Предмет игрок_2 не найден");
+        ERR_fatal("Player 2 point not exists on the map");
       }
       dm_pos[1].x = it[j].o.x;
       dm_pos[1].y = it[j].o.y;
@@ -133,7 +133,7 @@ static int IT_load (FILE *h) {
       }
     }
 	  if (g_dm && j < 2) {
-      ERR_fatal("Меньше 2-ух точек DM");
+      ERR_fatal("Required at least two DM points on the map");
     }
 	  if (g_dm) {
 	    dm_pnum = j;
@@ -222,7 +222,7 @@ static int read_array (void *p, FILE *h) {
     case 1:
       buf = malloc(blk.sz);
       if (buf == NULL) {
-        ERR_fatal("Не хватает памяти");
+        ERR_fatal("Out of memory");
       }
       myfread(buf, blk.sz, 1, h);
       unpack(buf, blk.sz, p);
@@ -276,7 +276,7 @@ void F_loadmap (char n[8]) {
   myfread(hdr.id, 8, 1, h);
   hdr.ver = myfread16(h);
   if (memcmp(hdr.id, "Doom2D\x1A", 8) != 0) {
-    ERR_fatal("%.8s не является уровнем", n);
+    ERR_fatal("%.8s not map", n);
   }
   for (;;) {
     blk.t = myfread16(h);
@@ -294,7 +294,7 @@ void F_loadmap (char n[8]) {
       if(!W_load(h)) {
         if(!IT_load(h)) {
           if(!SW_load(h)) {
-            ERR_fatal("Неизвестный блок %d(%d) в уровне %.8s", blk.t, blk.st, n);
+            ERR_fatal("Unknown block %d(%d) on map %.8s", blk.t, blk.st, n);
           }
         }
       }

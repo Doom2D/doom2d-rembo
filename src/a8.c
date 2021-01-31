@@ -214,7 +214,7 @@ int A8_nextframe(void) {
         p=draw2(p);
         break;
       default:
-        ERR_fatal("Плохой блок в файле A8");
+        ERR_fatal("Bad block in A8 file");
     }
     ++frame;
   return 1;
@@ -279,10 +279,10 @@ int A8_start(char *nm) {
   }
   sprintf(s,"%sA8\\%s.A8",cd_path,nm);
   if((fh=fopen(s,"rb"))==NULL) {
-    ERR_fatal("Не могу открыть файл %s",s);
+    ERR_fatal("Unable to open file %s",s);
   }
   myfread(&ah,1,sizeof(ah)-4,fh);
-  if(ah.id!=A8_ID || ah.ver!=0) ERR_fatal("Испорченный файл A8 %s",s);
+  if(ah.id!=A8_ID || ah.ver!=0) ERR_fatal("Bad A8 file %s",s);
   fseek(fh,0,SEEK_END);
   fsz=ftell(fh)-sizeof(ah)+4;
   fseek(fh,sizeof(ah)-4,SEEK_SET);
