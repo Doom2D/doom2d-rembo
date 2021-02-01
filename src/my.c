@@ -80,9 +80,13 @@ size_t myfreadc (void *ptr, size_t size, size_t n, FILE *f) {
 }
 
 void myfread (void *ptr, size_t size, size_t n, FILE *f) {
+#if 1
+  myfreadc(ptr, size, n, f);
+#else
   if (myfreadc(ptr, size, n, f) != n) {
-    ERR_fatal("File reading error\n");
+    ERR_fatal("File reading error (readed %u, required %u)\n", m, n);
   }
+#endif
 }
 
 int8_t myfread8 (FILE *f) {
