@@ -38,7 +38,6 @@
 #include "music.h" // S_initmusic S_updatemusic S_donemusic
 #include "render.h" // R_init R_draw R_done
 
-static int ticks = 0;
 static int quit = 0;
 static videomode_size_t wlist[3] = {
  { 320, 200, 0 },
@@ -486,10 +485,13 @@ static void handle_scancode (int code) {
 
 static void poll_events (void) {
   int ev, key, button, code, ch, k;
-  while(!!(ev = CheckEvent())) {
+  while((ev = CheckEvent()) != KOS32_EVENT_NONE) {
     switch (ev) {
       case KOS32_EVENT_REDRAW:
-        return; /* force redraw */
+        if (buf != NULL) {
+          Y_repaint(); /* redraw window */
+        }
+        break;
       case KOS32_EVENT_KEYBOARD:
         key = GetKey();
         if ((key & 0xff) == 0) {
@@ -521,19 +523,27 @@ static void poll_events (void) {
   }
 }
 
-static void step (void) {
-  poll_events();
-  MUS_update();
-  long t = GetTimeCountPro(); /* ns */
-  if (t - ticks > DELAY * 1000000) {
-    ticks = t;
-    G_act();
+static void game_loop (void) {
+  static long ticks; /* ns */
+  ticks = GetTimeCountPro();
+  while (!quit) {
+    poll_events();
+    MUS_update();
+    long t = GetTimeCountPro(); /* ns */
+    int n = (t - ticks) / ((DELAY + 1) * 1000000);
+    ticks = ticks + n * ((DELAY + 1) * 1000000);
+    if (n > 0) {
+      while (n) {
+        G_act();
+        n -= 1;
+      }
+      R_draw();
+    }
+    Delay(1);
   }
-  R_draw();
 }
 
 int main (int argc, char **argv) {
-  char *pw;
   CFG_args(argc, argv);
   logo("system: initialize engine\n");
   SetEventsMask(KOS32_EVENT_FLAG_REDRAW | KOS32_EVENT_FLAG_KEYBOARD | KOS32_EVENT_FLAG_BUTTON);
@@ -561,12 +571,7 @@ int main (int argc, char **argv) {
   srand(GetIdleCount());
   F_startup();
   CFG_load();
-  pw = "doom2d.wad";
-  if (fexists(pw)) {
-    F_addwad(pw);
-  } else {
-    F_addwad("doom2d.wad");
-  }
+  F_addwad("doom2d.wad");
   F_initwads();
   M_startup();
   F_allocres();
@@ -574,11 +579,8 @@ int main (int argc, char **argv) {
   MUS_init();
   R_init();
   G_init();
-  ticks = GetTimeCountPro();
   logo("system: game loop\n");
-  while (!quit) {
-    step();
-  }
+  game_loop();
   logo("system: finalize engine\n");
   CFG_save();
   R_done();

@@ -186,6 +186,18 @@ static inline int CheckEvent (void) {
   return ret;
 }
 
+/* --- fn 23 --- */
+static inline int WaitEventTimeout (int timeout) {
+  int ret;
+  __asm__ __volatile__ (
+    "int $0x40"
+    : "=a" (ret)
+    : "a" (23),
+      "b" (timeout)
+  );
+  return ret;
+}
+
 /* --- fn 2 --- */
 static inline int GetKey (void) {
   int ret;
@@ -244,6 +256,26 @@ static inline int GetSkinHeight (void) {
       "b" (4)
   );
   return ret;
+}
+
+/* --- fn 68.1 --- */
+static inline void SwitchTask (void) {
+  __asm__ __volatile__ (
+    "int $0x40"
+    :
+    : "a" (68),
+      "b" (1)
+  );
+}
+
+/* --- fn 5 --- */
+static inline void Delay (int time) {
+  __asm__ __volatile__ (
+    "int $0x40"
+    :
+    : "a" (5),
+      "b" (time)
+  );
 }
 
 #define KOS32_SC_UNKNOWN 0x00
