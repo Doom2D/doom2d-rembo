@@ -30,9 +30,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "my.h"
 #include "error.h"
 #include "cp866.h"
+
+#include "common/streams.h"
+#include "common/files.h"
 
 enum {
   MB_COMMENT = -1, MB_END = 0,
@@ -61,10 +65,10 @@ typedef struct old_thing_t {
 
 static map_block_t blk;
 
-static int G_load (FILE *h) {
+static int G_load (Reader *h) {
   switch (blk.t) {
     case MB_MUSIC:
-      myfread(g_music, 8, 1, h);
+      stream_read(g_music, 8, 1, h);
       //if (music_random) {
       //  F_randmus(g_music);
       //}
@@ -74,16 +78,16 @@ static int G_load (FILE *h) {
   return 0;
 }
 
-static int IT_load (FILE *h) {
+static int IT_load (Reader *h) {
   int m, i, j;
   old_thing_t t;
   switch (blk.t) {
 	case MB_THING:
 	  for (i = 0; blk.sz > 0; ++i, blk.sz -= 8) {
-      t.x = myfread16(h);
-      t.y = myfread16(h);
-      t.t = myfread16(h);
-      t.f = myfread16(h);
+      t.x = stream_read16(h);
+      t.y = stream_read16(h);
+      t.t = stream_read16(h);
+      t.f = stream_read16(h);
       it[i].o.x = t.x;
       it[i].o.y = t.y;
       it[i].t = t.t;
@@ -101,7 +105,8 @@ static int IT_load (FILE *h) {
     }
 	  if (!g_dm) {
       if (j == -1) {
-        ERR_fatal("Player 1 point not exists on the map");
+        logo("Player 1 point not exists on the map\n");
+        return 0; // error
       }
       dm_pos[0].x = it[j].o.x;
       dm_pos[0].y = it[j].o.y;
@@ -115,7 +120,8 @@ static int IT_load (FILE *h) {
     }
 	  if (!g_dm && _2pl) {
       if (j == -1) {
-        ERR_fatal("Player 2 point not exists on the map");
+        logo("Player 2 point not exists on the map\n");
+        return 0; // error
       }
       dm_pos[1].x = it[j].o.x;
       dm_pos[1].y = it[j].o.y;
@@ -133,7 +139,8 @@ static int IT_load (FILE *h) {
       }
     }
 	  if (g_dm && j < 2) {
-      ERR_fatal("Required at least two DM points on the map");
+      logo("Required at least two DM points on the map\n");
+      return 0; // error
     }
 	  if (g_dm) {
 	    dm_pnum = j;
@@ -167,21 +174,21 @@ static int IT_load (FILE *h) {
   return 0;
 }
 
-static int SW_load (FILE *h) {
+static int SW_load (Reader *h) {
   int i;
   switch(blk.t) {
     case MB_SWITCH2:
       sw_secrets = 0;
       for (i = 0; i < MAXSW && blk.sz > 0; ++i, blk.sz -= 9) {
-        sw[i].x = myfread8(h);
-        sw[i].y = myfread8(h);
-        sw[i].t = myfread8(h);
-        sw[i].tm = myfread8(h); // unused
-        sw[i].a = myfread8(h);
-        sw[i].b = myfread8(h);
-        sw[i].c = myfread8(h);
-        sw[i].d = myfread8(h); // unused
-        sw[i].f = myfread8(h);
+        sw[i].x = stream_read8(h);
+        sw[i].y = stream_read8(h);
+        sw[i].t = stream_read8(h);
+        sw[i].tm = stream_read8(h); // unused
+        sw[i].a = stream_read8(h);
+        sw[i].b = stream_read8(h);
+        sw[i].c = stream_read8(h);
+        sw[i].d = stream_read8(h); // unused
+        sw[i].f = stream_read8(h);
         sw[i].tm = 0;
         sw[i].d = 0;
         sw[i].f |= 0x80;
@@ -213,18 +220,19 @@ static void unpack (void *buf, int len, void *obuf) {
   }
 }
 
-static int read_array (void *p, FILE *h) {
+static int read_array (void *p, Reader *h) {
   void *buf;
   switch (blk.st) {
     case 0:
-      myfread(p, FLDW * FLDH, 1, h);
+      stream_read(p, FLDW * FLDH, 1, h);
       break;
     case 1:
       buf = malloc(blk.sz);
       if (buf == NULL) {
-        ERR_fatal("Out of memory");
+        logo("Out of memory\n");
+        return 0; // error
       }
-      myfread(buf, blk.sz, 1, h);
+      stream_read(buf, blk.sz, 1, h);
       unpack(buf, blk.sz, p);
       free(buf);
       break;
@@ -234,7 +242,7 @@ static int read_array (void *p, FILE *h) {
   return 1;
 }
 
-static int W_load (FILE *h) {
+static int W_load (Reader *h) {
   int i;
   char s[8];
   switch (blk.t) {
@@ -242,8 +250,8 @@ static int W_load (FILE *h) {
     R_begin_load();
     memset(walf, 0, sizeof(walf));
     for (i = 1; i < 256 && blk.sz > 0; i++, blk.sz -= 9) {
-      myfread(s, 8, 1, h);
-      walf[i] = myfread8(h) ? 1 : 0; // ???
+      stream_read(s, 8, 1, h);
+      walf[i] = stream_read8(h) ? 1 : 0; // ???
       R_load(s);
       if (cp866_strncasecmp(s, "VTRAP01", 8) == 0) {
         walf[i] |= 2;
@@ -258,47 +266,69 @@ static int W_load (FILE *h) {
   case MB_FRONT:
     return read_array(fldf, h);
   case MB_SKY:
-    sky_type = myfread16(h);
+    sky_type = stream_read16(h);
     R_loadsky(sky_type);
     return 1;
   }
   return 0;
 }
 
-void F_loadmap (char n[8]) {
-  int r, o;
-  FILE *h;
+int MAP_load (Reader *r) {
+  assert(r != NULL);
+  int ok = 0;
   map_header_t hdr;
-  W_init();
-  r = F_getresid(n);
-  h = wadh[wad[r].f];
-  fseek(h, wad[r].o, SEEK_SET);
-  myfread(hdr.id, 8, 1, h);
-  hdr.ver = myfread16(h);
-  if (memcmp(hdr.id, "Doom2D\x1A", 8) != 0) {
-    ERR_fatal("%.8s not map", n);
-  }
-  for (;;) {
-    blk.t = myfread16(h);
-    blk.st = myfread16(h);
-    blk.sz = myfread32(h);
-    if(blk.t == MB_END) {
-      break;
-    }
-    if(blk.t == MB_COMMENT) {
-      fseek(h, blk.sz, SEEK_CUR);
-      continue;
-    }
-    o = ftell(h) + blk.sz;
-    if(!G_load(h)) {
-      if(!W_load(h)) {
-        if(!IT_load(h)) {
-          if(!SW_load(h)) {
-            ERR_fatal("Unknown block %d(%d) on map %.8s", blk.t, blk.st, n);
-          }
-        }
+  W_init(); // reset all game data
+  stream_read(hdr.id, 8, 1, r);
+  hdr.ver = stream_read16(r);
+  if (memcmp(hdr.id, "Doom2D\x1A", 8) == 0) {
+    ok = 1;
+    while (ok) {
+      blk.t = stream_read16(r);
+      blk.st = stream_read16(r);
+      blk.sz = stream_read32(r);
+      long off = r->getpos(r) + blk.sz;
+      switch (blk.t) {
+        case MB_MUSIC:
+          ok = G_load(r);
+          break;
+        case MB_WALLNAMES:
+        case MB_BACK:
+        case MB_WTYPE:
+        case MB_FRONT:
+        case MB_SKY:
+          ok = W_load(r);
+          break;
+        case MB_THING:
+          ok = IT_load(r);
+          break;
+        case MB_SWITCH2:
+          ok = SW_load(r);
+          break;
+        case MB_COMMENT:
+          /* skip */
+          break;
+        case MB_END:
+          return ok;
+        default:
+          logo("Unknown block %d(%d)\n", blk.t, blk.st);
+          return 0; // error
       }
+      r->setpos(r, off);
     }
-    fseek(h, o, SEEK_SET);
+  } else {
+    logo("Invalid map header\n");
+    ok = 0;
+  }
+  return ok;
+}
+
+void F_loadmap (char n[8]) {
+  FILE_Reader rd;
+  int r = F_getresid(n);
+  FILE *h = wadh[wad[r].f];
+  fseek(h, wad[r].o, SEEK_SET);
+  FILE_AssignReader(&rd, h);
+  if (!MAP_load(&rd.base)) {
+    ERR_fatal("Failed to load map");
   }
 }

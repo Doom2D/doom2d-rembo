@@ -18,6 +18,9 @@
 #ifndef MAP_H_INCLUDED
 #define MAP_H_INCLUDED
 
+#include "common/streams.h"
+
+int MAP_load (Reader *r);
 void F_loadmap (char n[8]);
 
 #endif /* MAP_H_INCLUDED */
