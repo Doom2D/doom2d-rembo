@@ -19,6 +19,9 @@
 #define SAVE_H_INCLUDED
 
 #include "glob.h"
+#include "my.h"
+
+#include "common/streams.h"
 
 #define SAVE_MAX 7
 #define SAVE_MAXLEN 24
@@ -29,5 +32,8 @@ extern char savok[SAVE_MAX];
 void F_getsavnames (void);
 void F_savegame (int n, char *s);
 void F_loadgame (int n);
+
+void SAVE_save (Writer *w, const char name[24]);
+void SAVE_load (Reader *r);
 
 #endif /* SAVE_H_INCLUDED */
