@@ -8,12 +8,14 @@ typedef struct Reader Reader;
 typedef struct Writer Writer;
 
 struct Reader {
-  void (*setpos)(Reader *r, int pos);
+  long (*getpos)(Reader *r);
+  void (*setpos)(Reader *r, long pos);
   void (*read)(Reader *r, void *data, size_t size, size_t n);
 };
 
 struct Writer {
-  void (*setpos)(Writer *w, int pos);
+  long (*getpos)(Writer *w);
+  void (*setpos)(Writer *w, long pos);
   void (*write)(Writer *w, const void *data, size_t size, size_t n);
 };
 
