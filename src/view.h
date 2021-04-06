@@ -19,7 +19,6 @@
 #define VIEW_H_INCLUDED
 
 #include "glob.h"
-#include <stdio.h> // FILE
 
 #define FLDW 100
 #define FLDH 100
@@ -43,16 +42,6 @@ typedef struct {
   int vx, vy;
   int r, h;		// radius, height
 } obj_t;
-
-typedef struct {
-  int x, y;
-  byte d;
-} pos_t;
-
-typedef struct {
-  char n[8];
-  char t;
-} wall_t;
 
 extern int sky_type;
 extern dword walf[256];

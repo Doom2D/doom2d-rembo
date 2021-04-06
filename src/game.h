@@ -19,8 +19,12 @@
 #define GAME_H_INLUDED
 
 #include "glob.h"
-#include "view.h" // pos_t
 #include "player.h" // player_t
+
+typedef struct {
+  int x, y;
+  byte d;
+} pos_t;
 
 extern byte transdraw;
 extern byte _2pl;
