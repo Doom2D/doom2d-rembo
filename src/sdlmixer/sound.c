@@ -16,10 +16,11 @@
 #include "glob.h"
 #include "sound.h"
 #include "music.h"
-#include "misc.h" // int2host
 #include "memory.h" // M_lock M_unlock
 #include "files.h" // F_findres
 #include "error.h"
+
+#include "common/endianness.h"
 
 #include "SDL.h"
 #include "SDL_mixer.h"
