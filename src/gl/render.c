@@ -38,6 +38,7 @@
 #include "switch.h" // sw_secrets
 
 #include "cp866.h"
+#include "common/endianness.h"
 
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>

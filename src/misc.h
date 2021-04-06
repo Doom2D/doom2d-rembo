@@ -57,7 +57,4 @@ int Z_moveobj (obj_t *p);
 void Z_splash (obj_t *p, int n);
 void Z_calc_time(dword t, word *h, word *m, word *s);
 
-int16_t short2host (int16_t x);
-int32_t int2host (int32_t x);
-
 #endif /* MISC_H_INCLUDED */

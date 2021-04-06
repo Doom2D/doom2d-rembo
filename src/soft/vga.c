@@ -24,6 +24,8 @@
 #include "files.h"
 #include "system.h"
 
+#include "common/endianness.h"
+
 #include <string.h>
 #include <assert.h>
 

@@ -18,8 +18,9 @@
 
 #include "files.h" // F_findres F_getreslen
 #include "memory.h" // M_lock M_unlock
-#include "misc.h" // int2host
 #include "error.h" // logo
+
+#include "common/endianness.h"
 
 #ifdef __APPLE__
 #  include <OpenAL/al.h>

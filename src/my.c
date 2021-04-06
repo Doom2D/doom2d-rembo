@@ -18,7 +18,8 @@
 
 #include "glob.h"
 #include "error.h"
-#include "misc.h"
+#include "common/endianness.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>

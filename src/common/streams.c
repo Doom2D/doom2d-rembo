@@ -1,9 +1,8 @@
-#include "streams.h"
+#include "common/streams.h"
+#include "common/endianness.h"
 
 #include <stddef.h>
 #include <stdint.h>
-
-#include "misc.h" // endianness conversion
 
 void stream_read (void *data, size_t size, size_t n, Reader *r) {
   r->read(r, data, size, n);
