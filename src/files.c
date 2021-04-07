@@ -40,9 +40,9 @@ void F_startup (void) {
 
 void F_addwad (const char *fn) {
   static int i = 0;
-  static FILE_Reader wadh[MAX_WADS];
+  static FILE_Stream wadh[MAX_WADS];
   if (i < MAX_WADS) {
-    if (FILE_OpenReader(&wadh[i], fn)) {
+    if (FILE_Open(&wadh[i], fn, "rb")) {
       if (WADRES_addwad(&wadh[i].base)) {
         i += 1;
       } else {
@@ -149,9 +149,9 @@ void F_randmus (char *s) {
 void F_loadmap (char n[8]) {
   int id = F_getresid(n);
   if (id != -1) {
-    Reader *r = WADRES_getbasereader(id);
+    Stream *r = WADRES_getbasereader(id);
     long offset = WADRES_getoffset(id);
-    r->setpos(r, offset);
+    stream_setpos(r, offset);
     if (!MAP_load(r)) {
       ERR_fatal("Failed to load map");
     }

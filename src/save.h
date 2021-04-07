@@ -30,7 +30,7 @@ void F_getsavnames (void);
 void F_savegame (int n, char *s);
 void F_loadgame (int n);
 
-void SAVE_save (Writer *w, const char name[24]);
-void SAVE_load (Reader *r);
+void SAVE_save (Stream *w, const char name[24]);
+void SAVE_load (Stream *r);
 
 #endif /* SAVE_H_INCLUDED */

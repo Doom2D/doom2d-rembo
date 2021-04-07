@@ -44,7 +44,7 @@
 char savname[SAVE_MAX][SAVE_MAXLEN];
 char savok[SAVE_MAX];
 
-static void DOT_savegame (Writer *h) {
+static void DOT_savegame (Stream *h) {
   int i, n;
   for (i = n = 0; i < MAXDOT; ++i) {
     if (dot[i].t) {
@@ -68,7 +68,7 @@ static void DOT_savegame (Writer *h) {
   }
 }
 
-static void DOT_loadgame (Reader *h) {
+static void DOT_loadgame (Stream *h) {
   int i, n;
   n = stream_read32(h);
   for (i = 0; i < n; i++) {
@@ -85,7 +85,7 @@ static void DOT_loadgame (Reader *h) {
   }
 }
 
-static void FX_savegame (Writer *h) {
+static void FX_savegame (Stream *h) {
   int i, n;
   for (i = n = 0; i < MAXFX; ++i) {
     if (fx[i].t) {
@@ -105,7 +105,7 @@ static void FX_savegame (Writer *h) {
   }
 }
 
-static void FX_loadgame (Reader *h) {
+static void FX_loadgame (Stream *h) {
   int i, n;
   n = stream_read32(h);
   for (i = 0; i < n; i++) {
@@ -118,7 +118,7 @@ static void FX_loadgame (Reader *h) {
   }
 }
 
-static void G_savegame (Writer *h) {
+static void G_savegame (Stream *h) {
   stream_write8(_2pl, h);
   stream_write8(g_dm, h);
   stream_write8(g_exit, h);
@@ -138,7 +138,7 @@ static void G_savegame (Writer *h) {
   stream_write(g_music, 8, 1, h);
 }
 
-static void G_loadgame (Reader *h) {
+static void G_loadgame (Stream *h) {
   _2pl = stream_read8(h);
   g_dm = stream_read8(h);
   g_exit = stream_read8(h);
@@ -159,7 +159,7 @@ static void G_loadgame (Reader *h) {
   MUS_load(g_music);
 }
 
-static void IT_savegame (Writer *h) {
+static void IT_savegame (Stream *h) {
   int i, n;
   for (n = MAXITEM - 1; n >= 0 && it[n].t == 0; n--) {
     // empty
@@ -181,7 +181,7 @@ static void IT_savegame (Writer *h) {
   stream_write32(itm_rtime, h);
 }
 
-static void IT_loadgame (Reader *h) {
+static void IT_loadgame (Stream *h) {
   int i, n;
   n = stream_read32(h);
   for (i = 0; i < n; i++) {
@@ -199,7 +199,7 @@ static void IT_loadgame (Reader *h) {
   itm_rtime = stream_read32(h);
 }
 
-static void MN_savegame (Writer *h) {
+static void MN_savegame (Stream *h) {
   int i, n;
   for (n = MAXMN - 1; n >= 0 && mn[n].t == 0; n--) {
     // empty
@@ -235,7 +235,7 @@ static void MN_savegame (Writer *h) {
   stream_write32(gsndt, h);
 }
 
-static void MN_loadgame (Reader *h) {
+static void MN_loadgame (Stream *h) {
   int i, n, c;
   n = stream_read32(h);
   for (i = 0; i < n; i++) {
@@ -274,7 +274,7 @@ static void MN_loadgame (Reader *h) {
   }
 }
 
-static void PL_save_player (player_t *p, Writer *h) {
+static void PL_save_player (player_t *p, Stream *h) {
   stream_write32(p->o.x, h);
   stream_write32(p->o.y, h);
   stream_write32(p->o.xv, h);
@@ -318,7 +318,7 @@ static void PL_save_player (player_t *p, Writer *h) {
   // k* not saved
 }
 
-static void PL_savegame (Writer *h) {
+static void PL_savegame (Stream *h) {
   PL_save_player(&pl1, h);
   if (_2pl) {
     PL_save_player(&pl2, h);
@@ -328,7 +328,7 @@ static void PL_savegame (Writer *h) {
   stream_write8(p_immortal, h);
 }
 
-static void PL_load_player (player_t *p, Reader *h) {
+static void PL_load_player (player_t *p, Stream *h) {
   p->o.x = stream_read32(h);
   p->o.y = stream_read32(h);
   p->o.xv = stream_read32(h);
@@ -372,7 +372,7 @@ static void PL_load_player (player_t *p, Reader *h) {
   // k* not saved
 }
 
-static void PL_loadgame (Reader *h) {
+static void PL_loadgame (Stream *h) {
   PL_load_player(&pl1, h);
   if (_2pl) {
     PL_load_player(&pl2, h);
@@ -382,7 +382,7 @@ static void PL_loadgame (Reader *h) {
   p_immortal = stream_read8(h);
 }
 
-static void SMK_savegame (Writer *h) {
+static void SMK_savegame (Stream *h) {
   int i, n;
   for (i = n = 0; i < MAXSMOK; ++i) {
     if (sm[i].t) {
@@ -403,7 +403,7 @@ static void SMK_savegame (Writer *h) {
   }
 }
 
-static void SMK_loadgame (Reader *h) {
+static void SMK_loadgame (Stream *h) {
   int i, n;
   n = stream_read32(h);
   for (i = 0; i < n; ++i) {
@@ -417,7 +417,7 @@ static void SMK_loadgame (Reader *h) {
   }
 }
 
-static void SW_savegame (Writer *h) {
+static void SW_savegame (Stream *h) {
   int i, n;
   for (n = MAXSW - 1; n >= 0 && sw[n].t == 0; n--) {
     // empty
@@ -438,7 +438,7 @@ static void SW_savegame (Writer *h) {
   stream_write32(sw_secrets, h);
 }
 
-static void SW_loadgame (Reader *h) {
+static void SW_loadgame (Stream *h) {
   int i, n;
   n = stream_read32(h);
   for (i = 0; i < n; i++) {
@@ -455,7 +455,7 @@ static void SW_loadgame (Reader *h) {
   sw_secrets = stream_read32(h);
 }
 
-static void W_savegame (Writer* h) {
+static void W_savegame (Stream* h) {
   char s[8];
   int i;
   stream_write32(sky_type, h);
@@ -474,7 +474,7 @@ static void W_savegame (Writer* h) {
   stream_write(fldf, FLDW*FLDH, 1, h);
 }
 
-static void W_loadgame (Reader *h) {
+static void W_loadgame (Stream *h) {
   int i;
   char s[8];
   sky_type = stream_read32(h);
@@ -498,7 +498,7 @@ static void W_loadgame (Reader *h) {
   stream_read(fldf, FLDW*FLDH, 1, h);
 }
 
-static void WP_savegame (Writer *h) {
+static void WP_savegame (Stream *h) {
   int i, n;
   for (n = MAXWPN - 1; n >= 0 && wp[n].t == 0; n--) {
     // empty
@@ -521,7 +521,7 @@ static void WP_savegame (Writer *h) {
   }
 }
 
-static void WP_loadgame (Reader *h) {
+static void WP_loadgame (Stream *h) {
   int i, n;
   n = stream_read32(h);
   for (i = 0; i < n; i++) {
@@ -559,7 +559,7 @@ static char *getsavfpname (int n, int ro) {
   return p;
 }
 
-void SAVE_save (Writer *w, const char name[24]) {
+void SAVE_save (Stream *w, const char name[24]) {
   assert(w != NULL);
   stream_write(name, 24, 1, w); // slot name
   stream_write16(3, w); // version
@@ -576,17 +576,17 @@ void SAVE_save (Writer *w, const char name[24]) {
 }
 
 void F_savegame (int n, char *s) {
-  FILE_Writer wr;
+  FILE_Stream wr;
   char *p = getsavfpname(n, 0);
-  if (FILE_OpenWriter(&wr, p)) {
+  if (FILE_Open(&wr, p, "wb")) {
     SAVE_save(&wr.base, s);
-    FILE_CloseWriter(&wr);
+    FILE_Close(&wr);
   }
 }
 
-void SAVE_load (Reader *h) {
+void SAVE_load (Stream *h) {
   int16_t version;
-  h->setpos(h, 24); // skip name
+  stream_setpos(h, 24); // skip name
   version = stream_read16(h);
   if (version == 3) {
     G_loadgame(h);
@@ -605,28 +605,28 @@ void SAVE_load (Reader *h) {
 void F_getsavnames (void) {
   int i;
   char *p;
-  FILE_Reader rd;
+  FILE_Stream rd;
   int16_t version;
   for (i = 0; i < 7; ++i) {
     p = getsavfpname(i, 1);
     memset(savname[i], 0, 24);
     savok[i] = 0;
-    if (FILE_OpenReader(&rd, p)) {
+    if (FILE_Open(&rd, p, "rb")) {
       version = -1;
       stream_read(savname[i], 24, 1, &rd.base);
       version = stream_read16(&rd.base);
       savname[i][23] = 0;
       savok[i] = version == 3;
-      FILE_CloseReader(&rd);
+      FILE_Close(&rd);
     }
   }
 }
 
 void F_loadgame (int n) {
-  FILE_Reader rd;
+  FILE_Stream rd;
   char *p = getsavfpname(n, 1);
-  if (FILE_OpenReader(&rd, p)) {
+  if (FILE_Open(&rd, p, "rb")) {
     SAVE_load(&rd.base);
-    FILE_CloseReader(&rd);
+    FILE_Close(&rd);
   }
 }
