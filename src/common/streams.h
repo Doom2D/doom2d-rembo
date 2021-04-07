@@ -6,6 +6,7 @@
 
 typedef struct Reader Reader;
 typedef struct Writer Writer;
+typedef struct Handle Handle;
 
 struct Reader {
   long (*getpos)(Reader *r);

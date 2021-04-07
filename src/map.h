@@ -21,6 +21,5 @@
 #include "common/streams.h"
 
 int MAP_load (Reader *r);
-void F_loadmap (char n[8]);
 
 #endif /* MAP_H_INCLUDED */
