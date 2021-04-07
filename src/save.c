@@ -30,19 +30,11 @@
 
 #include "render.h"
 #include "music.h"
-
 #include <string.h>
-#ifdef UNIX
-#  include <sys/stat.h>
-#endif
 #include <assert.h>
-#include "files.h"
 
 #include "common/streams.h"
 #include "common/files.h"
-
-char savname[SAVE_MAX][SAVE_MAXLEN];
-char savok[SAVE_MAX];
 
 static void DOT_savegame (Stream *h) {
   int i, n;
@@ -540,25 +532,6 @@ static void WP_loadgame (Stream *h) {
   }
 }
 
-static char *getsavfpname (int n, int ro) {
-  static char fn[] = "savgame0.dat";
-  static char p[100];
-  fn[7] = n + '0';
-#ifdef UNIX
-  char *e = getenv("HOME");
-  strncpy(p, e, 60);
-  strcat(p, "/.flatwaifu");
-  if (!ro) {
-    mkdir(p, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  }
-  strcat(p, "/");
-  strcat(p, fn);
-#else
-  strcpy(p, fn);
-#endif
-  return p;
-}
-
 void SAVE_save (Stream *w, const char name[24]) {
   assert(w != NULL);
   stream_write(name, 24, 1, w); // slot name
@@ -573,15 +546,6 @@ void SAVE_save (Stream *w, const char name[24]) {
   PL_savegame(w);
   SW_savegame(w);
   WP_savegame(w);
-}
-
-void F_savegame (int n, char *s) {
-  FILE_Stream wr;
-  char *p = getsavfpname(n, 0);
-  if (FILE_Open(&wr, p, "wb")) {
-    SAVE_save(&wr.base, s);
-    FILE_Close(&wr);
-  }
 }
 
 void SAVE_load (Stream *h) {
@@ -602,31 +566,8 @@ void SAVE_load (Stream *h) {
   }
 }
 
-void F_getsavnames (void) {
-  int i;
-  char *p;
-  FILE_Stream rd;
-  int16_t version;
-  for (i = 0; i < 7; ++i) {
-    p = getsavfpname(i, 1);
-    memset(savname[i], 0, 24);
-    savok[i] = 0;
-    if (FILE_Open(&rd, p, "rb")) {
-      version = -1;
-      stream_read(savname[i], 24, 1, &rd.base);
-      version = stream_read16(&rd.base);
-      savname[i][23] = 0;
-      savok[i] = version == 3;
-      FILE_Close(&rd);
-    }
-  }
-}
-
-void F_loadgame (int n) {
-  FILE_Stream rd;
-  char *p = getsavfpname(n, 1);
-  if (FILE_Open(&rd, p, "rb")) {
-    SAVE_load(&rd.base);
-    FILE_Close(&rd);
-  }
+int SAVE_getname (Stream *r, char name[24]) {
+  stream_read(name, 24, 1, r);
+  int16_t version = stream_read16(r);
+  return version == 3;
 }

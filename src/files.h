@@ -20,6 +20,11 @@
 
 #include "glob.h"
 
+#define SAVE_MAX 7
+#define SAVE_MAXLEN 24
+
+extern char savname[SAVE_MAX][SAVE_MAXLEN];
+extern char savok[SAVE_MAX];
 extern int d_start, d_end;
 
 void F_startup (void);
@@ -32,9 +37,14 @@ int F_getresid (const char n[8]);
 void F_getresname (char n[8], int r);
 int F_getsprid (const char n[4], int s, int d, char *dir);
 int F_getreslen (int r);
+
 void F_nextmus (char *s);
 void F_randmus (char *s);
 
 void F_loadmap (char n[8]);
+
+void F_getsavnames (void);
+void F_savegame (int n, char *s);
+void F_loadgame (int n);
 
 #endif /* FILES_H_INCLUDED */
