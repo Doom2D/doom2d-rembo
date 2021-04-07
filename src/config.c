@@ -22,7 +22,8 @@
 #include "system.h"
 #include "files.h"
 #include "input.h"
-#include "cp866.h"
+
+#include "common/cp866.h"
 
 static FILE *f;
 static int ch;

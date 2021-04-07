@@ -30,10 +30,10 @@
 #include <string.h>
 #include <assert.h>
 #include "error.h"
-#include "cp866.h"
 
 #include "common/streams.h"
 #include "common/files.h"
+#include "common/cp866.h"
 
 enum {
   MB_COMMENT = -1, MB_END = 0,

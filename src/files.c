@@ -22,13 +22,13 @@
 #include <assert.h>
 #include "files.h"
 #include "error.h"
-#include "cp866.h"
 
 #include "map.h" // MAP_load
 
 #include "common/streams.h"
 #include "common/files.h"
 #include "common/wadres.h"
+#include "common/cp866.h"
 
 int d_start, d_end;
 static int m_start, m_end;

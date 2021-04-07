@@ -14,7 +14,8 @@
  */
 
 #include "input.h"
-#include "cp866.h"
+#include "common/cp866.h"
+
 #include <assert.h>
 
 static char keystate[KEY__LAST + 1];

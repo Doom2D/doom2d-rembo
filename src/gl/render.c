@@ -37,7 +37,7 @@
 #include "view.h"
 #include "switch.h" // sw_secrets
 
-#include "cp866.h"
+#include "common/cp866.h"
 #include "common/endianness.h"
 
 #ifdef __APPLE__
