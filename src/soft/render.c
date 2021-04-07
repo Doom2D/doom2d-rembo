@@ -41,7 +41,7 @@
 #include "music.h"
 #include "system.h"
 
-#include "cp866.h"
+#include "common/cp866.h"
 
 // game
 static vgaimg *scrnh[3]; // TITLEPIC INTERPIC ENDPIC

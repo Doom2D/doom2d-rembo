@@ -26,8 +26,6 @@
 #include "system.h"
 #include "input.h"
 
-#include "cp866.h"
-
 #include "player.h" // pl1 pl2
 #include "menu.h" // G_keyf
 #include "error.h" // logo
@@ -41,6 +39,8 @@
 #include "sound.h" // S_init S_done
 #include "music.h" // S_initmusic S_updatemusic S_donemusic
 #include "render.h" // R_init R_draw R_done
+
+#include "common/cp866.h"
 
 #define TITLE_STR "Doom 2D (SDL2)"
 
