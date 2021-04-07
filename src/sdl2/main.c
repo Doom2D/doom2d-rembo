@@ -28,7 +28,6 @@
 
 #include "cp866.h"
 
-#include "my.h" // fexists
 #include "player.h" // pl1 pl2
 #include "menu.h" // G_keyf
 #include "error.h" // logo
@@ -126,7 +125,7 @@ void ERR_failinit (char *s, ...) {
   vprintf(s, ap);
   va_end(ap);
   puts("");
-  exit(1);
+  abort()
 }
 
 void ERR_fatal (char *s, ...) {
@@ -141,7 +140,7 @@ void ERR_fatal (char *s, ...) {
   vprintf(s, ap);
   va_end(ap);
   puts("");
-  exit(1);
+  abort();
 }
 
 void ERR_quit (void) {
@@ -568,7 +567,6 @@ static void step (void) {
 }
 
 int main (int argc, char **argv) {
-  char *pw;
   CFG_args(argc, argv);
   logo("system: initialize SDL2\n");
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) == -1) {
@@ -598,16 +596,7 @@ int main (int argc, char **argv) {
   srand(SDL_GetTicks());
   F_startup();
   CFG_load();
-#ifndef WIN32
-  pw = "/usr/share/doom2d-rembo/doom2d.wad";
-#else
-  pw = "doom2d.wad";
-#endif
-  if (fexists(pw)) {
-    F_addwad(pw);
-  } else {
-    F_addwad("doom2d.wad");
-  }
+  F_addwad("doom2d.wad");
   F_initwads();
   M_startup();
   F_allocres();

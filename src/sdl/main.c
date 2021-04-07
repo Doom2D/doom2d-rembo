@@ -25,7 +25,6 @@
 #include "system.h"
 #include "input.h"
 
-#include "my.h" // fexists
 #include "player.h" // pl1 pl2
 #include "menu.h" // G_keyf
 #include "error.h" // logo
@@ -482,7 +481,6 @@ static void step (void) {
 }
 
 int main (int argc, char *argv[]) {
-  char *pw;
   logo("main: initialize SDL\n");
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1) {
     logo("main: failed to init SDL: %s\n", SDL_GetError());
@@ -511,16 +509,7 @@ int main (int argc, char *argv[]) {
   pl2.kp = KEY_E;
   srand(SDL_GetTicks());
   F_startup();
-#ifndef WIN32
-  pw = "/usr/share/doom2d-rembo/doom2d.wad";
-#else
-  pw = "doom2d.wad";
-#endif
-  if (fexists(pw)) {
-    F_addwad(pw);
-  } else {
-    F_addwad("doom2d.wad");
-  }
+  F_addwad("doom2d.wad");
   CFG_args(argc, argv);
   CFG_load();
   F_initwads();

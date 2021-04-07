@@ -33,7 +33,6 @@
 #include "misc.h"
 #include "map.h"
 #include "sound.h"
-#include "my.h"
 #include "render.h"
 
 int sky_type=1;

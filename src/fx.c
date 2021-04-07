@@ -22,7 +22,6 @@
 #include "view.h"
 #include "fx.h"
 #include "misc.h"
-#include "my.h"
 
 enum{NONE,TFOG,IFOG,BUBL};
 

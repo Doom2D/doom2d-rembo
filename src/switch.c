@@ -25,7 +25,6 @@
 #include "map.h"
 #include "files.h"
 #include "game.h"
-#include "my.h"
 #include "monster.h"
 #include "render.h"
 

@@ -19,8 +19,6 @@
 #define FILES_H_INCLUDED
 
 #include "glob.h"
-#include <stdio.h> // FILE
-#include "map.h" // map_block_t
 
 extern int d_start, d_end;
 
@@ -36,7 +34,6 @@ int F_getsprid (const char n[4], int s, int d, char *dir);
 int F_getreslen (int r);
 void F_nextmus (char *s);
 void F_randmus (char *s);
-void F_readstr (FILE* h, char *s, int m);
 
 void F_loadmap (char n[8]);
 

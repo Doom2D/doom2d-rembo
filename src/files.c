@@ -20,24 +20,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#ifdef UNIX
-#  include <sys/stat.h>
-#endif
 #include "files.h"
-#include "map.h"
-#include "my.h"
-#include "game.h"
-#include "view.h"
-#include "dots.h"
-#include "smoke.h"
-#include "fx.h"
-#include "items.h"
-#include "monster.h"
-#include "player.h"
-#include "switch.h"
-#include "weapons.h"
 #include "error.h"
 #include "cp866.h"
+
+#include "map.h" // MAP_load
 
 #include "common/streams.h"
 #include "common/files.h"
@@ -157,23 +144,6 @@ void F_randmus (char *s) {
   for (i = 0; i < n; i++) {
     F_nextmus(s);
   }
-}
-
-// reads bytes from file until CR
-void F_readstr (FILE* h, char *s, int m) {
-  int i = 0;
-  size_t len = 0;
-  static char c = 0;
-  while (i < m) {
-    c = 13;
-    len = myfreadc(&c, 1, 1, h);
-    if (len == 0 || c == 13 || c == 10) {
-      break;
-    }
-    s[i] = c;
-    i++;
-  }
-  s[i] = 0;
 }
 
 void F_loadmap (char n[8]) {

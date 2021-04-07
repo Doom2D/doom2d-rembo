@@ -22,7 +22,6 @@
 #include "game.h"
 #include "fx.h"
 #include "misc.h"
-#include "my.h"
 #include "monster.h"
 
 #define MAXSR 20

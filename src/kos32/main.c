@@ -23,7 +23,6 @@
 #include "system.h"
 #include "input.h"
 
-#include "my.h" // fexists
 #include "player.h" // pl1 pl2
 #include "menu.h" // G_keyf
 #include "error.h" // logo

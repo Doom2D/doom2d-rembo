@@ -35,7 +35,6 @@
 #include "menu.h"
 #include "misc.h"
 #include "map.h"
-#include "my.h"
 #include "game.h"
 #include "config.h"
 #include "music.h"
