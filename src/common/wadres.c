@@ -14,18 +14,18 @@ typedef struct Entry {
 
 static int n_wads;
 static int n_resources;
-static Reader *wads[MAX_WADS];
+static Stream *wads[MAX_WADS];
 static Entry resources[MAX_RESOURCES];
 
-static int check_header (Reader *r) {
+static int check_header (Stream *r) {
   assert(r != NULL);
   char ident[4];
-  r->setpos(r, 0);
+  stream_setpos(r, 0); // !!!
   stream_read(ident, 4, 1, r);
   return (memcmp(ident, "IWAD", 4) == 0) || (memcmp(ident, "PWAD", 4) == 0);
 }
 
-int WADRES_addwad (Reader *r) {
+int WADRES_addwad (Stream *r) {
   assert(r != NULL);
   if (n_wads < MAX_WADS && check_header(r)) {
     wads[n_wads] = r;
@@ -52,11 +52,11 @@ static int WADRES_addresource (const Entry *e) {
   return -1;
 }
 
-static int WADRES_read (Reader *r) {
-  r->setpos(r, 4); // skip magic
+static int WADRES_read (Stream *r) {
+  stream_setpos(r, 4); // skip magic
   int32_t n = stream_read32(r);
   int32_t dir = stream_read32(r);
-  r->setpos(r, dir);
+  stream_setpos(r, dir);
   int ok = 1;
   for (int32_t i = 0; ok && i < n; ++i) {
     Entry e;
@@ -90,7 +90,7 @@ int WADRES_maxids (void) {
   return n_resources;
 }
 
-Reader *WADRES_getbasereader (int id) {
+Stream *WADRES_getbasereader (int id) {
   assert(id >= 0 && id < n_resources);
   return wads[resources[id].f];
 }
@@ -112,9 +112,9 @@ void WADRES_getname (int id, char *name) {
 
 void WADRES_getdata (int id, void *data) {
   assert(id >= 0 && id < n_resources);
-  Reader *r = wads[resources[id].f];
-  long pos = r->getpos(r);
-  r->setpos(r, resources[id].offset);
+  Stream *r = wads[resources[id].f];
+  long pos = stream_getpos(r);
+  stream_setpos(r, resources[id].offset);
   stream_read(data, resources[id].size, 1, r);
-  r->setpos(r, pos);
+  stream_setpos(r, pos);
 }

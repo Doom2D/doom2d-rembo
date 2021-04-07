@@ -20,6 +20,6 @@
 
 #include "common/streams.h"
 
-int MAP_load (Reader *r);
+int MAP_load (Stream *r);
 
 #endif /* MAP_H_INCLUDED */

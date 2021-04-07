@@ -4,22 +4,13 @@
 #include <stdio.h>
 #include "streams.h"
 
-typedef struct FILE_Reader {
-  Reader base;
+typedef struct FILE_Stream {
+  Stream base;
   FILE *fp;
-} FILE_Reader;
+} FILE_Stream;
 
-typedef struct FILE_Writer {
-  Writer base;
-  FILE *fp;
-} FILE_Writer;
-
-void FILE_AssignReader (FILE_Reader *r, FILE *fp);
-int  FILE_OpenReader (FILE_Reader *r, const char *name);
-void FILE_CloseReader (FILE_Reader *r);
-
-void FILE_AssignWriter (FILE_Writer *w, FILE *fp);
-int  FILE_OpenWriter (FILE_Writer *w, const char *name);
-void FILE_CloseWriter (FILE_Writer *w);
+void FILE_Assign (FILE_Stream *r, FILE *fp);
+int  FILE_Open (FILE_Stream *r, const char *name, const char *mode);
+void FILE_Close (FILE_Stream *r);
 
 #endif /* COMMON_FILES_H_INCLUDED */

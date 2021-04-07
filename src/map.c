@@ -62,7 +62,7 @@ typedef struct old_thing_t {
 
 static map_block_t blk;
 
-static int G_load (Reader *h) {
+static int G_load (Stream *h) {
   switch (blk.t) {
     case MB_MUSIC:
       stream_read(g_music, 8, 1, h);
@@ -75,7 +75,7 @@ static int G_load (Reader *h) {
   return 0;
 }
 
-static int IT_load (Reader *h) {
+static int IT_load (Stream *h) {
   int m, i, j;
   old_thing_t t;
   switch (blk.t) {
@@ -171,7 +171,7 @@ static int IT_load (Reader *h) {
   return 0;
 }
 
-static int SW_load (Reader *h) {
+static int SW_load (Stream *h) {
   int i;
   switch(blk.t) {
     case MB_SWITCH2:
@@ -217,7 +217,7 @@ static void unpack (void *buf, int len, void *obuf) {
   }
 }
 
-static int read_array (void *p, Reader *h) {
+static int read_array (void *p, Stream *h) {
   void *buf;
   switch (blk.st) {
     case 0:
@@ -239,7 +239,7 @@ static int read_array (void *p, Reader *h) {
   return 1;
 }
 
-static int W_load (Reader *h) {
+static int W_load (Stream *h) {
   int i;
   char s[8];
   switch (blk.t) {
@@ -270,7 +270,7 @@ static int W_load (Reader *h) {
   return 0;
 }
 
-int MAP_load (Reader *r) {
+int MAP_load (Stream *r) {
   assert(r != NULL);
   int ok = 0;
   map_header_t hdr;
@@ -283,7 +283,7 @@ int MAP_load (Reader *r) {
       blk.t = stream_read16(r);
       blk.st = stream_read16(r);
       blk.sz = stream_read32(r);
-      long off = r->getpos(r) + blk.sz;
+      long off = stream_getpos(r) + blk.sz;
       switch (blk.t) {
         case MB_MUSIC:
           ok = G_load(r);
@@ -310,7 +310,7 @@ int MAP_load (Reader *r) {
           logo("Unknown block %d(%d)\n", blk.t, blk.st);
           return 0; // error
       }
-      r->setpos(r, off);
+      stream_setpos(r, off);
     }
   } else {
     logo("Invalid map header\n");
