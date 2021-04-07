@@ -19,69 +19,73 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "error.h"
 #include "files.h"
 #include "memory.h"
 
-static byte m_active;
-static void *resp[MAX_WAD];
-static short resl[MAX_WAD];
+#include "common/wadres.h"
+#include "common/streams.h"
+
+typedef struct Block {
+  int id;
+  int ref;
+  char data[];
+} Block;
+
+static Block *blocks[MAX_RESOURCES];
 
 void M_startup (void) {
-  if(m_active) return;
-  logo("M_startup: setup memory\n");
-  memset(resp,0,sizeof(resp));
-  memset(resl,0,sizeof(resl));
-  //  logo("  free DPMI-memory: %uK\n",dpmi_memavl()>>10);
-  m_active=TRUE;
+  memset(blocks, 0, sizeof(blocks));
 }
 
 void M_shutdown (void) {
-  if(!m_active) return;
-  m_active=FALSE;
+  // stub
 }
 
-static void allocres (int h) {
-  int *p,s;
-
-  if(h>d_start && h<d_end) s=1; else s=0;
-  if(!(p=malloc(wad[h].l+4+s*8)))
-    ERR_fatal("M_lock: out of memory");
-  *p=h;
-  ++p;
-  resp[h]=p;
-  if(s) {
-    p[0]=p[1]=p[2]=p[3]=0;
-    F_loadres(h,p,0,2);
-    F_loadres(h,p+1,2,2);
-    F_loadres(h,p+2,4,2);
-    F_loadres(h,p+3,6,2);
-    F_loadres(h,p+4,8,wad[h].l-8);
-  }else F_loadres(h,p,0,wad[h].l);
-}
-
-void *M_lock (int h) {
-  if(h==-1 || h==0xFFFF) return NULL;
-  if(h>=MAX_WAD) ERR_fatal("M_lock: invalid resource id");
-  if(!resl[h]) if(!resp[h]) allocres(h);
-  ++resl[h];
-  return resp[h];
+void *M_lock (int id) {
+  assert(id >= -1 && id < MAX_RESOURCES);
+  if (id >= 0) {
+    Block *x = blocks[id];
+    if (x) {
+      x->ref += 1;
+      return x->data;
+    } else {
+      x = malloc(sizeof(Block) + WADRES_getsize(id));
+      if (x) {
+        x->id = id;
+        x->ref = 1;
+        WADRES_getdata(id, x->data);
+        blocks[id] = x;
+        return x->data;
+      }
+    }
+  }
+  return NULL;
 }
 
 void M_unlock (void *p) {
-  int h;
-
-  if(!p) return;
-  h=((int*)p)[-1];
-  if(h>=MAX_WAD) ERR_fatal("M_unlock: invalid resource id");
-  if(!resl[h]) return;
-  --resl[h];
+  if (p) {
+    Block *x = p - sizeof(Block);
+    int id = x->id;
+    assert(id >= 0 && id < MAX_RESOURCES);
+    x->ref -= 1;
+    assert(x->ref >= 0);
+#if 0
+    if (x->ref == 0) {
+      blocks[id] = NULL;
+      free(x);
+    }
+#endif
+  }
 }
 
-int M_locked (int h) {
-  return (h != -1) && (h != 0xFFFF) && (resl[h] != 0);
+int M_locked (int id) {
+  assert(id >= -1 && id < MAX_RESOURCES);
+  return (id >= 0) && (blocks[id] != NULL) && (blocks[id]->ref >= 1);
 }
 
-int M_was_locked (int h) {
-  return (h != -1) && (h != 0xFFFF) && (resp[h] != NULL);
+int M_was_locked (int id) {
+  assert(id >= -1 && id < MAX_RESOURCES);
+  return (id >= 0) && (blocks[id] != NULL) && (blocks[id]->ref >= 0);
 }

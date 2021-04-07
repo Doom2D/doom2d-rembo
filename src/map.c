@@ -25,13 +25,10 @@
 #include "view.h"
 
 #include "music.h"
-#include "files.h"
 #include "render.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include "my.h"
 #include "error.h"
 #include "cp866.h"
 
@@ -317,18 +314,8 @@ int MAP_load (Reader *r) {
     }
   } else {
     logo("Invalid map header\n");
+    abort();
     ok = 0;
   }
   return ok;
-}
-
-void F_loadmap (char n[8]) {
-  FILE_Reader rd;
-  int r = F_getresid(n);
-  FILE *h = wadh[wad[r].f];
-  fseek(h, wad[r].o, SEEK_SET);
-  FILE_AssignReader(&rd, h);
-  if (!MAP_load(&rd.base)) {
-    ERR_fatal("Failed to load map");
-  }
 }
