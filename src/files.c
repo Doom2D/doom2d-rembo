@@ -24,6 +24,11 @@
 #include "error.h"
 
 #include "map.h" // MAP_load
+#include "save.h" // SAVE_getname
+
+#ifdef UNIX
+#  include <sys/stat.h>
+#endif
 
 #include "common/streams.h"
 #include "common/files.h"
@@ -31,6 +36,10 @@
 #include "common/cp866.h"
 
 int d_start, d_end;
+
+char savname[SAVE_MAX][SAVE_MAXLEN];
+char savok[SAVE_MAX];
+
 static int m_start, m_end;
 static int s_start, s_end;
 
@@ -157,5 +166,59 @@ void F_loadmap (char n[8]) {
     }
   } else {
     ERR_fatal("Failed to load map: resource %.8s not found", n);
+  }
+}
+
+static char *getsavfpname (int n, int ro) {
+  static char fn[] = "savgame0.dat";
+  static char p[100];
+  fn[7] = n + '0';
+#ifdef UNIX
+  char *e = getenv("HOME");
+  strncpy(p, e, 60);
+  strcat(p, "/.flatwaifu");
+  if (!ro) {
+    mkdir(p, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  }
+  strcat(p, "/");
+  strcat(p, fn);
+#else
+  strcpy(p, fn);
+#endif
+  return p;
+}
+
+void F_getsavnames (void) {
+  FILE_Stream rd;
+  for (int i = 0; i < SAVE_MAX; ++i) {
+    savok[i] = 0;
+    char *p = getsavfpname(i, 1);
+    if (FILE_Open(&rd, p, "rb")) {
+      savok[i] = SAVE_getname(&rd.base, savname[i]);
+      FILE_Close(&rd);
+    }
+    if (!savok[i]) {
+      memset(savname[i], 0, 24);
+    } else {
+      savname[i][23] = 0;
+    }
+  }
+}
+
+void F_loadgame (int n) {
+  FILE_Stream rd;
+  char *p = getsavfpname(n, 1);
+  if (FILE_Open(&rd, p, "rb")) {
+    SAVE_load(&rd.base);
+    FILE_Close(&rd);
+  }
+}
+
+void F_savegame (int n, char *s) {
+  FILE_Stream wr;
+  char *p = getsavfpname(n, 0);
+  if (FILE_Open(&wr, p, "wb")) {
+    SAVE_save(&wr.base, s);
+    FILE_Close(&wr);
   }
 }
