@@ -7,14 +7,17 @@
 typedef struct Stream Stream;
 
 struct Stream {
-  long (*getpos)(Stream *r);
-  void (*setpos)(Stream *r, long pos);
+  long (*getpos)(Stream *rw);
+  void (*setpos)(Stream *rw, long pos);
+  long (*getlen)(Stream *rw);
   void (*read)(Stream *r, void *data, size_t size, size_t n);
   void (*write)(Stream *w, const void *data, size_t size, size_t n);
 };
 
 long stream_getpos (Stream *s);
 void stream_setpos (Stream *s, long pos);
+
+long stream_getlen (Stream *s);
 
 void stream_read (void *data, size_t size, size_t n, Stream *r);
 int8_t stream_read8 (Stream *r);

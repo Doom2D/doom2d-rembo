@@ -22,6 +22,21 @@ static void FILE_Stream_SetPos (Stream *r, long pos) {
   assert(res == 0); // fail
 }
 
+static long FILE_Stream_GetLen (Stream *r) {
+  FILE_Stream *rd = (FILE_Stream*)r;
+  assert(rd != NULL);
+  assert(rd->fp != NULL);
+  long pos = ftell(rd->fp);
+  assert(pos != -1); // fail get cur pos
+  int res = fseek(rd->fp, 0, SEEK_END);
+  assert(res == 0); // fail jump to end
+  long len = ftell(rd->fp);
+  res = fseek(rd->fp, pos, SEEK_SET);
+  assert(res == 0); // fail return
+  assert(len != -1); // fail get length
+  return len;
+}
+
 static void FILE_Stream_Read (Stream *r, void *data, size_t size, size_t n) {
   FILE_Stream *rd = (FILE_Stream*)r;
   assert(rd != NULL);
@@ -43,6 +58,7 @@ void FILE_Assign (FILE_Stream *r, FILE *fp) {
   assert(fp != NULL);
   r->base.getpos = FILE_Stream_GetPos;
   r->base.setpos = FILE_Stream_SetPos;
+  r->base.getlen = FILE_Stream_GetLen;
   r->base.read   = FILE_Stream_Read;
   r->base.write  = FILE_Stream_Write;
   r->fp = fp;
@@ -65,6 +81,7 @@ void FILE_Close (FILE_Stream *r) {
   }
   r->base.getpos = NULL;
   r->base.setpos = NULL;
+  r->base.getlen = NULL;
   r->base.read   = NULL;
   r->base.write  = NULL;
   r->fp = NULL;

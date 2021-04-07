@@ -12,6 +12,10 @@ void stream_setpos (Stream *s, long pos) {
   s->setpos(s, pos);
 }
 
+long stream_getlen (Stream *s) {
+  return s->getlen(s);
+}
+
 void stream_read (void *data, size_t size, size_t n, Stream *r) {
   r->read(r, data, size, n);
 }
