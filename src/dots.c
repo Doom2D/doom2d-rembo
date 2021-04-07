@@ -21,7 +21,6 @@
 #include "view.h"
 #include "dots.h"
 #include "misc.h"
-#include "my.h"
 
 #define MAXINI 50
 #define MAXSR 20

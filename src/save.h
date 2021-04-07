@@ -18,9 +18,6 @@
 #ifndef SAVE_H_INCLUDED
 #define SAVE_H_INCLUDED
 
-#include "glob.h"
-#include "my.h"
-
 #include "common/streams.h"
 
 #define SAVE_MAX 7

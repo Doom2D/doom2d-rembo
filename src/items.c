@@ -26,9 +26,9 @@
 #include "things.h"
 #include "misc.h"
 #include "map.h"
-#include "my.h"
 #include "files.h"
 #include "game.h"
+
 item_t it[MAXITEM];
 
 static void *snd[4];

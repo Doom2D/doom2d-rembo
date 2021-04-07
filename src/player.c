@@ -28,7 +28,6 @@
 #include "switch.h"
 #include "player.h"
 #include "misc.h"
-#include "my.h"
 #include "game.h"
 #include "input.h"
 

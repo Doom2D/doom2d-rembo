@@ -30,7 +30,6 @@
 #include "misc.h"
 #include "fx.h"
 #include "smoke.h"
-#include "my.h"
 #include "player.h"
 #include "error.h"
 #include "game.h"

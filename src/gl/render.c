@@ -45,9 +45,10 @@
 #else
 #  include <GL/gl.h>
 #endif
-#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <assert.h>
 
 #define VGA_TRANSPARENT_COLOR 0

@@ -28,7 +28,6 @@
 #include "player.h"
 #include "monster.h"
 #include "switch.h"
-#include "my.h"
 
 enum{NONE=0,ROCKET,PLASMA,APLASMA,BALL1,BALL2,BALL7,BFGBALL,BFGHIT,
      MANF,REVF,FIRE};
