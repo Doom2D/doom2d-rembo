@@ -133,7 +133,6 @@ void ERR_fatal (char *s, ...) {
   R_done();
   MUS_done();
   S_done();
-  M_shutdown();
   SDL_Quit();
   puts("\nCRITICAL ERROR:");
   va_start(ap, s);
@@ -594,12 +593,9 @@ int main (int argc, char **argv) {
   pl2.kwr = KEY_2;
   pl2.kp = KEY_E;
   srand(SDL_GetTicks());
-  F_startup();
   CFG_load();
   F_addwad("doom2d.wad");
   F_initwads();
-  M_startup();
-  F_allocres();
   S_init();
   MUS_init();
   R_init();
@@ -616,7 +612,6 @@ int main (int argc, char **argv) {
   R_done();
   MUS_done();
   S_done();
-  M_shutdown();
   SDL_Quit();
   return 0;
 }

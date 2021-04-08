@@ -43,10 +43,6 @@ char savok[SAVE_MAX];
 static int m_start, m_end;
 static int s_start, s_end;
 
-void F_startup (void) {
-  logo("F_startup: setup file system\n");
-}
-
 void F_addwad (const char *fn) {
   static int i = 0;
   static FILE_Stream wadh[MAX_WADS];
@@ -69,19 +65,12 @@ void F_initwads (void) {
   if (!WADRES_rehash()) {
     ERR_failinit("F_initwads: failed rehash");
   }
-}
-
-void F_allocres (void) {
   d_start = F_getresid("D_START");
   d_end = F_getresid("D_END");
   m_start = F_getresid("M_START");
   m_end = F_getresid("M_END");
   s_start = F_getresid("S_START");
   s_end = F_getresid("S_END");
-}
-
-void F_loadres (int r, void *p) {
-  WADRES_getdata(r, p);
 }
 
 int F_findres (const char n[8]) {
@@ -126,6 +115,7 @@ int F_getreslen (int r) {
   return WADRES_getsize(r);
 }
 
+/*
 void F_nextmus (char *s) {
   int i = F_findres(s);
   if (i <= m_start || i >= m_end) {
@@ -154,6 +144,7 @@ void F_randmus (char *s) {
     F_nextmus(s);
   }
 }
+*/
 
 void F_loadmap (char n[8]) {
   int id = F_getresid(n);
