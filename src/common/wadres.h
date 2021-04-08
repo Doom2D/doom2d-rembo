@@ -18,4 +18,9 @@ long WADRES_getsize (int id);
 void WADRES_getname (int id, char *name);
 void WADRES_getdata (int id, void *data);
 
+void *WADRES_lock (int id);
+void  WADRES_unlock (void *data);
+int   WADRES_locked (int id);
+int   WADRES_was_locked (int id);
+
 #endif /* COMMON_WADRES_H_INCLUDED */

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #include "wadres.h"
@@ -12,10 +13,17 @@ typedef struct Entry {
   int f;
 } Entry;
 
+typedef struct Block {
+  int id;
+  int ref;
+  char data[];
+} Block;
+
 static int n_wads;
 static int n_resources;
 static Stream *wads[MAX_WADS];
 static Entry resources[MAX_RESOURCES];
+static Block *blocks[MAX_RESOURCES];
 
 static int check_header (Stream *r) {
   assert(r != NULL);
@@ -117,4 +125,51 @@ void WADRES_getdata (int id, void *data) {
   stream_setpos(r, resources[id].offset);
   stream_read(data, resources[id].size, 1, r);
   stream_setpos(r, pos);
+}
+
+void *WADRES_lock (int id) {
+  assert(id >= -1 && id < MAX_RESOURCES);
+  if (id >= 0) {
+    Block *x = blocks[id];
+    if (x) {
+      x->ref += 1;
+      return x->data;
+    } else {
+      x = malloc(sizeof(Block) + WADRES_getsize(id));
+      if (x) {
+        x->id = id;
+        x->ref = 1;
+        WADRES_getdata(id, x->data);
+        blocks[id] = x;
+        return x->data;
+      }
+    }
+  }
+  return NULL;
+}
+
+void WADRES_unlock (void *data) {
+  if (data) {
+    Block *x = data - sizeof(Block);
+    int id = x->id;
+    assert(id >= 0 && id < MAX_RESOURCES);
+    x->ref -= 1;
+    assert(x->ref >= 0);
+#if 0
+    if (x->ref == 0) {
+      blocks[id] = NULL;
+      free(x);
+    }
+#endif
+  }
+}
+
+int WADRES_locked (int id) {
+  assert(id >= -1 && id < MAX_RESOURCES);
+  return (id >= 0) && (blocks[id] != NULL) && (blocks[id]->ref >= 1);
+}
+
+int WADRES_was_locked (int id) {
+  assert(id >= -1 && id < MAX_RESOURCES);
+  return (id >= 0) && (blocks[id] != NULL) && (blocks[id]->ref >= 0);
 }
