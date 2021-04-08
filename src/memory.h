@@ -18,8 +18,6 @@
 #ifndef MEMORY_H_INCLULDED
 #define MEMORY_H_INCLULDED
 
-void M_startup (void);
-void M_shutdown (void);
 void *M_lock (int h);
 void M_unlock (void *p);
 int M_locked (int h);

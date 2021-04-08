@@ -18,14 +18,6 @@
 #include "memory.h"
 #include "common/wadres.h"
 
-void M_startup (void) {
-  // stub
-}
-
-void M_shutdown (void) {
-  // stub
-}
-
 void *M_lock (int id) {
   return WADRES_lock(id);
 }
