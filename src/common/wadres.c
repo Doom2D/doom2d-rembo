@@ -2,8 +2,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "common/wadres.h"
-#include "common/streams.h"
+#include "wadres.h"
+#include "streams.h"
 #include "cp866.h"
 
 typedef struct Entry {

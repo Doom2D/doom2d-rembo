@@ -1,7 +1,7 @@
 #ifndef COMMON_WADRES_H_INCLUDED
 #define COMMON_WADRES_H_INCLUDED
 
-#include "common/streams.h"
+#include "streams.h"
 
 #define MAX_WADS 20
 #define MAX_RESOURCES 2000
