@@ -40,8 +40,8 @@ extern byte *buffer;
 extern int buf_w, buf_h, pitch;
 
 extern byte bright[256];
-extern byte mixmap[256][256];
-extern byte clrmap[256*12];
+extern byte *mixmap; /* [256][256] */
+extern byte *clrmap; /* [256*12] */
 
 vgaimg *V_getvgaimg (int id);
 vgaimg *V_loadvgaimg (char *name);
