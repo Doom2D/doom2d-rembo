@@ -34,8 +34,8 @@ int SCRH = 600;
 char fullscreen = OFF;
 
 byte bright[256];
-byte mixmap[256][256];
-byte clrmap[256*12];
+byte *mixmap; /* [256][256] */
+byte *clrmap; /* [256*12] */
 
 byte *buffer;
 int buf_w, buf_h, pitch;
@@ -167,7 +167,8 @@ void smoke_sprf (int x, int y, byte c) {
     c = c + bright[t];
     c += 0x60;
     c ^= 0xF;
-    putpixel(x,y,mixmap[c][t]);
+    //putpixel(x,y,mixmap[c][t]);
+    putpixel(x, y, mixmap[t * 256 + c]);
 }
 
 void flame_sprf (int x, int y, byte c) {

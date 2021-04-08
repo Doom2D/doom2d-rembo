@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h> // abs()
@@ -42,6 +43,12 @@
 #include "system.h"
 
 #include "common/cp866.h"
+
+#pragma pack(push, 1)
+typedef struct rgb_t {
+  byte r, g, b;
+} rgb_t;
+#pragma pack(pop)
 
 // game
 static vgaimg *scrnh[3]; // TITLEPIC INTERPIC ENDPIC
@@ -77,8 +84,8 @@ static int prx = 0, pry = 0;
 static vgaimg *msklh[2], *mbarl, *mbarm, *mbarr, *mbaro, *mslotl, *mslotm, *mslotr;
 // low level
 static int gammaa = 0;
-static char main_pal[256][3];
-static char std_pal[256][3];
+static rgb_t *main_pal;
+static byte std_pal[256][3];
 static byte gamcor[5][64]={
   #include "gamma.dat"
 };
@@ -1487,11 +1494,11 @@ void R_setgamma(int g) {
   g = g < 0 ? 0 : (g > 4 ? 4 : g);
   gammaa = g;
   for (t = 0; t < 256; ++t) {
-    std_pal[t][0]=gamcor[gammaa][main_pal[t][0]];
-    std_pal[t][1]=gamcor[gammaa][main_pal[t][1]];
-    std_pal[t][2]=gamcor[gammaa][main_pal[t][2]];
+    std_pal[t][0] = gamcor[gammaa][main_pal[t].r];
+    std_pal[t][1] = gamcor[gammaa][main_pal[t].g];
+    std_pal[t][2] = gamcor[gammaa][main_pal[t].b];
   }
-  Y_set_vga_palette(std_pal);
+  Y_set_vga_palette(&std_pal[0][0]);
 }
 
 int R_getgamma (void) {
@@ -1522,7 +1529,7 @@ void R_toggle_fullscreen (void) {
   R_setgamma(gammaa);
 }
 
-static int video_menu_handler (menu_msg_t *msg, const menu_t *m, void *data, int i) {
+static int video_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   static int w, h, fullscreen;
   static char buf[16];
@@ -1612,15 +1619,23 @@ const cfg_t *R_conf (void) {
   return conf;
 }
 
+static void *R_load_fixed (char *name, int size) {
+  int id = F_getresid(name);
+  if (F_getreslen(id) < size) {
+    ERR_fatal("invalid %s (%i)", name, F_getreslen(id));
+  }
+  return M_lock(id);
+}
+
 void R_init () {
   int i;
   logo("R_init: initialize software render\n");
-  F_loadres(F_getresid("PLAYPAL"), main_pal, 0, 768);
+  main_pal = R_load_fixed("PLAYPAL", 256 * 3);
+  clrmap = R_load_fixed("COLORMAP", 256 * 12);
+  mixmap = R_load_fixed("MIXMAP", 256 * 256);
   for (i = 0; i < 256; ++i) {
-    bright[i] = ((int) main_pal[i][0] + main_pal[i][1] + main_pal[i][2]) * 8 / (63 * 3);
+    bright[i] = ((int)main_pal[i].r + main_pal[i].g + main_pal[i].b) * 8 / (63 * 3);
   }
-  F_loadres(F_getresid("MIXMAP"), mixmap, 0, 0x10000);
-  F_loadres(F_getresid("COLORMAP"), clrmap, 0, 256*12);
   SCRW = init_screen_width > 0 ? init_screen_width : SCRW;
   SCRH = init_screen_height > 0 ? init_screen_height : SCRH;
   fullscreen = init_screen_full != 0xFF ? init_screen_full : fullscreen;
