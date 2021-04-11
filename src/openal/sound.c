@@ -30,13 +30,14 @@
 #  include <AL/alc.h>
 #endif
 
-#include "SDL.h" // SDL_BuildAudioCVT SDL_ConvertAudio
 #include <assert.h>
 #include <stdlib.h> // malloc
 #include <string.h> // memcpy
 
 #define TAG_OAL1 0x4F414C31
 #define MAX_CHANNELS 8
+
+#define OAL_FORMAT AL_FORMAT_MONO8
 
 #pragma pack(1)
 typedef struct dmi {
@@ -151,25 +152,74 @@ const cfg_t *S_conf (void) {
   return conf;
 }
 
-static void convert_this_ext (Uint32 src_format, int src_chan, int src_rate, Uint32 dst_format, int dst_chan, int dst_rate, const void *buf, int len, void **maxbuf, int *maxlen) {
-  SDL_AudioCVT cvt;
-  *maxlen = 0;
-  *maxbuf = NULL;
-  if (SDL_BuildAudioCVT(&cvt, src_format, src_chan, src_rate, dst_format, dst_chan, dst_rate) != -1) {
-    *maxlen = len * cvt.len_mult;
-    *maxbuf = malloc(*maxlen);
-    if (*maxbuf != NULL) {
-      memcpy(*maxbuf, buf, len);
-      cvt.buf = *maxbuf;
-      cvt.len = len;
-      if (SDL_ConvertAudio(&cvt) == 0) {
-        *maxlen = len * cvt.len_ratio;
-      } else {
-        free(*maxbuf);
-        *maxbuf = NULL;
-        *maxlen = 0;
+// Convert mono signed/unsigned 8bit sound to openal format
+//   AL_FORMAT_MONO8    -> mono unsigned 8bit
+//   AL_FORMAT_STEREO8  -> stereo unsigned 8bit
+//   AL_FORMAT_MONO16   -> mono signed 16bit
+//   AL_FORMAT_STEREO16 -> stereo signed 16bit
+static void cvt_this (int sign, ALint format, const void *data, size_t len, void **outdata, size_t *outlen) {
+  *outdata = NULL;
+  *outlen = 0;
+  switch (format) {
+    case AL_FORMAT_MONO8:
+      {
+        int8_t *y = malloc(len);
+        if (y != NULL) {
+          memcpy(y, data, len);
+          if (sign) {
+            for (size_t i = 0; i < len; i++) {
+              y[i] ^= 0x80;
+            }
+          }
+          *outdata = y;
+          *outlen = len;
+        }
       }
-    }
+      break;
+    case AL_FORMAT_MONO16:
+      {
+        int16_t *y = malloc(2 * len);
+        if (y != NULL) {
+          for (size_t i = 0; i < len; ++i) {
+            int32_t c = ((int8_t*)data)[i] ^ (sign ? 0x00 : 0x80);
+            y[i] = c >= 0 ? c * 32767 / 127 : c * -32767 / -128;
+          }
+        }
+        *outdata = y;
+        *outlen = 2 * len;
+      }
+      break;
+    case AL_FORMAT_STEREO8:
+      {
+        int8_t *y = malloc(2 * len);
+        if (y != NULL) {
+          int8_t *yy = y;
+          for (size_t i = 0; i < len; i++) {
+            int8_t xx = ((int8_t*)data)[i] ^ (sign ? 0x80 : 0x00);
+            *yy = xx; yy++;
+            *yy = xx; yy++;
+          }
+          *outdata = y;
+          *outlen = 2 * len;
+        }
+      }
+      break;
+    case AL_FORMAT_STEREO16:
+      {
+        int16_t *y = malloc(2 * 2 * len);
+        if (y != NULL) {
+          int16_t *yy = y;
+          for (size_t i = 0; i < len; ++i) {
+            int32_t x = ((int8_t*)data)[i] ^ (sign ? 0x00 : 0x80);
+            int16_t xx = x >= 0 ? x * 32767 / 127 : x * -32767 / -128;
+            *yy = xx; yy++;
+            *yy = xx; yy++;
+          }
+        }
+        *outdata = y;
+        *outlen = 2 * 2* len;
+      }
+      break;
   }
 }
 
@@ -178,14 +228,12 @@ static openal_snd *new_openal_snd (const void *data, dword len, dword rate, dwor
   ALuint buffer = 0;
   openal_snd *snd = NULL;
   void *newdata = NULL;
-  int newlen = 0;
-  // for some reason 8bit formats makes psshshshsh
-  // TODO do this without SDL
-  convert_this_ext(sign ? AUDIO_S8 : AUDIO_U8, 1, rate, AUDIO_S16SYS, 1, rate, data, len, &newdata, &newlen);
+  size_t newlen = 0;
+  cvt_this(sign, OAL_FORMAT, data, len, &newdata, &newlen);
   if (newdata != NULL) {
     alGenBuffers(1, &buffer);
     if (alGetError() == AL_NO_ERROR) {
-      alBufferData(buffer, AL_FORMAT_MONO16, newdata, newlen, rate);
+      alBufferData(buffer, OAL_FORMAT, newdata, newlen, rate);
       if (alGetError() == AL_NO_ERROR) {
         snd = malloc(sizeof(openal_snd));
         if (snd != NULL) {
