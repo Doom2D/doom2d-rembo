@@ -60,7 +60,8 @@ static int WADRES_addresource (const Entry *e) {
   return -1;
 }
 
-static int WADRES_read (Stream *r) {
+static int WADRES_read (int f) {
+  Stream *r = wads[f];
   stream_setpos(r, 4); // skip magic
   int32_t n = stream_read32(r);
   int32_t dir = stream_read32(r);
@@ -70,6 +71,7 @@ static int WADRES_read (Stream *r) {
     Entry e;
     e.offset = stream_read32(r);
     e.size = stream_read32(r);
+    e.f = f;
     stream_read(e.name, 8, 1, r);
     ok = WADRES_addresource(&e) != -1;
   }
@@ -79,7 +81,7 @@ static int WADRES_read (Stream *r) {
 int WADRES_rehash (void) {
   int ok = 1;
   for (int i = 0; i < n_wads; ++i) {
-    if (!WADRES_read(wads[i])) {
+    if (!WADRES_read(i)) {
       ok = 0;
     }
   }
