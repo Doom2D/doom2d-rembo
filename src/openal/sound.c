@@ -40,10 +40,10 @@
 
 #pragma pack(1)
 typedef struct dmi {
-  dword len;
-  dword rate;
-  dword lstart;
-  dword llen;
+  word len;
+  word rate;
+  word lstart;
+  word llen;
   byte data[];
 } dmi;
 #pragma pack()
@@ -211,18 +211,18 @@ snd_t *S_get (int id) {
     handle = M_lock(id);
     if (handle != NULL) {
       void *data = handle;
-      dword len = F_getreslen(id);
-      dword rate = 11025;
-      dword lstart = 0;
-      dword llen = 0;
+      word len = F_getreslen(id);
+      word rate = 11025;
+      word lstart = 0;
+      word llen = 0;
       int sign = 0;
-      if (len > 16) {
+      if (len > 8) {
         dmi *hdr = handle;
-        dword hdr_len = int2host(hdr->len);
-        dword hdr_rate = int2host(hdr->rate);
-        dword hdr_lstart = int2host(hdr->lstart);
-        dword hdr_llen = int2host(hdr->llen);
-        if (hdr_len <= len - 8 && hdr_lstart + hdr_llen <= len - 16) {
+        word hdr_len = short2host(hdr->len);
+        word hdr_rate = short2host(hdr->rate);
+        word hdr_lstart = short2host(hdr->lstart);
+        word hdr_llen = short2host(hdr->llen);
+        if (hdr_len <= len - 4 && hdr_lstart + hdr_llen <= len - 8) {
           data = hdr->data;
           len = hdr_len;
           rate = hdr_rate;
