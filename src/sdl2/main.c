@@ -125,7 +125,7 @@ void ERR_failinit (char *s, ...) {
   vprintf(s, ap);
   va_end(ap);
   puts("");
-  abort()
+  abort();
 }
 
 void ERR_fatal (char *s, ...) {
