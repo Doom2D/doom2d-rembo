@@ -30,8 +30,8 @@
 #  include <sys/stat.h>
 #endif
 
+#include "sdl2/streams.h"
 #include "common/streams.h"
-#include "common/files.h"
 #include "common/wadres.h"
 #include "common/cp866.h"
 
@@ -45,9 +45,9 @@ static int s_start, s_end;
 
 void F_addwad (const char *fn) {
   static int i = 0;
-  static FILE_Stream wadh[MAX_WADS];
+  static SDLRW_Stream wadh[MAX_WADS];
   if (i < MAX_WADS) {
-    if (FILE_Open(&wadh[i], fn, "rb")) {
+    if (SDLRW_Open(&wadh[i], fn, "rb")) {
       if (WADRES_addwad(&wadh[i].base)) {
         i += 1;
       } else {
@@ -89,22 +89,6 @@ void F_getresname (char n[8], int r) {
   WADRES_getname(r, n);
 }
 
-// Get sprite resource id.
-// Sprite name has following format:
-//  (nnnn)('A'+s)('0'+d)[('A'+s)('0'+d)]
-//  Letter means animation frame
-//    A for first, B for second...
-//  Number means direction
-//    0 = front
-//    1 = left
-//    2 = right
-//  Optional part means that this file can be used for differnt frame/direction.
-//  Note that if found FRONT direction for this frame than it UNCONDITIONALLY used.
-//  Note that search performed between markers S_START and S_END in order as paced in wad.
-//  int n[4]  -- sprite name
-//  int s     -- sprite frame
-//  int d     -- sprite direction
-//  char *dir -- out flag "alternative used" (
 int F_getsprid (const char n[4], int s, int d, char *dir) {
   s += 'A';
   d += '0';
@@ -196,13 +180,13 @@ static char *getsavfpname (int n, int ro) {
 }
 
 void F_getsavnames (void) {
-  FILE_Stream rd;
+  SDLRW_Stream rd;
   for (int i = 0; i < SAVE_MAX; ++i) {
     savok[i] = 0;
     char *p = getsavfpname(i, 1);
-    if (FILE_Open(&rd, p, "rb")) {
+    if (SDLRW_Open(&rd, p, "rb")) {
       savok[i] = SAVE_getname(&rd.base, savname[i]);
-      FILE_Close(&rd);
+      SDLRW_Close(&rd);
     }
     if (!savok[i]) {
       memset(savname[i], 0, 24);
@@ -213,19 +197,19 @@ void F_getsavnames (void) {
 }
 
 void F_loadgame (int n) {
-  FILE_Stream rd;
+  SDLRW_Stream rd;
   char *p = getsavfpname(n, 1);
-  if (FILE_Open(&rd, p, "rb")) {
+  if (SDLRW_Open(&rd, p, "rb")) {
     SAVE_load(&rd.base);
-    FILE_Close(&rd);
+    SDLRW_Close(&rd);
   }
 }
 
 void F_savegame (int n, char *s) {
-  FILE_Stream wr;
+  SDLRW_Stream wr;
   char *p = getsavfpname(n, 0);
-  if (FILE_Open(&wr, p, "wb")) {
+  if (SDLRW_Open(&wr, p, "wb")) {
     SAVE_save(&wr.base, s);
-    FILE_Close(&wr);
+    SDLRW_Close(&wr);
   }
 }
