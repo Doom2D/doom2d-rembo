@@ -409,4 +409,124 @@ static inline void Delay (int time) {
 
 #define KOS32_SC_EXTENDED_PAUSE 0xE1 /* pause key seq */
 
+#pragma pack(push, 1)
+struct FileExt {
+  int fn;
+  int a, b, c, d;
+  int enc;
+  const void *path;
+};
+
+struct FileTime {
+  char s, m, h, reserved;
+};
+
+struct FileDate {
+  char d, m;
+  unsigned short y;
+};
+
+struct FileInfo {
+  int attr;
+  int enc;
+  struct FileTime ctime;
+  struct FileDate cdate;
+  struct FileTime atime;
+  struct FileDate cdate;
+  struct FileTime mtime;
+  struct FileDate mdate;
+  long long size;
+  union {
+    char  cp866[264];
+    short utf16[260];
+    char  utf8[520];
+  };
+};
+#pragma pack(pop)
+
+#define KOS32_READ_FILE     0
+#define KOS32_READ_FOLDER   1
+#define KOS32_CREATE_FILE   2
+#define KOS32_WRITE_FILE    3
+#define KOS32_SET_END       4
+#define KOS32_GET_INFO      5
+#define KOS32_SET_INFO      6
+#define KOS32_START_APP     7
+#define KOS32_DELETE        8
+#define KOS32_CREATE_FOLDER 9
+#define KOS32_RENAME        10
+
+#define KOS32_FILE_SUCCESS       0
+#define KOS32_FILE_NOT_SUPPORTED 2
+#define KOS32_FILE_UNKNOWN_FS    3
+#define KOS32_FILE_NOT_FOUND     5
+#define KOS32_FILE_EOF           6
+#define KOS32_FILE_INVALID_PTR   7
+#define KOS32_FILE_DISK_FULL     8
+#define KOS32_FILE_FS_ERROR      9
+#define KOS32_FILE_ACCESS_DENIED 10
+#define KOS32_FILE_DEVICE_ERROR  11
+#define KOS32_FILE_OUT_OF_MEMORY 12
+
+#define KOS32_CP866 1
+#define KOS32_UTF16 2
+#define KOS32_UTF8  3
+
+#define KOS32_ATTR_READONLY 0
+#define KOS32_ATTR_HIDDEN   1
+#define KOS32_ATTR_SYSTEM   2
+#define KOS32_ATTR_VOLUME   3
+#define KOS32_ATTR_FOLDER   4
+#define KOS32_ATTR_ARCHIVED 5
+
+#define KOS32_ATTR_MASK_READONLY (1 << KOS32_ATTR_READONLY)
+#define KOS32_ATTR_MASK_HIDDEN   (1 << KOS32_ATTR_HIDDEN)
+#define KOS32_ATTR_MASK_SYSTEM   (1 << KOS32_ATTR_SYSTEM)
+#define KOS32_ATTR_MASK_VOLUME   (1 << KOS32_ATTR_VOLUME)
+#define KOS32_ATTR_MASK_FOLDER   (1 << KOS32_ATTR_FOLDER)
+#define KOS32_ATTR_MASK_ARCHIVED (1 << KOS32_ATTR_ARCHIVED)
+
+static inline int FileExt (struct FileExt *info, int *ret) {
+  int ret1, ret2;
+  __asm__ __volatile__ (
+    "int $0x40"
+    : "=a" (ret1),
+      "=b" (ret2)
+    : "a" (80),
+      "b" (info)
+    : "memory"
+  );
+  if (ret) *ret = ret2;
+  return ret1;
+}
+
+/* --- fn 30.4 --- */
+static inline void SetCurrentFolderEnc (char *path, int enc) {
+  __asm__ __volatile__ (
+    "int $0x40"
+    :
+    : "a" (30),
+      "b" (4),
+      "c" (path),
+      "d" (enc)
+    : "memory"
+  );
+}
+
+/* --- fn 30.5 --- */
+static inline int GetCurrentFolderEnc (char *buf, int maxlen, int enc) {
+  int len;
+  __asm__ __volatile__ (
+    "int $0x40"
+    : "=a" (len)
+    : "a" (30),
+      "b" (5),
+      "c" (buf),
+      "d" (maxlen),
+      "S" (enc)
+    : "memory"
+  );
+  return len;
+}
+
 #endif /* KOS32_H */
