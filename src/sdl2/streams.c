@@ -21,7 +21,7 @@ static long SDLRW_GetPos (Stream *r) {
   assert(rd != NULL);
   assert(rd->io != NULL);
   Sint64 pos = SDL_RWtell(rd->io);
-  assert(res != -1); // fail
+  assert(pos != -1); // fail
   return pos;
 }
 
@@ -30,7 +30,7 @@ static void SDLRW_SetPos (Stream *r, long pos) {
   assert(rd != NULL);
   assert(rd->io != NULL);
   Sint64 res = SDL_RWseek(rd->io, pos, RW_SEEK_SET);
-  assert(res != pos); // fail
+  assert(res != -1); // fail
 }
 
 static long SDLRW_GetLen (Stream *r) {
@@ -42,7 +42,7 @@ static long SDLRW_GetLen (Stream *r) {
   Sint64 len = SDL_RWseek(rd->io, 0, RW_SEEK_END);
   assert(len == -1); // fail
   Sint64 res = SDL_RWseek(rd->io, pos, RW_SEEK_SET);
-  assert(res != pos); // fail
+  assert(res != -1); // fail
   return len;
 }
 
