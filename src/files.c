@@ -89,6 +89,22 @@ void F_getresname (char n[8], int r) {
   WADRES_getname(r, n);
 }
 
+// Get sprite resource id.
+// Sprite name has following format:
+//  (nnnn)('A'+s)('0'+d)[('A'+s)('0'+d)]
+//  Letter means animation frame
+//    A for first, B for second...
+//  Number means direction
+//    0 = front
+//    1 = left
+//    2 = right
+//  Optional part means that this file can be used for differnt frame/direction.
+//  Note that if found FRONT direction for this frame than it UNCONDITIONALLY used.
+//  Note that search performed between markers S_START and S_END in order as paced in wad.
+//  int n[4]  -- sprite name
+//  int s     -- sprite frame
+//  int d     -- sprite direction
+//  char *dir -- out flag "alternative used" (
 int F_getsprid (const char n[4], int s, int d, char *dir) {
   s += 'A';
   d += '0';
