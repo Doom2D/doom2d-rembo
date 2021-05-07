@@ -90,25 +90,11 @@ void F_getresname (char n[8], int r) {
 }
 
 int F_getsprid (const char n[4], int s, int d, char *dir) {
-  s += 'A';
-  d += '0';
-  for (int i = s_start + 1; i < s_end; i++) {
-    char wn[8];
-    byte a, b;
-    WADRES_getname(i, wn);
-    if (cp866_strncasecmp(wn, n, 4) == 0 && (wn[4] == s || wn[6] == s)) {
-      a = wn[4] == s ? wn[5] : 0;
-      b = wn[6] == s ? wn[7] : 0;
-      if (a == '0' || b == '0' || a == d || b == d) {
-        if (dir != NULL) {
-          *dir = (a != '0' && b == '0') || (a != d && b == d);
-        }
-        return i;
-      }
-    }
+  int i = WADRES_findsprite(n, s, d, dir);
+  if (i == -1) {
+    ERR_fatal("F_getsprid: image %.4s%c%c not found", n, s, d);
   }
-  ERR_fatal("F_getsprid: image %.4s%c%c not found", n, s, d);
-  return -1;
+  return i;
 }
 
 int F_getreslen (int r) {

@@ -25,6 +25,8 @@ static Stream *wads[MAX_WADS];
 static Entry resources[MAX_RESOURCES];
 static Block *blocks[MAX_RESOURCES];
 
+static int s_start, s_end;
+
 static int check_header (Stream *r) {
   assert(r != NULL);
   char ident[4];
@@ -85,6 +87,8 @@ int WADRES_rehash (void) {
       ok = 0;
     }
   }
+  s_start = WADRES_find("S_START");
+  s_end = WADRES_find("S_END");
   return ok;
 }
 
@@ -98,6 +102,26 @@ int WADRES_find (const char name[8]) {
 
 int WADRES_maxids (void) {
   return n_resources;
+}
+
+int WADRES_findsprite (const char n[4], int s, int d, char *dir) {
+  s += 'A';
+  d += '0';
+  for (int i = s_start + 1; i < s_end; i++) {
+    char a, b;
+    char *wn = resources[i].name;
+    if (cp866_strncasecmp(wn, n, 4) == 0 && (wn[4] == s || wn[6] == s)) {
+      a = wn[4] == s ? wn[5] : 0;
+      b = wn[6] == s ? wn[7] : 0;
+      if (a == '0' || b == '0' || a == d || b == d) {
+        if (dir != NULL) {
+          *dir = (a != '0' && b == '0') || (a != d && b == d);
+        }
+        return i;
+      }
+    }
+  }
+  return -1;
 }
 
 Stream *WADRES_getbasereader (int id) {
