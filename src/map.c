@@ -271,9 +271,10 @@ static int W_load (Stream *h) {
 }
 
 int MAP_load (Stream *r) {
-  assert(r != NULL);
   int ok = 0;
+  long off;
   map_header_t hdr;
+  assert(r != NULL);
   W_init(); // reset all game data
   stream_read(hdr.id, 8, 1, r);
   hdr.ver = stream_read16(r);
@@ -283,7 +284,7 @@ int MAP_load (Stream *r) {
       blk.t = stream_read16(r);
       blk.st = stream_read16(r);
       blk.sz = stream_read32(r);
-      long off = stream_getpos(r) + blk.sz;
+      off = stream_getpos(r) + blk.sz;
       switch (blk.t) {
         case MB_MUSIC:
           ok = G_load(r);

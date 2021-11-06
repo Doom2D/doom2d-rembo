@@ -20,13 +20,13 @@
 #include <assert.h>
 
 void ARG_parse (int argc, char **argv, int n, const cfg_t **list) {
+  int i, j;
+  char *key;
+  const cfg_t *c;
   assert(argc >= 0);
   assert(argv != NULL);
   assert(n >= 0);
   assert(list != NULL);
-  int i, j;
-  char *key;
-  const cfg_t *c;
   for (i = 1; i < argc; i++) {
     if (argv[i][0] == '-' && argv[i][1] != 0) {
       j = 0;

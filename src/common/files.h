@@ -2,7 +2,7 @@
 #define COMMON_FILES_H_INCLUDED
 
 #include <stdio.h>
-#include "streams.h"
+#include "common/streams.h"
 
 typedef struct FILE_Stream {
   Stream base;

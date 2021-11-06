@@ -47,8 +47,8 @@ void BM_clear(byte f)
 
 void BM_remapfld(void)
 {
-    BM_clear(BM_WALL);
     int x,y;
+    BM_clear(BM_WALL);
     for(x=0; x<FLDW; x++)
         for(y=0; y<FLDH; y++)
             if (fld[y][x] == 1 || fld[y][x] == 2)

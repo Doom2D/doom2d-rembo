@@ -111,6 +111,7 @@ static void FX_loadgame (Stream *h) {
 }
 
 static void G_savegame (Stream *h) {
+  int i = 0;
   stream_write8(_2pl, h);
   stream_write8(g_dm, h);
   stream_write8(g_exit, h);
@@ -119,7 +120,6 @@ static void G_savegame (Stream *h) {
   stream_write32(dm_pl1p, h);
   stream_write32(dm_pl2p, h);
   stream_write32(dm_pnum, h);
-  int i = 0;
   while (i < dm_pnum) {
     stream_write32(dm_pos[i].x, h);
     stream_write32(dm_pos[i].y, h);
@@ -131,6 +131,7 @@ static void G_savegame (Stream *h) {
 }
 
 static void G_loadgame (Stream *h) {
+  int i = 0;
   _2pl = stream_read8(h);
   g_dm = stream_read8(h);
   g_exit = stream_read8(h);
@@ -139,7 +140,6 @@ static void G_loadgame (Stream *h) {
   dm_pl1p = stream_read32(h);
   dm_pl2p = stream_read32(h);
   dm_pnum = stream_read32(h);
-  int i = 0;
   while (i < dm_pnum) {
     dm_pos[i].x = stream_read32(h);
     dm_pos[i].y = stream_read32(h);
@@ -567,7 +567,8 @@ void SAVE_load (Stream *h) {
 }
 
 int SAVE_getname (Stream *r, char name[24]) {
+  int16_t version;
   stream_read(name, 24, 1, r);
-  int16_t version = stream_read16(r);
+  version = stream_read16(r);
   return version == 3;
 }

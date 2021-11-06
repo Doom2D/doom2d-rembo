@@ -157,7 +157,7 @@ static int start_game (int twoplayers, int dm, int level) {
 
 static int new_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
-  enum { ONEPLAYER, TWOPLAYERS, DEATHMATCH, __NUM__ };
+  enum { ONEPLAYER, TWOPLAYERS, DEATHMATCH, NG__NUM__ };
   static const simple_menu_t sm = {
     GM_BIG, "New Game", "_NEWGAME",
     {
@@ -174,7 +174,7 @@ static int new_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
       // GM_say("_COOP");
     }
   }
-  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+  return simple_menu_handler(msg, i, NG__NUM__, &sm, &cur);
 }
 
 static int load_game_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
@@ -263,7 +263,11 @@ static int controls_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
     case GM_GETCAPTION:
       return GM_init_str(msg, (char*)captions[i], strlen(captions[i]));
     case GM_GETSTR:
-      str = state == 0 || i != cur ? I_key_to_string(mm->pl_keys[i]) : "...";
+      if (state == 0 || i != cur) {
+        str = I_key_to_string(mm->pl_keys[i]);
+      } else {
+        str = "...";
+      }
       return GM_init_str(msg, (char*)str, strlen(str));
     case GM_SELECT:
       state = state == 0 ? 1 : 0;
@@ -275,7 +279,7 @@ static int controls_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
 static int options_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
   const menu_t *mm;
-  enum { VIDEO, SOUND, MUSIC, CONTROLS_1, CONTROLS_2, __NUM__ };
+  enum { VIDEO, SOUND, MUSIC, CONTROLS_1, CONTROLS_2, OPT__NUM__ };
   static const controls_menu_t c1 = {
     { controls_menu_handler },
     &pl1.ku
@@ -305,12 +309,12 @@ static int options_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
       return GM_push(mm);
     }
   }
-  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+  return simple_menu_handler(msg, i, OPT__NUM__, &sm, &cur);
 }
 
 static int exit_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
   static int cur;
-  enum { YES, NO, __NUM__ };
+  enum { YES, NO, EXIT__NUM__ };
   static const simple_menu_t sm = {
     GM_SMALL, "You are sure?", NULL,
     {
@@ -333,14 +337,13 @@ static int exit_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
         return GM_pop();
     }
   }
-  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+  return simple_menu_handler(msg, i, EXIT__NUM__, &sm, &cur);
 }
 
 static int main_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
-  enum { NEWGAME, OLDGAME, SAVEGAME, OPTIONS, EXIT, __NUM__ };
-  assert(i >= 0 && i < __NUM__);
+  enum { NEWGAME, OLDGAME, SAVEGAME, OPTIONS, EXIT, MAIN__NUM__ };
   static int cur;
-  static const menu_t hm[__NUM__] = {
+  static const menu_t hm[MAIN__NUM__] = {
     { new_game_menu_handler },
     { load_game_menu_handler },
     { save_game_menu_handler },
@@ -357,16 +360,17 @@ static int main_menu_handler (menu_msg_t *msg, const menu_t *m, int i) {
       { "Exit", &hm[EXIT] }
     }
   };
-  return simple_menu_handler(msg, i, __NUM__, &sm, &cur);
+  assert(i >= 0 && i < MAIN__NUM__);
+  return simple_menu_handler(msg, i, MAIN__NUM__, &sm, &cur);
 }
 
 static const menu_t main_menu = { &main_menu_handler };
 
 int GM_push (const menu_t *m) {
+  menu_msg_t msg;
   assert(m != NULL);
   assert(stack_p >= -1);
   assert(stack_p < MAX_STACK - 1);
-  menu_msg_t msg;
   stack_p += 1;
   stack[stack_p].m = m;
   msg.type = GM_ENTER;
@@ -375,8 +379,8 @@ int GM_push (const menu_t *m) {
 }
 
 int GM_pop (void) {
-  assert(stack_p >= 0);
   menu_msg_t msg;
+  assert(stack_p >= 0);
   stack_p -= 1;
   msg.type = GM_LEAVE;
   GM_send_this(stack[stack_p + 1].m, &msg);

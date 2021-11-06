@@ -1,5 +1,5 @@
-#include "streams.h"
-#include "endianness.h"
+#include "common/streams.h"
+#include "common/endianness.h"
 
 #include <stddef.h>
 #include <stdint.h>

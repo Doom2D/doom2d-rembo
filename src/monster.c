@@ -91,28 +91,28 @@ static void *snd[MN_TN][5],*impsitsnd[2],*impdthsnd[2],*firsnd,*slopsnd,*gsnd[4]
 static void *swgsnd,*pchsnd,*telesnd;
 static void *positsnd[3],*podthsnd[3];
 static mnsz_t mnsz[MN_TN+1]={
-//rad  ht  life  pain rv jv  slop min_pn
-    0,  0,    0,    0, 0, 0,    0,    0,	// none
-   15, 28,   60,   20, 7,10,	0,   10,	// demon
-   10, 28,   25,   15, 3,10,   30,    0,	// imp
-   10, 28,   15,   10, 3,10,   30,    0,	// zomby
-   10, 28,   20,   10, 3,10,   30,    0,	// sergeant
-   20, 55,  500,   70, 5,10,	0,   50,	// cyberdemon
-   12, 28,   60,   20, 3,10,   30,   10,	// chaingunner
-   12, 32,  150,   40, 3,10,    0,   30, 	// baron of hell
-   12, 32,   75,   40, 3,10,    0,   30, 	// hell knight
-   15, 28,  100,   10, 4, 4,    0,    0,	// cacodemon
-    8, 18,   60,   10, 4, 4,    0,    0,	// lost soul
-   15, 28,  100,   10, 4, 4,    0,    0,	// pain elemental
-   64, 50,  500,   70, 4,10,    0,   50,	// spider mastermind
-   25, 27,  150,   20, 4,10,    0,    0,	// arachnotron
-   18, 30,  200,   40, 3, 7,    0,   20,	// mancubus
-   17, 36,  200,   40, 6,11,    0,   20,	// revenant
-   17, 36,  150,   30, 7,12,    0,   10,	// archvile
-    5,  5,   35,   20,14, 6,    0,   10,	// fish
-    5, 17,   20,    0, 7, 6,    0,    0,	// barrel
-   17, 38,   20,   40, 3, 6,    0,   20,	// robot
-    8, 26,  400,   70, 8,10,   30,   50		// man
+  /* rad  ht life  pain  rv  jv slop min_pn */
+  {    0,  0,   0,    0,  0,  0,   0,     0 }, // none
+  {   15, 28,  60,   20,  7, 10,   0,    10 }, // demon
+  {   10, 28,  25,   15,  3, 10,  30,     0 }, // imp
+  {   10, 28,  15,   10,  3, 10,  30,     0 }, // zomby
+  {   10, 28,  20,   10,  3, 10,  30,     0 }, // sergeant
+  {   20, 55, 500,   70,  5, 10,   0,    50 }, // cyberdemon
+  {   12, 28,  60,   20,  3, 10,  30,    10 }, // chaingunner
+  {   12, 32, 150,   40,  3, 10,   0,    30 }, // baron of hell
+  {   12, 32,  75,   40,  3, 10,   0,    30 }, // hell knight
+  {   15, 28, 100,   10,  4,  4,   0,     0 }, // cacodemon
+  {    8, 18,  60,   10,  4,  4,   0,     0 }, // lost soul
+  {   15, 28, 100,   10,  4,  4,   0,     0 }, // pain elemental
+  {   64, 50, 500,   70,  4, 10,   0,    50 }, // spider mastermind
+  {   25, 27, 150,   20,  4, 10,   0,     0 }, // arachnotron
+  {   18, 30, 200,   40,  3,  7,   0,    20 }, // mancubus
+  {   17, 36, 200,   40,  6, 11,   0,    20 }, // revenant
+  {   17, 36, 150,   30,  7, 12,   0,    10 }, // archvile
+  {    5,  5,  35,   20, 14,  6,   0,    10 }, // fish
+  {    5, 17,  20,    0,  7,  6,   0,     0 }, // barrel
+  {   17, 38,  20,   40,  3,  6,   0,    20 }, // robot
+  {    8, 26, 400,   70,  8, 10,  30,    50 }  // man
 };
 
 void setst (int i, int st) {

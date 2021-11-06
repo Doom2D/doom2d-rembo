@@ -167,10 +167,11 @@ static char *getsavfpname (int n, int ro) {
 
 void F_getsavnames (void) {
   int i;
+  char *p;
   FILE_Stream rd;
   for (i = 0; i < SAVE_MAX; ++i) {
     savok[i] = 0;
-    char *p = getsavfpname(i, 1);
+    p = getsavfpname(i, 1);
     if (FILE_Open(&rd, p, "rb")) {
       savok[i] = SAVE_getname(&rd.base, savname[i]);
       FILE_Close(&rd);

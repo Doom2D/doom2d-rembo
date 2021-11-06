@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cp866.h"
+#include "common/cp866.h"
 
 int cp866_isalpha (int ch) {
   return (ch >= 0x41 && ch <= 0x5A) || (ch >= 0x61 && ch <= 0x7A) || (ch >= 0x80 && ch <= 0xAF) || (ch >= 0xE0 && ch <= 0xF7);
