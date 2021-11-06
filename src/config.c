@@ -42,9 +42,10 @@ const cfg_t *CFG_find_entry (const char *key, const cfg_t *cfg) {
 }
 
 int CFG_update_key (const char *key, const char *value, const cfg_t *cfg) {
+  const cfg_t *entry;
   assert(key != NULL);
   assert(value != NULL);
-  const cfg_t *entry = CFG_find_entry(key, cfg);
+  entry = CFG_find_entry(key, cfg);
   if (entry != NULL) {
     void *p = entry->p;
     switch (entry->t) {
@@ -92,12 +93,12 @@ static void CFG_skip_line (void) {
 }
 
 int CFG_scan_iterator (char *key, int keylen, char *value, int valuelen) {
+  int i;
+  int found = 0;
   assert(key != NULL);
   assert(keylen > 0);
   assert(value != NULL);
   assert(valuelen > 0);
-  int i;
-  int found = 0;
   while (feof(f) == 0 && found == 0) {
     CFG_skip_space();
     if (ch == ';') {
@@ -142,12 +143,12 @@ void CFG_close_iterator (void) {
 /* --- reader --- */
 
 int CFG_read_config (const char *name, int n, const cfg_t **cfg) {
-  assert(name != NULL);
-  assert(n >= 0);
-  assert(cfg != NULL);
   int i;
   char key[64];
   char value[64];
+  assert(name != NULL);
+  assert(n >= 0);
+  assert(cfg != NULL);
   assert(name != NULL);
   if (CFG_open_iterator(name)) {
     while (CFG_scan_iterator(key, 64, value, 64)) {
@@ -178,11 +179,12 @@ static void CFG_write_key_value (FILE *f, const char *key, const char *value) {
 }
 
 static int CFG_write_entry (FILE *f, const cfg_t *entry) {
-  assert(f != NULL);
-  assert(entry != NULL);
   char buf[16];
   const char *str;
-  const char *key = entry->cfg;
+  const char *key;
+  assert(f != NULL);
+  assert(entry != NULL);
+  key = entry->cfg;
   if (key != NULL) {
     switch (entry->t) {
       case Y_BYTE:
@@ -218,14 +220,15 @@ static int CFG_write_entry (FILE *f, const cfg_t *entry) {
 }
 
 int CFG_update_config (const char *old, const char *new, int n, const cfg_t **cfg, const char *msg) {
+  int i, j;
+  char key[64];
+  char value[64];
+  FILE *nf;
   assert(old != NULL);
   assert(new != NULL);
   assert(n >= 0);
   assert(cfg != NULL);
-  int i, j;
-  char key[64];
-  char value[64];
-  FILE *nf = fopen(new, "wb");
+  nf = fopen(new, "wb");
   if (nf != NULL) {
     if (msg != NULL) {
       fwrite("; ", 2, 1, nf);
